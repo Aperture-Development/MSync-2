@@ -1,0 +1,11 @@
+{
+	"title"		:	"MSync 2 - Now with steak",
+	"type"		:	"ServerContent",
+	"tags"		:	[ "roleplay", "realism" ],
+	"ignore"	:
+	[
+		"*.psd",
+		"*.vcproj",
+		"*.svn*"
+	]
+}
