@@ -74,3 +74,12 @@ CREATE TABLE IF NOT EXISTS `tbl_mrs` (
     FOREIGN KEY (userid) REFERENCES tbl_users(p_user_id),
     FOREIGN KEY (adminid) REFERENCES tbl_users(p_user_id)
 );
+
+CREATE TABLE IF NOT EXISTS `tbl_musync` (
+    `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `userid` INT UNSIGNED NOT NULL,
+    `time` INT UNSIGNED NOT NULL,
+    `server_group` INT UNSIGNED NOT NULL,
+    FOREIGN KEY (server_group) REFERENCES tbl_server_grp(p_group_id),
+    FOREIGN KEY (userid) REFERENCES tbl_users(p_user_id)
+);
