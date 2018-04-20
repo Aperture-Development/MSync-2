@@ -20,6 +20,7 @@ function MSync.mysql.initialize()
             local initVersion = MSync.DBServer:query([[
                 CREATE TABLE IF NOT EXISTS `tbl_msyncdb_version` ( `version` float NOT NULL );
             ]])
+
             initVersion:start()
 
             MSync.initModules()
