@@ -40,7 +40,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
     local mysqldb = vgui.Create( "DTextEntry", pnl )
     mysqldb:SetPos( 25, 140 )
     mysqldb:SetSize( 150, 20 )
-    mysqldb:SetText( "127.0.0.1" )
+    mysqldb:SetText( "msync" )
     mysqldb.OnEnter = function( self )
         chat.AddText( self:GetValue() )
     end
@@ -94,12 +94,6 @@ function MSync.AdminPanel.InitMySQL( sheet )
     reset_button:SetPos( 415, 290 )
     reset_button:SetSize( 130, 30 )
     reset_button.DoClick = function() end
-
-    local breen_img = vgui.Create( "DImage", pnl )
-    breen_img:SetPos( 10, 35 )
-    breen_img:SetSize( 150, 150 )
-
-    breen_img:SetImage( "msync/apdev_bw" )
 
     return pnl
 end

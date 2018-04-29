@@ -27,7 +27,7 @@ function MSync.mysql.initialize()
         end
 
         function  MSync.DBServer.onConnectionFailed( db, err )
-
+            print("[MSync] There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
         end
 
         MSync.DBServer:connect()
