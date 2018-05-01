@@ -1,6 +1,7 @@
 MSync           = MSync     or {}
 MSync.net       = MSync.net or {}
 MSync.mysql     = MSync.mysql or {}
+MSync.modules = MSync.modules or {}
 MSync.settings  = MSync.settings or {}
 MSync.function  = MSync.function or {}
 
@@ -41,4 +42,21 @@ end
 function MSync.function.saveSettings()
     file.Write("msync/settings.txt", util.TableToJSON(MSync.settings.data, true))
     return file.Exists("msync/settings.txt", "DATA")
+end
+
+function MSync.function.getModuleInfos()
+    local infoTable = {}
+
+    for k,v in pairs(MSync.modules) do
+        infoTable[k] = v.info
+    end
+
+    return infoTable
+end
+
+function MSync.function.getSafeSettings()
+    local settings = MSync.settings.data
+    settings.mysql.password = nil
+
+    return settings
 end

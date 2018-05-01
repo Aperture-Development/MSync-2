@@ -40,7 +40,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
     local mysqldb = vgui.Create( "DTextEntry", pnl )
     mysqldb:SetPos( 25, 140 )
     mysqldb:SetSize( 150, 20 )
-    mysqldb:SetText( "msync" )
+    mysqldb:SetText( "MSync" )
     mysqldb.OnEnter = function( self )
         chat.AddText( self:GetValue() )
     end
@@ -53,7 +53,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
     local mysqluser = vgui.Create( "DTextEntry", pnl )
     mysqluser:SetPos( 25, 185 )
     mysqluser:SetSize( 150, 20 )
-    mysqluser:SetText( "root" )
+    mysqluser:SetText( MSync.settings.data.mysql.username or "root" )
     mysqluser.OnEnter = function( self )
         chat.AddText( self:GetValue() )
     end
@@ -95,6 +95,20 @@ function MSync.AdminPanel.InitMySQL( sheet )
     reset_button:SetSize( 130, 30 )
     reset_button.DoClick = function() end
 
+    if not MSync.settings == nil then
+        mysqlip:SetText(MSync.settings.mysql.host)
+        mysqlport:SetText(MSync.settings.mysql.port)
+        mysqldb:SetText(MSync.settings.mysql.database)
+        mysqluser:SetText(MSync.settings.mysql.username)
+    else
+        timer.Simple(2, function()
+            mysqlip:SetText(MSync.settings.mysql.host)
+            mysqlport:SetText(MSync.settings.mysql.port)
+            mysqldb:SetText(MSync.settings.mysql.database)
+            mysqluser:SetText(MSync.settings.mysql.username)
+        end)
+    end
+
     return pnl
 end
 
@@ -105,7 +119,12 @@ function MSync.AdminPanel.InitModules( sheet )
 end
 
 function MSync.AdminPanel.InitModuleSettings( sheet ) 
-    local pnl = vgui.Create( "DPanel", sheet )
+    local pnl = vgui.Create( "DColumnSheet", sheet )
+
+    for k, v in pairs(file.Find("msync/client_gui/modules/*.lua", "LUA")[1]) do
+        local info, adminPanel = include("msync/client_gui/modules/"..v)
+        pnl:AddSheet( info.Name, adminPanel, "icon16/box.png" )
+    end
 
     return pnl
 end
@@ -114,6 +133,9 @@ end
 function MSync.AdminPanel.InitPanel()
 
     --if not LocalPlayer():query("msync_admingui") then return false end;
+
+    MSync.net.getSettings()
+    MSync.net.getModules()
 
     local panel = vgui.Create( "DFrame" )
     panel:SetSize( 600, 400 )
@@ -129,4 +151,4 @@ function MSync.AdminPanel.InitPanel()
 
 end
 
-MSync.AdminPanel.InitPanel() 
+MSync.AdminPanel.InitPanel()

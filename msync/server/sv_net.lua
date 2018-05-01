@@ -34,3 +34,15 @@ net.Receive("msync.sendSettings", function(len, ply)
     MSync.settings.data = net.ReadTable()
     MSync.function.saveSettings()
 end )
+
+net.Receive("msync.getSettings", function(len, ply)
+    if not ply:query("msync.getSettings") then return end
+    
+    MSync.net.sendTable(ply, "settings", MSync.function.getSafeSettings())
+end )
+
+net.Receive("msync.getModules", function(len, ply)
+    if not ply:query("msync.getModules") then return end
+    
+    MSync.net.sendTable(ply, "modules", MSync.function.getModuleInfos())
+end )
