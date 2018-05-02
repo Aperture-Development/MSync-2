@@ -53,7 +53,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
     local mysqluser = vgui.Create( "DTextEntry", pnl )
     mysqluser:SetPos( 25, 185 )
     mysqluser:SetSize( 150, 20 )
-    mysqluser:SetText( MSync.settings.data.mysql.username or "root" )
+    mysqluser:SetText( "root" )
     mysqluser.OnEnter = function( self )
         chat.AddText( self:GetValue() )
     end
@@ -115,6 +115,17 @@ end
 function MSync.AdminPanel.InitModules( sheet ) 
     local pnl = vgui.Create( "DPanel", sheet )
 
+    local ModuleList = vgui.Create( "DListView", pnl )
+    ModuleList:Dock( FILL )
+    ModuleList:SetMultiSelect( false )
+    ModuleList:AddColumn( "Name" )
+    ModuleList:AddColumn( "Identifier" )
+    ModuleList:AddColumn( "Enabled" )
+
+    for k,v in pairs(MSync.serverModules) do
+        ModuleList:AddItem(v["Name"], v["ModuleIdentifier"], v["state"])
+    end
+
     return pnl
 end
 
@@ -122,8 +133,8 @@ function MSync.AdminPanel.InitModuleSettings( sheet )
     local pnl = vgui.Create( "DColumnSheet", sheet )
 
     for k, v in pairs(file.Find("msync/client_gui/modules/*.lua", "LUA")[1]) do
-        local info, adminPanel = include("msync/client_gui/modules/"..v)
-        pnl:AddSheet( info.Name, adminPanel, "icon16/box.png" )
+        local info = include("msync/client_gui/modules/"..v)
+        pnl:AddSheet( info.Name, MSync.modules[info.ModuleIdentifier].adminPanel(pnl), "icon16/box.png" )
     end
 
     return pnl
@@ -132,7 +143,7 @@ end
 
 function MSync.AdminPanel.InitPanel()
 
-    --if not LocalPlayer():query("msync_admingui") then return false end;
+    --if not LocalPlayer():query("msync.admingui") then return false end;
 
     MSync.net.getSettings()
     MSync.net.getModules()

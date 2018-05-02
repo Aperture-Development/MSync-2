@@ -15,6 +15,7 @@ function MSync.initModules()
         local initTransaction = MSync.DBServer:createTransaction()
 
         for k,v in pairs(MSync.Modules) do
+            if not MSync.settings.data.enabledModules[v[info].ModuleIdentifier] then return end;
             v["init"](initTransaction)
             v["net"]()
             v["ulx"]()

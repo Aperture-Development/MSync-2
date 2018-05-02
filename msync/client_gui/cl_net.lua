@@ -22,7 +22,7 @@ net.Receive( "msync.sendTable", function( len, pl )
     local table = net.ReadTable()
 
     if type == "settings" then MSync.settings = table
-    elseif type == "modules" then MSync.modules = table end
+    elseif type == "modules" then MSync.serverModules = table end
 end )
 
 net.Receive( "msync.sendMessage", function( len, pl )

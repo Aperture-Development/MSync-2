@@ -49,6 +49,7 @@ function MSync.function.getModuleInfos()
 
     for k,v in pairs(MSync.modules) do
         infoTable[k] = v.info
+        infoTable[k].state = table.HasValue( MSync.settings.data.enabledModules, v.info["ModuleIdentifier"] ) 
     end
 
     return infoTable
