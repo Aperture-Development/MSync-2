@@ -17,13 +17,48 @@ function MSync.mysql.initialize()
         )
 
         function MSync.DBServer.onConnected( db )
-            local initVersion = MSync.DBServer:query([[
+            local initDatabase = MSync.DBServer:createTransaction()
+
+            initDatabase:addQuery( [[
                 CREATE TABLE IF NOT EXISTS `tbl_msyncdb_version` ( `version` float NOT NULL );
-            ]])
+            ]] )
 
-            initVersion:start()
+            initDatabase:addQuery( [[
+                CREATE TABLE IF NOT EXISTS `tbl_msync_servers` (
+                    `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    `server_name` VARCHAR(15) NOT NULL,
+                    `options` VARCHAR(100) NOT NULL DEFAULT '[]',
+                    `server_group` VARCHAR(45)
+                );
+            ]] )
 
-            MSync.initModules()
+            initDatabase:addQuery( [[
+                CREATE TABLE IF NOT EXISTS `tbl_server_grp` (
+                    `p_group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    `group_name` VARCHAR(15) NOT NULL
+                );
+            ]] )
+
+            initDatabase:addQuery( [[
+                CREATE TABLE IF NOT EXISTS `tbl_users` (
+                    `p_user_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    `steamid` VARCHAR(20) NOT NULL,
+                    `steamid64` VARCHAR(17) NOT NULL,
+                    `nickname` VARCHAR(30) NOT NULL,
+                    `joined` DATETIME NOT NULL
+                );
+            ]] )
+            
+            function initDatabase.onSuccess()
+                MSync.initModules()
+            end
+
+            function initDatabase.onError(tr, err)
+                print("[MSync] There has been a error while initializing the database.\nPlease inform the Developer and send him this:\n"..err)
+            end
+
+            initDatabase:start()
+
         end
 
         function  MSync.DBServer.onConnectionFailed( db, err )
@@ -36,6 +71,28 @@ function MSync.mysql.initialize()
     else
         print("[MSync] Could not locate MySQLoo")
     end
+end
+
+function MSync.mysql.addUser(ply)
+    if not MSync.DBServer then print("[MSync] No Database connected yet. Please connect to a Database to be able to create users."); return end;
+    
+    local addUserQ = MSync.DBServer:prepare( [[
+        INSERT INTO `tbl_users` ('steamid', 'steamid64', 'nickname', 'joined')
+        VALUES (?, ?, ?, ']]..os.date("%Y - %m - %d %H:%M:%S", os.time())..[[');
+    ]] )
+    addUserQ:setString(1, ply:SteamID())
+    addUserQ:setString(2, ply:SteamID64())
+    addUserQ:setString(3, ply:Nick())
+
+    function addUserQ.onSuccess()
+        print("[MSync] User "..ply:Nick().." successfully created")
+    end
+
+    function addUserQ.onError(q, err, sql)
+        print("[MSync] Failed to create user "..ply:Nick().." !\nPlease report this to the developer: "..err)
+    end
+
+    addUserQ:start()
 end
 
 function MSync.mysql.getInfo() 

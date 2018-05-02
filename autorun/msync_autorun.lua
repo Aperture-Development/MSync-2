@@ -4,6 +4,8 @@ if SERVER then
 
     include("/msync/server/sv_init.lua")
 
+    MSync.function.loadServer()
+
     for k, v in pairs(file.Find("msync/client_gui/*.lua", "LUA")[1]) do
         AddCSLuaFile("msync/client_gui/"..v)
     end
