@@ -40,5 +40,3 @@ MSync 2 - GitHub is distributed under the by-nc-sa 4.0 Int licence. Please read 
 
 Support is provided over our ticketsystem:
 [https://www.Aperture-Development.de/ticketsystem](https://www.Aperture-Development.de/ticketsystem)
-
-test
