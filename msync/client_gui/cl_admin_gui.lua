@@ -1,8 +1,11 @@
-AddCSLuaFile()
-
 MSync = MSync or {}
 MSync.AdminPanel = MSync.AdminPanel or {}
 
+--[[
+    Description: MySQL settings panel
+    Arguments: parent sheet
+    Returns: panel
+]]
 function MSync.AdminPanel.InitMySQL( sheet ) 
     local pnl = vgui.Create( "DPanel", sheet )
 
@@ -112,6 +115,11 @@ function MSync.AdminPanel.InitMySQL( sheet )
     return pnl
 end
 
+--[[
+    Description: Module list panel
+    Arguments: parent sheet
+    Returns: panel
+]]
 function MSync.AdminPanel.InitModules( sheet ) 
     local pnl = vgui.Create( "DPanel", sheet )
 
@@ -129,6 +137,11 @@ function MSync.AdminPanel.InitModules( sheet )
     return pnl
 end
 
+--[[
+    Description: Module settings panel
+    Arguments: parent sheet
+    Returns: panel
+]]
 function MSync.AdminPanel.InitModuleSettings( sheet ) 
     local pnl = vgui.Create( "DColumnSheet", sheet )
 
@@ -140,7 +153,10 @@ function MSync.AdminPanel.InitModuleSettings( sheet )
     return pnl
 end
 
-
+--[[
+    Description: MSync 2 panel
+    Returns: nothing
+]]
 function MSync.AdminPanel.InitPanel()
 
     --if not LocalPlayer():query("msync.admingui") then return false end;
@@ -162,4 +178,8 @@ function MSync.AdminPanel.InitPanel()
 
 end
 
+--[[
+    Description: Debug function. Remove on command implementation.
+    Returns: nothing
+]]
 MSync.AdminPanel.InitPanel()

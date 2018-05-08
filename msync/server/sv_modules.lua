@@ -3,12 +3,20 @@ MSync.mysql     = MSync.mysql or {}
 MSync.settings  = MSync.settings or {}
 MSync.modules   = MSync.modules or {}
 
+--[[
+    Description: Loads all server side modules
+    Returns: nothing
+]]     
 function MSync.loadModules()
     for k, v in pairs(file.Find("msync/server/modules/*.lua", "LUA")[1]) do
         include("msync/server/modules/"..v)
     end
 end
 
+--[[
+    Description: initializes all modules
+    Returns: nothing
+]]   
 function MSync.initModules()
     MSync.mysql.dbstatus = false
     if MSync.DBServer then
@@ -39,6 +47,11 @@ function MSync.initModules()
     end
 end
 
+--[[
+    Description: Loads single modules
+    Arguments: path to module
+    Returns: nothing
+]]   
 function MSync.loadModule(path)
     local initTransaction = MSync.DBServer:createTransaction()
     local info = include(path)

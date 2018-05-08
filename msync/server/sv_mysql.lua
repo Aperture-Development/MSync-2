@@ -4,6 +4,10 @@ MSync.mysql     = MSync.mysql or {}
 MSync.settings  = MSync.settings or {}
 MSync.function  = MSync.function or {}
 
+--[[
+    Description: initializes the MySQL part
+    Returns: nothing
+]]   
 function MSync.mysql.initialize() 
     if (file.Exists( "bin/gmsv_mysqloo_linux.dll", "LUA" ) or file.Exists( "bin/gmsv_mysqloo_win32.dll", "LUA" )) and MSync.settings.data.mysql then
         require("mysqloo")
@@ -73,6 +77,11 @@ function MSync.mysql.initialize()
     end
 end
 
+--[[
+    Description: Adds a user to the users table
+    Arguments: player
+    Returns: nothing
+]]   
 function MSync.mysql.addUser(ply)
     if not MSync.DBServer then print("[MSync] No Database connected yet. Please connect to a Database to be able to create users."); return end;
     
@@ -95,6 +104,10 @@ function MSync.mysql.addUser(ply)
     addUserQ:start()
 end
 
+--[[
+    Description: Function to print the MySQL informations to the console
+    Returns: nothing
+]]   
 function MSync.mysql.getInfo() 
     print("--Database Server Information--")
     print("Version: "..MSync.DBServer:serverVersion())
