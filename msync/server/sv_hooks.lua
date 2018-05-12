@@ -12,8 +12,10 @@ hook.Add( "Initialize", "msync.initScript", function()
     timer.Create("msync.checkForULXandULib", 5, 0, function()
         if not ULX and ULib then return end;
 
-        MSync.mysql.initialize() 
+        timer.Remove("msync.checkForULXandULib")
         MSync.ulx.createPermissions()
+        MSync.ulx.createCommands()
+        MSync.mysql.initialize() 
     end)
 end)
 

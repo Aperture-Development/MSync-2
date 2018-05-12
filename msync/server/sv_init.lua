@@ -22,6 +22,14 @@ function MSync.func.loadServer()
         AddCSLuaFile("msync/client_gui/"..v)
     end
 
+    local files, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
+    for k, v in pairs(files) do
+        AddCSLuaFile("msync/client_gui/modules/"..v)
+    end
+
+    util.AddNetworkString("msync.sendSettings")
+    util.AddNetworkString("msync.getModules")
+    util.AddNetworkString("msync.getSettings")
 end
 
 --[[
