@@ -56,3 +56,11 @@ net.Receive( "msync.sendMessage", function( len, pl )
         chat.AddText(Color(255,255,255), "[MSync] "..net.ReadString())
     end
 end )
+
+--[[
+    Description:  Net Receiver - Gets called when the client requested to open the admin GUI
+    Returns: nothing
+]]
+net.Receive( "msync.openAdminGUI", function( len, pl )
+    MSync.AdminPanel.InitPanel()
+end )

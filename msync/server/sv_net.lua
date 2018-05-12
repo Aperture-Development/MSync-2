@@ -38,6 +38,17 @@ function MSync.net.sendMessage(ply, state, string)
 end
 
 --[[
+    Description: Function to open the admin GUI on the client
+    Arguments:
+        player [player] - the player that wants to open the admin GUI
+    Returns: nothing
+]]   
+function MSync.net.openAdminGUI(ply)
+    net.Start("msync.openAdminGUI")
+    net.Send(ply)
+end
+
+--[[
     Description: Net Receiver - Gets called when the client requests a table
     Returns: nothing
 ]]   

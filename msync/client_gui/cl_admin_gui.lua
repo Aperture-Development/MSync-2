@@ -177,9 +177,3 @@ function MSync.AdminPanel.InitPanel()
     sheet:AddSheet( "Module Settings", MSync.AdminPanel.InitModuleSettings( sheet ), "icon16/folder.png" )
 
 end
-
---[[
-    Description: Debug function. Remove on command implementation.
-    Returns: nothing
-]]
-MSync.AdminPanel.InitPanel()

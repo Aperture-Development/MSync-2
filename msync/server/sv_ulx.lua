@@ -1,6 +1,10 @@
 MSync = MSync or {}
 MSync.ulx = MSync.ulx or {}
 
+--[[
+    Description: Function to create the ULX permissions
+    Returns: nothing
+]] 
 function MSync.ulx.createPermissions()
     ULib.ucl.registerAccess("msync.getTable", "superadmin", "Allows player to get MSync tables", "MSync")
     ULib.ucl.registerAccess("msync.sendSettings", "superadmin", "Allows player to send settings to server", "MSync")
@@ -9,6 +13,21 @@ function MSync.ulx.createPermissions()
     ULib.ucl.registerAccess("msync.loadModule", "superadmin", "Allows the player to load a module", "MSync")
     ULib.ucl.registerAccess("msync.reloadModules", "superadmin", "Allows the player to reload all modules", "MSync")
     ULib.ucl.registerAccess("msync.toggleModule", "superadmin", "Allows the player to enable/disable modules", "MSync"	)
-    ULib.ucl.registerAccess("msync.openAdminGUI", "superadmin", "Allows the player to see the admin gui", "MSync"	)
+end
+
+--[[
+    Description: Function to create the ULX commands
+    Returns: nothing
+]] 
+function MSync.ulx.createCommands()
+
+    function MSync.func.openAdminGUI(calling_ply)
+        if not calling_ply:query("msync.openAdminGUI") then return end;
+
+        MSync.net.openAdminGUI(ply)
+    end
+    local OpenAdminGUI = ulx.command( "MSync", "msync.openAdminGUI", MSync.func.openAdminGUI, "!msync" )
+    OpenAdminGUI:defaultAccess( ULib.ACCESS_SUPERADMIN )
+    OpenAdminGUI:help( "Opens MSync Settings." )
 end
 --ucl.registerAccess("msync.", "superadmin", "", "MSync"	)
