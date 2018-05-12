@@ -3,7 +3,7 @@
     Returns: nothing
 ]]
 hook.Add( "Initialize", "msync.initScript", function()
-    MSync.function.loadSettings()
+    MSync.func.loadSettings()
     
     --[[
         Description: timer to prevent loading before ULX

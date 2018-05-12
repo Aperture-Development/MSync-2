@@ -1,20 +1,26 @@
 MSync           = MSync     or {}
 MSync.net       = MSync.net or {}
 MSync.mysql     = MSync.mysql or {}
-MSync.modules = MSync.modules or {}
+MSync.modules   = MSync.modules or {}
 MSync.settings  = MSync.settings or {}
-MSync.function  = MSync.function or {}
+MSync.func  = MSync.func or {}
 
 --[[
     Description: Function to load the server side files
     Returns: nothing
 ]]
-function MSync.function.loadServer()
+function MSync.func.loadServer()
 
-    include("/msync/server/sv_net.lua")
-    include("/msync/server/sv_mysql.lua")
-    include("/msync/server/sv_modules.lua")
-    include("/msync/server/sv_hooks.lua")
+    include("msync/server/sv_net.lua")
+    include("msync/server/sv_mysql.lua")
+    include("msync/server/sv_modules.lua")
+    include("msync/server/sv_hooks.lua")
+    include("msync/server/sv_ulx.lua")
+
+    local files, _ = file.Find("msync/client_gui/*.lua", "LUA")
+    for k, v in pairs(files) do
+        AddCSLuaFile("msync/client_gui/"..v)
+    end
 
 end
 
@@ -22,7 +28,7 @@ end
     Description: Function to load the MSync settings file
     Returns: true
 ]]
-function MSync.function.loadSettings()
+function MSync.func.loadSettings()
     if not file.Exists("msync/settings.txt", "DATA") then
         MSync.settings.data = {
             mysql = {
@@ -50,7 +56,7 @@ end
     Description: Function to save the MSync settings to the settings file
     Returns: true if the settings file exists
 ]]
-function MSync.function.saveSettings()
+function MSync.func.saveSettings()
     file.Write("msync/settings.txt", util.TableToJSON(MSync.settings.data, true))
     return file.Exists("msync/settings.txt", "DATA")
 end
@@ -59,7 +65,7 @@ end
     Description: Function to get a table of the module informations
     Returns: table with Module informations
 ]]
-function MSync.function.getModuleInfos()
+function MSync.func.getModuleInfos()
     local infoTable = {}
 
     for k,v in pairs(MSync.modules) do
@@ -75,9 +81,9 @@ end
                 We have decided that its better to Re-Enter the password always, and not be able to see the MySQL password client side
     Returns: safe settings table
 ]]
-function MSync.function.getSafeSettings()
+function MSync.func.getSafeSettings()
     local settings = MSync.settings.data
     settings.mysql.password = nil
-
+    
     return settings
 end

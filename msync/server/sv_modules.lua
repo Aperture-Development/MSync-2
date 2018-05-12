@@ -8,7 +8,8 @@ MSync.modules   = MSync.modules or {}
     Returns: nothing
 ]]     
 function MSync.loadModules()
-    for k, v in pairs(file.Find("msync/server/modules/*.lua", "LUA")[1]) do
+    local files, _ = file.Find("msync/server/modules/*.lua", "LUA")
+    for k, v in pairs(files) do
         include("msync/server/modules/"..v)
     end
 end

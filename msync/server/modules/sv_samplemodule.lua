@@ -15,7 +15,8 @@ MSync.modules.SampleModule = MSync.modules.SampleModule or {}
 MSync.modules.SampleModule.info = {
     Name = "Sample Module",
     ModuleIdentifier = "SampleModule",
-    Description = "A basic example module on how to create modules"
+    Description = "A basic example module on how to create modules",
+    Version = "1.0.0"
 }
 
 --[[

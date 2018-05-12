@@ -56,7 +56,7 @@ net.Receive("msync.sendSettings", function(len, ply)
     if not ply:query("msync.sendSettings") then return end
     
     MSync.settings.data = net.ReadTable()
-    MSync.function.saveSettings()
+    MSync.func.saveSettings()
 end )
 
 --[[
@@ -66,7 +66,7 @@ end )
 net.Receive("msync.getSettings", function(len, ply)
     if not ply:query("msync.getSettings") then return end
     
-    MSync.net.sendTable(ply, "settings", MSync.function.getSafeSettings())
+    MSync.net.sendTable(ply, "settings", MSync.func.getSafeSettings())
 end )
 
 --[[
@@ -76,5 +76,5 @@ end )
 net.Receive("msync.getModules", function(len, ply)
     if not ply:query("msync.getModules") then return end
     
-    MSync.net.sendTable(ply, "modules", MSync.function.getModuleInfos())
+    MSync.net.sendTable(ply, "modules", MSync.func.getModuleInfos())
 end )

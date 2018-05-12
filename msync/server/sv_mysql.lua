@@ -2,7 +2,7 @@ MSync           = MSync     or {}
 MSync.net       = MSync.net or {}
 MSync.mysql     = MSync.mysql or {}
 MSync.settings  = MSync.settings or {}
-MSync.function  = MSync.function or {}
+MSync.func  = MSync.func or {}
 
 --[[
     Description: initializes the MySQL part
