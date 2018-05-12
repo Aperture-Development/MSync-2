@@ -17,6 +17,17 @@ function MSync.func.loadServer()
     include("msync/server/sv_hooks.lua")
     include("msync/server/sv_ulx.lua")
 
+    MSync.func.loadSettings()
+
+    timer.Create("msync.t.checkForULXandULib", 5, 0, function()
+        if not ULX and ULib then return end;
+
+        timer.Remove("msync.t.checkForULXandULib")
+        MSync.ulx.createPermissions()
+        MSync.ulx.createCommands()
+        MSync.mysql.initialize() 
+    end)
+
     local files, _ = file.Find("msync/client_gui/*.lua", "LUA")
     for k, v in pairs(files) do
         AddCSLuaFile("msync/client_gui/"..v)
@@ -26,10 +37,6 @@ function MSync.func.loadServer()
     for k, v in pairs(files) do
         AddCSLuaFile("msync/client_gui/modules/"..v)
     end
-
-    util.AddNetworkString("msync.sendSettings")
-    util.AddNetworkString("msync.getModules")
-    util.AddNetworkString("msync.getSettings")
 end
 
 --[[

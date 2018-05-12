@@ -16,8 +16,8 @@ function MSync.net.sendTable(ply, identifier, table)
         net.WriteString(identifier)
         net.WriteTable(table)
     net.Send(ply)
-
 end
+util.AddNetworkString("msync.sendTable")
 
 --[[
     Description: Function to send a text message to the client
@@ -34,8 +34,8 @@ function MSync.net.sendMessage(ply, state, string)
         net.WriteString(state)
         net.WriteString(string)
     net.Send(ply)
-
 end
+util.AddNetworkString("msync.sendMessage")
 
 --[[
     Description: Function to open the admin GUI on the client
@@ -47,11 +47,13 @@ function MSync.net.openAdminGUI(ply)
     net.Start("msync.openAdminGUI")
     net.Send(ply)
 end
+util.AddNetworkString("msync.openAdminGUI")
 
 --[[
     Description: Net Receiver - Gets called when the client requests a table
     Returns: nothing
 ]]   
+util.AddNetworkString("msync.getTable")
 net.Receive("msync.getTable", function(len, ply)
     if not ply:query("msync.getTable") then return end
     
@@ -63,6 +65,7 @@ end )
     Description: Net Receiver - Gets called when the client sends the settings table to the server
     Returns: nothing
 ]]   
+util.AddNetworkString("msync.sendSettings")
 net.Receive("msync.sendSettings", function(len, ply)
     if not ply:query("msync.sendSettings") then return end
     
@@ -74,6 +77,7 @@ end )
     Description: Net Receiver - Gets called when the client requests the settings table
     Returns: nothing
 ]]   
+util.AddNetworkString("msync.getSettings")
 net.Receive("msync.getSettings", function(len, ply)
     if not ply:query("msync.getSettings") then return end
     
@@ -84,6 +88,7 @@ end )
     Description: Net Receiver - Gets called when the client requests the module table
     Returns: nothing
 ]]   
+util.AddNetworkString("msync.getModules")
 net.Receive("msync.getModules", function(len, ply)
     if not ply:query("msync.getModules") then return end
     

@@ -1,4 +1,4 @@
-MSync = Msync or {}
+MSync = MSync or {}
 MSync.modules = MSync.modules or {}
 MSync.modules.SampleModule = MSync.modules.SampleModule or {}
 --[[
@@ -35,7 +35,7 @@ end
 ]]
 function MSync.modules.SampleModule.adminPanel(sheet)
     local pnl = vgui.Create( "DPanel", sheet )
-
+    pnl:Dock(FILL)
     return pnl
 end
 

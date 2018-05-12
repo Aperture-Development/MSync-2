@@ -37,7 +37,7 @@ net.Receive( "msync.sendTable", function( len, pl )
     local type = net.ReadString()
     local table = net.ReadTable()
 
-    if type == "settings" then MSync.settings = table
+    if type == "settings" then MSync.settings = table; print("Got Settings!")
     elseif type == "modules" then MSync.serverModules = table end
 end )
 

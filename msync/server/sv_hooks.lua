@@ -2,23 +2,24 @@
     Description: hook to initialize MSync 2
     Returns: nothing
 ]]
+--[[
 hook.Add( "Initialize", "msync.initScript", function()
     MSync.func.loadSettings()
     
     --[[
         Description: timer to prevent loading before ULX
         Returns: nothing
-    ]]        
-    timer.Create("msync.checkForULXandULib", 5, 0, function()
+    ]      
+    timer.Create("msync.t.checkForULXandULib", 5, 0, function()
         if not ULX and ULib then return end;
 
-        timer.Remove("msync.checkForULXandULib")
+        timer.Remove("msync.t.checkForULXandULib")
         MSync.ulx.createPermissions()
         MSync.ulx.createCommands()
         MSync.mysql.initialize() 
     end)
 end)
-
+]]
 --[[
         Description: Creates a entry to the database for every player that joins.
         Returns: nothing

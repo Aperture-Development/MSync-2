@@ -13,6 +13,7 @@ function MSync.ulx.createPermissions()
     ULib.ucl.registerAccess("msync.loadModule", "superadmin", "Allows the player to load a module", "MSync")
     ULib.ucl.registerAccess("msync.reloadModules", "superadmin", "Allows the player to reload all modules", "MSync")
     ULib.ucl.registerAccess("msync.toggleModule", "superadmin", "Allows the player to enable/disable modules", "MSync"	)
+    ULib.ucl.registerAccess("msync.getSettings", "superadmin", "Allows the player to get the server settings", "MSync"	)
 end
 
 --[[
@@ -23,8 +24,9 @@ function MSync.ulx.createCommands()
 
     function MSync.func.openAdminGUI(calling_ply)
         if not calling_ply:query("msync.openAdminGUI") then return end;
+        if not IsValid(calling_ply) then return end;
 
-        MSync.net.openAdminGUI(ply)
+        MSync.net.openAdminGUI(calling_ply)
     end
     local OpenAdminGUI = ulx.command( "MSync", "msync.openAdminGUI", MSync.func.openAdminGUI, "!msync" )
     OpenAdminGUI:defaultAccess( ULib.ACCESS_SUPERADMIN )

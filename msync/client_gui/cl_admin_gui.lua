@@ -104,7 +104,10 @@ function MSync.AdminPanel.InitMySQL( sheet )
         mysqldb:SetText(MSync.settings.mysql.database)
         mysqluser:SetText(MSync.settings.mysql.username)
     else
-        timer.Simple(2, function()
+        timer.Create("msync.t.checkForSettings", 1, 0, function()
+            if not MSync.settings or not MSync.settings.mysql then return end;
+
+            timer.Remove("msync.t.checkForSettings")
             mysqlip:SetText(MSync.settings.mysql.host)
             mysqlport:SetText(MSync.settings.mysql.port)
             mysqldb:SetText(MSync.settings.mysql.database)
@@ -130,9 +133,16 @@ function MSync.AdminPanel.InitModules( sheet )
     ModuleList:AddColumn( "Identifier" )
     ModuleList:AddColumn( "Enabled" )
 
-    for k,v in pairs(MSync.serverModules) do
-        ModuleList:AddItem(v["Name"], v["ModuleIdentifier"], v["state"])
-    end
+    timer.Create("msync.t.checkForServerModules", 1, 0, function()
+
+        if not MSync.serverModules then return end;
+
+        timer.Remove("msync.t.checkForServerModules")
+
+        for k,v in pairs(MSync.serverModules) do
+            ModuleList:AddItem(v["Name"], v["ModuleIdentifier"], v["state"])
+        end
+    end)
 
     return pnl
 end
@@ -145,9 +155,11 @@ end
 function MSync.AdminPanel.InitModuleSettings( sheet ) 
     local pnl = vgui.Create( "DColumnSheet", sheet )
 
-    for k, v in pairs(file.Find("msync/client_gui/modules/*.lua", "LUA")[1]) do
+    local files, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
+
+    for k, v in pairs(files) do
         local info = include("msync/client_gui/modules/"..v)
-        pnl:AddSheet( info.Name, MSync.modules[info.ModuleIdentifier].adminPanel(pnl), "icon16/box.png" )
+        pnl:AddSheet( info.Name, MSync.modules[info.ModuleIdentifier].adminPanel(pnl))
     end
 
     return pnl
