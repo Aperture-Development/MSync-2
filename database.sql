@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS `tbl_users` (
     `steamid` VARCHAR(20) NOT NULL,
     `steamid64` VARCHAR(17) NOT NULL,
     `nickname` VARCHAR(30) NOT NULL,
-    `joined` DATETIME NOT NULL
+    `joined` DATETIME NOT NULL,
+    UNIQUE INDEX `steamid_UNIQUE` (`steamid`),
+    UNIQUE INDEX `steamid64_UNIQUE` (`steamid64`)
 );
 
 CREATE TABLE IF NOT EXISTS `tbl_mbsync` (

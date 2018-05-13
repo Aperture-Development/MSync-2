@@ -14,6 +14,7 @@ function MSync.ulx.createPermissions()
     ULib.ucl.registerAccess("msync.reloadModules", "superadmin", "Allows the player to reload all modules", "MSync")
     ULib.ucl.registerAccess("msync.toggleModule", "superadmin", "Allows the player to enable/disable modules", "MSync"	)
     ULib.ucl.registerAccess("msync.getSettings", "superadmin", "Allows the player to get the server settings", "MSync"	)
+    ULib.ucl.registerAccess("msync.getModules", "superadmin", "Allows the player to get the server settings", "MSync"	)
 end
 
 --[[
@@ -21,7 +22,6 @@ end
     Returns: nothing
 ]] 
 function MSync.ulx.createCommands()
-
     function MSync.func.openAdminGUI(calling_ply)
         if not calling_ply:query("msync.openAdminGUI") then return end;
         if not IsValid(calling_ply) then return end;

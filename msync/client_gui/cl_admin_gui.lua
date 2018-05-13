@@ -18,9 +18,6 @@ function MSync.AdminPanel.InitMySQL( sheet )
     mysqlip:SetPos( 25, 50 )
     mysqlip:SetSize( 150, 20 )
     mysqlip:SetText( "127.0.0.1" )
-    mysqlip.OnEnter = function( self )
-        chat.AddText( self:GetValue() )
-    end
 
     local mysqlport_text = vgui.Create( "DLabel", pnl )
     mysqlport_text:SetPos( 25, 75 )
@@ -31,9 +28,6 @@ function MSync.AdminPanel.InitMySQL( sheet )
     mysqlport:SetPos( 25, 95 )
     mysqlport:SetSize( 150, 20 )
     mysqlport:SetText( "3306" )
-    mysqlport.OnEnter = function( self )
-        chat.AddText( self:GetValue() )
-    end
 
     local mysqldb_text = vgui.Create( "DLabel", pnl )
     mysqldb_text:SetPos( 25, 120 )
@@ -44,9 +38,6 @@ function MSync.AdminPanel.InitMySQL( sheet )
     mysqldb:SetPos( 25, 140 )
     mysqldb:SetSize( 150, 20 )
     mysqldb:SetText( "MSync" )
-    mysqldb.OnEnter = function( self )
-        chat.AddText( self:GetValue() )
-    end
 
     local mysqluser_text = vgui.Create( "DLabel", pnl )
     mysqluser_text:SetPos( 25, 165 )
@@ -57,9 +48,6 @@ function MSync.AdminPanel.InitMySQL( sheet )
     mysqluser:SetPos( 25, 185 )
     mysqluser:SetSize( 150, 20 )
     mysqluser:SetText( "root" )
-    mysqluser.OnEnter = function( self )
-        chat.AddText( self:GetValue() )
-    end
 
     local mysqlpassword_text = vgui.Create( "DLabel", pnl )
     mysqlpassword_text:SetPos( 25, 210 )
@@ -70,33 +58,86 @@ function MSync.AdminPanel.InitMySQL( sheet )
     mysqlpassword:SetPos( 25, 230 )
     mysqlpassword:SetSize( 150, 20 )
     mysqlpassword:SetText( "*****" )
-    mysqlpassword.OnEnter = function( self )
-        chat.AddText( self:GetValue() )
-    end
+
+    local title_info = vgui.Create( "DLabel", pnl )
+    title_info:SetPos( 200, 25 )
+    title_info:SetColor( Color( 0, 0, 0 ) )
+    title_info:SetSize(400, 15)
+    title_info:SetText( "--Information--" )
+
+    local info = vgui.Create( "DLabel", pnl )
+    info:SetPos( 200, 30 )
+    info:SetColor( Color( 0, 0, 0 ) )
+    info:SetSize(400, 200)
+    info:SetText( [[
+        Support: https://www.Aperture-Development.de
+        GitHub: https://github.com/Aperture-Development/MSync-2
+        LICENCE: To know what you are allowed to do and what not, 
+            read the LICENCE file in the root directory of the addon.
+            If there is no file, the Licence by-nc-sa 4.0 International applies.
+        
+        Developer: This Addon was created by Aperture Development.
+        Copyright 2018 - Aperture Development
+    ]] )
+
+    local dbstatus = vgui.Create( "DLabel", pnl )
+    dbstatus:SetPos( 200, 210 )
+    dbstatus:SetColor( Color( 0, 0, 0 ) )
+    dbstatus:SetSize(400, 15)
+    dbstatus:SetText( "DB Connection status: -Not Implemented-" )
 
     local save_button = vgui.Create( "DButton", pnl )
     save_button:SetText( "Save Settings" )					
     save_button:SetPos( 25, 290 )
     save_button:SetSize( 130, 30 )
-    save_button.DoClick = function() end
+    save_button.DoClick = function() 
+        MSync.settings.mysql.host = mysqlip:GetValue()
+        MSync.settings.mysql.port = mysqlport:GetValue()
+        MSync.settings.mysql.database = mysqldb:GetValue()
+        MSync.settings.mysql.username = mysqluser:GetValue()
+        MSync.settings.mysql.password = mysqlpassword:GetValue()
+        MSync.net.sendSettings(MSync.settings)
+    end
 
     local saveconnect_button = vgui.Create( "DButton", pnl )
     saveconnect_button:SetText( "Save and Connect" )					
     saveconnect_button:SetPos( 155, 290 )
     saveconnect_button:SetSize( 130, 30 )
-    saveconnect_button.DoClick = function() end
+    saveconnect_button.DoClick = function() 
+        MSync.settings.mysql.host = mysqlip:GetValue()
+        MSync.settings.mysql.port = mysqlport:GetValue()
+        MSync.settings.mysql.database = mysqldb:GetValue()
+        MSync.settings.mysql.username = mysqluser:GetValue()
+        MSync.settings.mysql.password = mysqlpassword:GetValue()
+        MSync.net.sendSettings(MSync.settings)
+        MSync.net.connectDB()
+    end
 
     local connect_button = vgui.Create( "DButton", pnl )
     connect_button:SetText( "Connect" )					
     connect_button:SetPos( 285, 290 )
     connect_button:SetSize( 130, 30 )
-    connect_button.DoClick = function() end
+    connect_button.DoClick = function() 
+        MSync.net.connectDB()
+    end
 
     local reset_button = vgui.Create( "DButton", pnl )
     reset_button:SetText( "Reset Settings" )					
     reset_button:SetPos( 415, 290 )
     reset_button:SetSize( 130, 30 )
-    reset_button.DoClick = function() end
+    reset_button.DoClick = function() 
+        mysqlip:SetText("127.0.0.1")
+        mysqlport:SetText("3306")
+        mysqldb:SetText("msync")
+        mysqluser:SetText("root")
+        mysqlpassword:SetText("****")
+        MSync.settings.mysql.host = mysqlip:GetValue()
+        MSync.settings.mysql.port = mysqlport:GetValue()
+        MSync.settings.mysql.database = mysqldb:GetValue()
+        MSync.settings.mysql.username = mysqluser:GetValue()
+        MSync.settings.mysql.password = ""
+        MSync.net.sendSettings(MSync.settings)
+    end
 
     if not MSync.settings == nil then
         mysqlip:SetText(MSync.settings.mysql.host)
@@ -104,14 +145,14 @@ function MSync.AdminPanel.InitMySQL( sheet )
         mysqldb:SetText(MSync.settings.mysql.database)
         mysqluser:SetText(MSync.settings.mysql.username)
     else
-        timer.Create("msync.t.checkForSettings", 1, 0, function()
+        timer.Create("msync.t.checkForSettings", 0.5, 0, function()
             if not MSync.settings or not MSync.settings.mysql then return end;
 
-            timer.Remove("msync.t.checkForSettings")
             mysqlip:SetText(MSync.settings.mysql.host)
             mysqlport:SetText(MSync.settings.mysql.port)
             mysqldb:SetText(MSync.settings.mysql.database)
             mysqluser:SetText(MSync.settings.mysql.username)
+            timer.Remove("msync.t.checkForSettings")
         end)
     end
 
@@ -134,16 +175,26 @@ function MSync.AdminPanel.InitModules( sheet )
     ModuleList:AddColumn( "Enabled" )
 
     timer.Create("msync.t.checkForServerModules", 1, 0, function()
-
         if not MSync.serverModules then return end;
 
-        timer.Remove("msync.t.checkForServerModules")
-
         for k,v in pairs(MSync.serverModules) do
-            ModuleList:AddItem(v["Name"], v["ModuleIdentifier"], v["state"])
+            ModuleList:AddLine(v["Name"], v["ModuleIdentifier"], v["state"])
         end
+        timer.Remove("msync.t.checkForServerModules")
     end)
-
+    ModuleList.OnRowRightClick = function(panel, lineID, line)
+        local ident = line:GetValue(2)
+        local cursor_x, cursor_y = ModuleList:CursorPos()
+        local DMenu = vgui.Create("DMenu", ModuleList)
+        DMenu:SetPos(cursor_x, cursor_y)
+        DMenu:AddOption(MSync.serverModules[ident].Description)
+        DMenu:AddSpacer()
+        DMenu:AddOption("Enable")
+        DMenu:AddOption("Disable")
+        DMenu.OptionSelected = function(menu,optPnl,optStr)
+            MSync.net.toggleModule(ident, optStr)
+        end
+    end
     return pnl
 end
 
@@ -178,6 +229,7 @@ function MSync.AdminPanel.InitPanel()
 
     local panel = vgui.Create( "DFrame" )
     panel:SetSize( 600, 400 )
+    panel:SetTitle( "MSync Admin Menu" )
     panel:Center()
     panel:MakePopup()
 

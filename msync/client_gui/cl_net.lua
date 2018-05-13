@@ -20,12 +20,32 @@ function MSync.net.getModules()
 end
 
 --[[
+    Description: function to toggle a module
+    Returns: nothing
+]]
+function MSync.net.toggleModule(ident, state)
+    net.Start("msync.toggleModule")
+        net.WriteString(ident)
+        net.WriteString(state)
+    net.SendToServer()
+end
+
+--[[
     Description: function to send settngs to the server
     Returns: nothing
 ]]
 function MSync.net.sendSettings(table)
     net.Start("msync.sendSettings")
         net.WriteTable(table)
+    net.SendToServer()
+end
+
+--[[
+    Description: function to connect to the database server
+    Returns: nothing
+]]
+function MSync.net.connectDB()
+    net.Start("msync.connectDB")
     net.SendToServer()
 end
 

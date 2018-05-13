@@ -23,35 +23,37 @@ function MSync.mysql.initialize()
         function MSync.DBServer.onConnected( db )
             local initDatabase = MSync.DBServer:createTransaction()
 
-            initDatabase:addQuery( [[
+            initDatabase:addQuery(MSync.DBServer:query([[
                 CREATE TABLE IF NOT EXISTS `tbl_msyncdb_version` ( `version` float NOT NULL );
-            ]] )
+            ]] ))
 
-            initDatabase:addQuery( [[
+            initDatabase:addQuery(MSync.DBServer:query( [[
                 CREATE TABLE IF NOT EXISTS `tbl_msync_servers` (
                     `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     `server_name` VARCHAR(15) NOT NULL,
                     `options` VARCHAR(100) NOT NULL DEFAULT '[]',
                     `server_group` VARCHAR(45)
                 );
-            ]] )
+            ]] ))
 
-            initDatabase:addQuery( [[
+            initDatabase:addQuery(MSync.DBServer:query( [[
                 CREATE TABLE IF NOT EXISTS `tbl_server_grp` (
                     `p_group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     `group_name` VARCHAR(15) NOT NULL
                 );
-            ]] )
+            ]] ))
 
-            initDatabase:addQuery( [[
+            initDatabase:addQuery(MSync.DBServer:query( [[
                 CREATE TABLE IF NOT EXISTS `tbl_users` (
                     `p_user_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     `steamid` VARCHAR(20) NOT NULL,
                     `steamid64` VARCHAR(17) NOT NULL,
                     `nickname` VARCHAR(30) NOT NULL,
-                    `joined` DATETIME NOT NULL
+                    `joined` DATETIME NOT NULL,
+                    UNIQUE INDEX `steamid_UNIQUE` (`steamid`),
+                    UNIQUE INDEX `steamid64_UNIQUE` (`steamid64`)
                 );
-            ]] )
+            ]] ))
             
             function initDatabase.onSuccess()
                 MSync.initModules()
@@ -70,7 +72,7 @@ function MSync.mysql.initialize()
         end
 
         MSync.DBServer:connect()
-    elseif !MSync.settings.data.mysql then
+    elseif not MSync.settings then
         print("[MSync] Settings not found")
     else
         print("[MSync] Could not locate MySQLoo")
@@ -86,12 +88,14 @@ function MSync.mysql.addUser(ply)
     if not MSync.DBServer then print("[MSync] No Database connected yet. Please connect to a Database to be able to create users."); return end;
     
     local addUserQ = MSync.DBServer:prepare( [[
-        INSERT INTO `tbl_users` ('steamid', 'steamid64', 'nickname', 'joined')
-        VALUES (?, ?, ?, ']]..os.date("%Y - %m - %d %H:%M:%S", os.time())..[[');
+        INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE nickname=VALUES(nickname);
     ]] )
     addUserQ:setString(1, ply:SteamID())
     addUserQ:setString(2, ply:SteamID64())
     addUserQ:setString(3, ply:Nick())
+    addUserQ:setString(4, os.date("%Y-%m-%d %H:%M:%S", os.time()))
 
     function addUserQ.onSuccess()
         print("[MSync] User "..ply:Nick().." successfully created")

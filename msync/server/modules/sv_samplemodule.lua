@@ -1,4 +1,4 @@
-MSync = Msync or {}
+MSync = MSync or {}
 MSync.modules = MSync.modules or {}
 MSync.modules.SampleModule = MSync.modules.SampleModule or {}
 --[[
@@ -22,7 +22,7 @@ MSync.modules.SampleModule.info = {
 --[[
     Define mysql table and additional functions that are later used
 ]]
-function MSync.Modules.SampleModule.init( transaction ) 
+function MSync.modules.SampleModule.init( transaction ) 
     transaction:addQuery( [[
         CREATE TABLE IF NOT EXISTS `tbl_SampleModule` (
             SampleData INT
@@ -38,7 +38,7 @@ end
 --[[
     Define net receivers and util.AddNetworkString
 ]]
-function MSync.Modules.SampleModule.net() 
+function MSync.modules.SampleModule.net() 
     net.Receive( "my_message", function( len, pl )
         if ( IsValid( pl ) and pl:IsPlayer() ) then
             print( "Message from " .. pl:Nick() .. " received. Its length is " .. len .. "." )
@@ -51,14 +51,14 @@ end
 --[[
     Define ulx Commands and overwrite common ulx functions (module does not get loaded until ulx has fully been loaded)
 ]]
-function MSync.Modules.SampleModule.ulx() 
+function MSync.modules.SampleModule.ulx() 
     
 end
 
 --[[
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
-function MSync.Modules.SampleModule.hooks() 
+function MSync.modules.SampleModule.hooks() 
     hook.Add("initialize", "msync_sampleModule_init", function()
         
     end)

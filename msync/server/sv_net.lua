@@ -91,6 +91,37 @@ end )
 util.AddNetworkString("msync.getModules")
 net.Receive("msync.getModules", function(len, ply)
     if not ply:query("msync.getModules") then return end
-    
+
     MSync.net.sendTable(ply, "modules", MSync.func.getModuleInfos())
+end )
+
+--[[
+    Description: Net Receiver - Gets called when the client requests a module toggle
+    Returns: nothing
+]]   
+util.AddNetworkString("msync.toggleModule")
+net.Receive("msync.toggleModule", function(len, ply)
+    if not ply:query("msync.toggleModule") then return end
+    
+    local ident = net.ReadString()
+    local state = net.ReadString()
+
+    if state == "Enable" then
+        MSync.settings.data.enabledModules[ident] = true
+    elseif state == "Disable" then
+        MSync.settings.data.enabledModules[ident] = nil
+    end
+    MSync.func.saveSettings()
+    MSync.net.sendMessage(ply, "info", state.."d module "..ident)
+end )
+
+--[[
+    Description: Net Receiver - Gets called when the client requests db connection
+    Returns: nothing
+]]   
+util.AddNetworkString("msync.connectDB")
+net.Receive("msync.connectDB", function(len, ply)
+    if not ply:query("msync.connectDB") then return end
+
+    MSync.mysql.initialize() 
 end )

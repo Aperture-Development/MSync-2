@@ -3,7 +3,8 @@ MSync.net       = MSync.net or {}
 MSync.mysql     = MSync.mysql or {}
 MSync.modules   = MSync.modules or {}
 MSync.settings  = MSync.settings or {}
-MSync.func  = MSync.func or {}
+MSync.func      = MSync.func or {}
+MSync.ulx       = MSync.ulx or {}
 
 --[[
     Description: Function to load the server side files
@@ -20,13 +21,15 @@ function MSync.func.loadServer()
     MSync.func.loadSettings()
 
     timer.Create("msync.t.checkForULXandULib", 5, 0, function()
-        if not ULX and ULib then return end;
+        if not ulx or not ULib then return end;
 
         timer.Remove("msync.t.checkForULXandULib")
         MSync.ulx.createPermissions()
         MSync.ulx.createCommands()
         MSync.mysql.initialize() 
     end)
+
+    MSync.loadModules()
 
     local files, _ = file.Find("msync/client_gui/*.lua", "LUA")
     for k, v in pairs(files) do
@@ -54,7 +57,7 @@ function MSync.func.loadSettings()
                 database = "msync"
             },
             enabledModules = {
-                "mrsync"
+                ["mrsync"] = true
             },
             serverGroup = "allservers"
         }
@@ -85,7 +88,7 @@ function MSync.func.getModuleInfos()
 
     for k,v in pairs(MSync.modules) do
         infoTable[k] = v.info
-        infoTable[k].state = table.HasValue( MSync.settings.data.enabledModules, v.info["ModuleIdentifier"] ) 
+        infoTable[k].state = MSync.settings.data.enabledModules[v.info.ModuleIdentifier] or false
     end
 
     return infoTable
