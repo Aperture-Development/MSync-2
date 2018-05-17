@@ -68,8 +68,14 @@ end )
 util.AddNetworkString("msync.sendSettings")
 net.Receive("msync.sendSettings", function(len, ply)
     if not ply:query("msync.sendSettings") then return end
-    
+
+    local password = MSync.settings.data.mysql.password
     MSync.settings.data = net.ReadTable()
+
+    if not MSync.settings.data.mysql.password then
+        MSync.settings.data.mysql.password = password
+    end
+    
     MSync.func.saveSettings()
 end )
 

@@ -23,13 +23,13 @@ MSync.modules.SampleModule.info = {
     Define mysql table and additional functions that are later used
 ]]
 function MSync.modules.SampleModule.init( transaction ) 
-    transaction:addQuery( [[
+    transaction:addQuery( MSync.DBServer:query([[
         CREATE TABLE IF NOT EXISTS `tbl_SampleModule` (
             SampleData INT
         );
-    ]] )
+    ]] ))
     
-    function MSync.Modules.SampleModule.SampleFunction()
+    function MSync.modules.SampleModule.SampleFunction()
         return true
     end
 
