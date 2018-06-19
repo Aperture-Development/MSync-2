@@ -10,54 +10,64 @@ function MSync.AdminPanel.InitMySQL( sheet )
     local pnl = vgui.Create( "DPanel", sheet )
 
     local mysqlip_text = vgui.Create( "DLabel", pnl )
-    mysqlip_text:SetPos( 25, 30 )
+    mysqlip_text:SetPos( 25, 10 )
     mysqlip_text:SetColor( Color( 0, 0, 0 ) )
     mysqlip_text:SetText( "Host IP" )
 
     local mysqlip = vgui.Create( "DTextEntry", pnl )
-    mysqlip:SetPos( 25, 50 )
+    mysqlip:SetPos( 25, 30 )
     mysqlip:SetSize( 150, 20 )
     mysqlip:SetText( "127.0.0.1" )
 
     local mysqlport_text = vgui.Create( "DLabel", pnl )
-    mysqlport_text:SetPos( 25, 75 )
+    mysqlport_text:SetPos( 25, 55 )
     mysqlport_text:SetColor( Color( 0, 0, 0 ) )
     mysqlport_text:SetText( "Host Port" )
 
     local mysqlport = vgui.Create( "DTextEntry", pnl )
-    mysqlport:SetPos( 25, 95 )
+    mysqlport:SetPos( 25, 75 )
     mysqlport:SetSize( 150, 20 )
     mysqlport:SetText( "3306" )
 
     local mysqldb_text = vgui.Create( "DLabel", pnl )
-    mysqldb_text:SetPos( 25, 120 )
+    mysqldb_text:SetPos( 25, 100 )
     mysqldb_text:SetColor( Color( 0, 0, 0 ) )
     mysqldb_text:SetText( "Database" )
 
     local mysqldb = vgui.Create( "DTextEntry", pnl )
-    mysqldb:SetPos( 25, 140 )
+    mysqldb:SetPos( 25, 120 )
     mysqldb:SetSize( 150, 20 )
     mysqldb:SetText( "MSync" )
 
     local mysqluser_text = vgui.Create( "DLabel", pnl )
-    mysqluser_text:SetPos( 25, 165 )
+    mysqluser_text:SetPos( 25, 145 )
     mysqluser_text:SetColor( Color( 0, 0, 0 ) )
     mysqluser_text:SetText( "Username" )
 
     local mysqluser = vgui.Create( "DTextEntry", pnl )
-    mysqluser:SetPos( 25, 185 )
+    mysqluser:SetPos( 25, 165 )
     mysqluser:SetSize( 150, 20 )
     mysqluser:SetText( "root" )
 
     local mysqlpassword_text = vgui.Create( "DLabel", pnl )
-    mysqlpassword_text:SetPos( 25, 210 )
+    mysqlpassword_text:SetPos( 25, 190 )
     mysqlpassword_text:SetColor( Color( 0, 0, 0 ) )
     mysqlpassword_text:SetText( "Password" )
 
     local mysqlpassword = vgui.Create( "DTextEntry", pnl )
-    mysqlpassword:SetPos( 25, 230 )
+    mysqlpassword:SetPos( 25, 210 )
     mysqlpassword:SetSize( 150, 20 )
     mysqlpassword:SetText( "*****" )
+
+    local servergroup_text = vgui.Create( "DLabel", pnl )
+    servergroup_text:SetPos( 25, 235 )
+    servergroup_text:SetColor( Color( 0, 0, 0 ) )
+    servergroup_text:SetText( "Server Group" )
+
+    local servergroup = vgui.Create( "DTextEntry", pnl )
+    servergroup:SetPos( 25, 255 )
+    servergroup:SetSize( 150, 20 )
+    servergroup:SetText( "allserver" )
 
     local title_info = vgui.Create( "DLabel", pnl )
     title_info:SetPos( 200, 25 )
@@ -96,6 +106,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
         MSync.settings.mysql.database = mysqldb:GetValue()
         MSync.settings.mysql.username = mysqluser:GetValue()
         MSync.settings.mysql.password = mysqlpassword:GetValue()
+        MSync.settings.serverGroup = servergroup:GetValue()
         MSync.net.sendSettings(MSync.settings)
     end
 
@@ -109,6 +120,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
         MSync.settings.mysql.database = mysqldb:GetValue()
         MSync.settings.mysql.username = mysqluser:GetValue()
         MSync.settings.mysql.password = mysqlpassword:GetValue()
+        MSync.settings.serverGroup = servergroup:GetValue()
         MSync.net.sendSettings(MSync.settings)
         MSync.net.connectDB()
     end
@@ -131,11 +143,13 @@ function MSync.AdminPanel.InitMySQL( sheet )
         mysqldb:SetText("msync")
         mysqluser:SetText("root")
         mysqlpassword:SetText("****")
+        servergroup:SetText("allserver")
         MSync.settings.mysql.host = mysqlip:GetValue()
         MSync.settings.mysql.port = mysqlport:GetValue()
         MSync.settings.mysql.database = mysqldb:GetValue()
         MSync.settings.mysql.username = mysqluser:GetValue()
         MSync.settings.mysql.password = ""
+        MSync.settings.serverGroup = servergroup:GetValue()
         MSync.net.sendSettings(MSync.settings)
     end
 
@@ -144,6 +158,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
         mysqlport:SetText(MSync.settings.mysql.port)
         mysqldb:SetText(MSync.settings.mysql.database)
         mysqluser:SetText(MSync.settings.mysql.username)
+        servergroup:SetText(MSync.settings.serverGroup)
     else
         timer.Create("msync.t.checkForSettings", 0.5, 0, function()
             if not MSync.settings or not MSync.settings.mysql then return end;
@@ -152,6 +167,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
             mysqlport:SetText(MSync.settings.mysql.port)
             mysqldb:SetText(MSync.settings.mysql.database)
             mysqluser:SetText(MSync.settings.mysql.username)
+            servergroup:SetText(MSync.settings.serverGroup)
             timer.Remove("msync.t.checkForSettings")
         end)
     end
@@ -210,6 +226,8 @@ function MSync.AdminPanel.InitModuleSettings( sheet )
 
     for k, v in pairs(files) do
         local info = include("msync/client_gui/modules/"..v)
+        MSync.modules[info.ModuleIdentifier]["init"]()
+        MSync.modules[info.ModuleIdentifier]["net"]()
         pnl:AddSheet( info.Name, MSync.modules[info.ModuleIdentifier].adminPanel(pnl))
     end
 

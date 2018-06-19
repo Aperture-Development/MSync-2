@@ -30,16 +30,20 @@ function MSync.mysql.initialize()
             initDatabase:addQuery(MSync.DBServer:query( [[
                 CREATE TABLE IF NOT EXISTS `tbl_msync_servers` (
                     `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                    `server_name` VARCHAR(15) NOT NULL,
+                    `server_name` VARCHAR(55) NOT NULL,
                     `options` VARCHAR(100) NOT NULL DEFAULT '[]',
-                    `server_group` VARCHAR(45)
+                    `ip` INT NOT NULL,
+                    `port` VARCHAR(5) NOT NULL,
+                    `server_group` VARCHAR(45),
+                    UNIQUE INDEX `server_UNIQUE` (`ip`, `port`)
                 );
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
                 CREATE TABLE IF NOT EXISTS `tbl_server_grp` (
                     `p_group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                    `group_name` VARCHAR(15) NOT NULL
+                    `group_name` VARCHAR(15) NOT NULL,
+                    UNIQUE INDEX `group_UNIQUE` (`group_name`)
                 );
             ]] ))
 
@@ -56,6 +60,7 @@ function MSync.mysql.initialize()
             ]] ))
             
             function initDatabase.onSuccess()
+                MSync.mysql.saveServer()
                 MSync.initModules()
             end
 
@@ -117,4 +122,47 @@ function MSync.mysql.getInfo()
     print("Version: "..MSync.DBServer:serverVersion())
     print("Fancy Version: "..MSync.DBServer:serverInfo())
     print("Host Info: "..MSync.DBServer:hostInfo())
+end
+
+--[[
+    Description: Function to save the server date to the database
+    Returns: nothing
+]]   
+function MSync.mysql.saveServer()
+
+    local addServerGroup = MSync.DBServer:prepare( [[
+        INSERT INTO `tbl_server_grp` (group_name) VALUES (?)
+        ON DUPLICATE KEY UPDATE group_name=VALUES(group_name);
+    ]] )
+    addServerGroup:setString(1, MSync.settings.data.serverGroup)
+
+    function addServerGroup.onSuccess()
+        local addServer = MSync.DBServer:prepare( [[
+            INSERT INTO `tbl_msync_servers` (server_name, ip, port, server_group) 
+            VALUES (?,?,?,
+                (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
+            )
+            ON DUPLICATE KEY UPDATE server_name=VALUES(server_name), server_group=VALUES(server_group);
+        ]] )
+        addServer:setString(1, GetHostName())
+        addServer:setString(2, GetConVar( "hostip" ):GetString())
+        addServer:setString(3, GetConVar( "hostport" ):GetString())
+        addServer:setString(4, MSync.settings.data.serverGroup)
+
+        function addServer.onSuccess()
+            print("[MSync] Server saved to database")
+        end
+
+        function addServer.onError(q, err, sql)
+            print("[MSync] Failed to create server !\nPlease report this to the developer: "..err)
+        end
+
+        addServer:start()
+    end
+
+    function addServerGroup.onError(q, err, sql)
+        print("[MSync] Failed to create server !\nPlease report this to the developer: "..err)
+    end
+
+    addServerGroup:start()
 end

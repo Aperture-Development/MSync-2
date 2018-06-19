@@ -8,15 +8,19 @@ USE `msync`;
 CREATE TABLE IF NOT EXISTS `tbl_msyncdb_version` ( `version` float NOT NULL );
 
 CREATE TABLE IF NOT EXISTS `tbl_msync_servers` (
-	`p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `server_name` VARCHAR(15) NOT NULL,
+    `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `server_name` VARCHAR(55) NOT NULL,
     `options` VARCHAR(100) NOT NULL DEFAULT '[]',
-    `server_group` VARCHAR(45)
+    `ip` INT NOT NULL,
+    `port` VARCHAR(5) NOT NULL,
+    `server_group` INT NOT NULL,
+    UNIQUE INDEX `server_UNIQUE` (`ip`, `port`)
 );
 
 CREATE TABLE IF NOT EXISTS `tbl_server_grp` (
-	`p_group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `group_name` VARCHAR(15) NOT NULL
+    `p_group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `group_name` VARCHAR(15) NOT NULL,
+    UNIQUE INDEX `group_UNIQUE` (`group_name`)
 );
 
 CREATE TABLE IF NOT EXISTS `tbl_users` (
