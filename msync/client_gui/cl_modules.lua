@@ -8,9 +8,11 @@ MSync.modules   = MSync.modules or {}
     Returns: nothing
 ]]
 function MSync.loadModules()
-    for k, v in pairs(file.Find("msync/client_gui/modules/*.lua", "LUA")[1]) do
+    local files, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
+    for k, v in pairs(files) do
         include("msync/client_gui/modules/"..v)
     end
+    MSync.initModules()
 end
 
 --[[
@@ -19,12 +21,13 @@ end
 ]]
 function MSync.initModules()
 
-    for k,v in pairs(MSync.Modules) do
+    for k,v in pairs(MSync.modules) do
+        if not MSync.moduleState[v["info"]["ModuleIdentifier"]] then return end;
         v["init"]()
         v["net"]()
         v["ulx"]()
         v["hooks"]()
-        print("["..v[info][Name].."] Module loaded")
+        print("["..v["info"]["Name"].."] Module loaded")
     end
 
 end

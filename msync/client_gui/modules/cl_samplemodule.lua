@@ -24,7 +24,7 @@ MSync.modules.SampleModule.info = {
 ]]
 function MSync.modules.SampleModule.init() 
 
-    function MSync.Modules.SampleModule.SampleFunction()
+    function MSync.modules.SampleModule.SampleFunction()
         return true
     end
 

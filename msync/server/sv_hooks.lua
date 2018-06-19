@@ -27,4 +27,9 @@ end)
     ]]     
 hook.Add("PlayerInitialSpawn", "msync.createUser", function( ply )
     MSync.mysql.addUser(ply)
+    MSync.net.sendTable(ply, "modulestate", MSync.settings.data.enabledModules)
+
+    if ply:query("msync.openAdminGUI") then
+        MSync.net.dbStatus(ply)
+    end
 end)

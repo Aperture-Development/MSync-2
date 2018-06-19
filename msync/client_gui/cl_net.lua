@@ -58,7 +58,11 @@ net.Receive( "msync.sendTable", function( len, pl )
     local table = net.ReadTable()
 
     if type == "settings" then MSync.settings = table; print("Got Settings!")
-    elseif type == "modules" then MSync.serverModules = table end
+    elseif type == "modules" then MSync.serverModules = table 
+    elseif type == "modulestate" then 
+        MSync.moduleState = table
+        MSync.loadModules() 
+    end
 end )
 
 --[[
@@ -83,4 +87,12 @@ end )
 ]]
 net.Receive( "msync.openAdminGUI", function( len, pl )
     MSync.AdminPanel.InitPanel()
+end )
+
+--[[
+    Description:  Net Receiver - Gets called when server sent the db status
+    Returns: nothing
+]]
+net.Receive( "msync.dbStatus", function( len, pl )
+    MSync.DBStatus = net.ReadBool()
 end )
