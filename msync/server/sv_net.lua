@@ -50,6 +50,23 @@ end
 util.AddNetworkString("msync.openAdminGUI")
 
 --[[
+    Description: Function to send the database status to the client
+    Arguments:
+        player [player] - the player that wants to know the db status
+    Returns: nothing
+]]   
+function MSync.net.dbStatus(ply)
+    net.Start("msync.dbStatus")
+        if MSync.DBServer then
+            net.WriteBool(true)
+        else
+            net.WriteBool(false)
+        end
+    net.Send(ply)
+end
+util.AddNetworkString("msync.dbStatus")
+
+--[[
     Description: Net Receiver - Gets called when the client requests a table
     Returns: nothing
 ]]   

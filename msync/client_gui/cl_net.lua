@@ -88,3 +88,11 @@ end )
 net.Receive( "msync.openAdminGUI", function( len, pl )
     MSync.AdminPanel.InitPanel()
 end )
+
+--[[
+    Description:  Net Receiver - Gets called when server sent the db status
+    Returns: nothing
+]]
+net.Receive( "msync.dbStatus", function( len, pl )
+    MSync.DBStatus = net.ReadBool()
+end )

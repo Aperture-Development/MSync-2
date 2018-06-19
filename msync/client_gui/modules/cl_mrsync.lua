@@ -128,7 +128,9 @@ function MSync.modules.MRSync.adminPanel(sheet)
         end
     end
 
-    MSync.modules.MRSync.getSettings()
+    if MSync.DBStatus then
+        MSync.modules.MRSync.getSettings()
+    end
 
     if not MSync.modules.MRSync.settings then
         timer.Create("mrsync.t.checkSettings", 1, 0, function()
@@ -199,7 +201,6 @@ function MSync.modules.MRSync.net()
         Returns: nothing
     ]]   
     net.Receive("msync.mrsync.sendSettingsPly", function(len, ply)
-        
         MSync.modules.MRSync.settings = net.ReadTable()
     end )
 end
@@ -215,9 +216,7 @@ end
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
 function MSync.modules.MRSync.hooks() 
-    hook.Add("initialize", "msync_sampleModule_init", function()
-        
-    end)
+
 end
 
 --[[
