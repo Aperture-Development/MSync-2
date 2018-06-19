@@ -82,7 +82,7 @@ function MSync.modules.MRSync.init( transaction )
         loadUserQ:setString(3, MSync.settings.data.serverGroup)
 
         function loadUserQ.onData( q, data )
-            if data[1].rank == ply:GetUserGroup() then return end;
+            if data.rank == ply:GetUserGroup() then return end;
 
             ply:SetUserGroup(data[1].rank)
         end
