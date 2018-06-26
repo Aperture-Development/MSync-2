@@ -1,5 +1,13 @@
 # MSync-2
 
+What is MSync-2 ?
+
+MSync is a all around GMod server synchronisation addon. The addon is and will always be free to use. 
+
+MSync 2 is a more developed version of https://github.com/Aperture-Development/MSync
+
+It requires [MySQLoo](https://github.com/FredyH/MySQLOO) to work.
+
 Why version 2?
 
 Let's be honest here, version one is a broken piece of shit. It errors out everywhere, the GUI does not work and when you remove it, all bans and stuff are lost, because we overwrite the origiinal commands.
