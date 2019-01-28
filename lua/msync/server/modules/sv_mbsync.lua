@@ -32,12 +32,17 @@ function MSync.modules.MBSync.init( transaction )
             `date_unix` float NOT NULL,
             `lenght_unix` float NOT NULL,
             `server_group` INT UNSIGNED NOT NULL,
+            `ban_lifted` INT UNSIGNED,
             FOREIGN KEY (server_group) REFERENCES tbl_server_grp(p_group_id),
             FOREIGN KEY (userid) REFERENCES tbl_users(p_user_id),
             FOREIGN KEY (adminid) REFERENCES tbl_users(p_user_id)
         );
     ]] ))
     
+    --[[
+        Description: Function to ban a player
+        Returns: nothing
+    ]]
     function MSync.modules.MBSync.banUser(ply, calling_ply, length, reason, allserver)
         local banUserQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, lenght_unix, server_group)
@@ -47,7 +52,7 @@ function MSync.modules.MBSync.init( transaction )
             ?, ?, ?,
                 (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
             )
-            ON DUPLICATE KEY UPDATE rank=VALUES(rank);
+            ON DUPLICATE KEY UPDATE reason=VALUES(reason) AND lenght_unix=VALUES(lenght_unix) AND server_group=VALUES(server_group);
         ]] )
         banUserQ:setString(1, ply:SteamID())
         banUserQ:setString(2, ply:SteamID64())
@@ -63,6 +68,73 @@ function MSync.modules.MBSync.init( transaction )
         end
             
         banUserQ:start()
+    end
+
+    --[[
+        Description: Function to unban a banId
+        Returns: nothing
+    ]]
+    function MSync.modules.MBSync.unBanUserID(calling_ply, banId)
+        local unBanUserIdQ = MSync.DBServer:prepare( [[
+            UPDATE `tbl_mbsync`
+            SET ban_lifted=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?)
+            WHERE p_ID=? 
+        ]] )
+        unBanUserIdQ:setString(1, calling_ply:SteamID())
+        unBanUserIdQ:setString(2, calling_ply:SteamID64())
+        unBanUserIdQ:setString(3, banId)
+            
+        unBanUserIdQ:start()
+    end
+
+    --[[
+        Description: Function to unban a user
+        Returns: nothing
+    ]]
+    function MSync.modules.MBSync.unBanUser(ply, calling_ply)
+        local unBanUserQ = MSync.DBServer:prepare( [[
+            UPDATE `tbl_mbsync`
+            SET 
+                ban_lifted=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?)
+            WHERE 
+                user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?) AND 
+                server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
+        ]] )
+        unBanUserQ:setString(1, calling_ply:SteamID())
+        unBanUserQ:setString(2, calling_ply:SteamID64())
+        unBanUserQ:setString(3, ply:SteamID())
+        unBanUserQ:setString(4, ply:SteamID64())
+        if not allserver then
+            banUserQ:setString(5, MSync.settings.data.serverGroup)
+        else
+            banUserQ:setString(5, "allservers")
+        end
+            
+        unBanUserQ:start()
+    end
+
+    --[[
+        Description: Function to get all bans
+        Returns: nothing
+    ]]
+    function MSync.modules.MBSync.getBans(ply)
+        local getBansQ = MSync.DBServer:prepare( [[
+            SELECT * FROM `tbl_mbsync`;
+        ]] )
+        getBansQ:setString(1, ply:SteamID())
+        unBanUserQ:setString(2, ply:SteamID64())
+        unBanUserQ:setString(3, calling_ply:SteamID())
+        unBanUserQ:setString(4, calling_ply:SteamID64())
+        unBanUserQ:setString(5, reason)
+        unBanUserQ:setNumber(6, os.time())
+        unBanUserQ:setNumber(7, lenght)
+        if not allserver then
+            unBanUserQ:setString(8, MSync.settings.data.serverGroup)
+        else
+            unBanUserQ:setString(8, "allservers")
+        end
+            
+        banunBanUserQUserQ:start()
     end
 
 end
