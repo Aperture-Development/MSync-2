@@ -11,6 +11,7 @@
 		"LICENSE",
 		"README.md",
 		"database.sql",
+		".git/*",
 		".git"
 	]
 }
