@@ -1,28 +1,33 @@
 MSync = MSync or {}
 MSync.modules = MSync.modules or {}
-MSync.modules.MBSync = MSync.modules.MBSync or {}
 --[[
  * @file       sv_mbsync.lua
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    0.0.2
+ * @version    0.0.3
 ]]
 
 --[[
     Define name, description and module identifier
 ]]
-MSync.modules.MBSync.info = {
+local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "0.0.2"
+    Version = "0.0.3"
 }
+
+--[[
+    Prepare Module
+]]
+MSync.modules.[info.ModuleIdentifier] = MSync.modules.[info.ModuleIdentifier] or {}
+MSync.modules.[info.ModuleIdentifier].info = info
 
 --[[
     Define mysql table and additional functions that are later used
 ]]
-function MSync.modules.MBSync.init( transaction ) 
+function MSync.modules.[info.ModuleIdentifier].init( transaction ) 
     transaction:addQuery( MSync.DBServer:query([[
         CREATE TABLE IF NOT EXISTS `tbl_mbsync` (
             `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -43,7 +48,7 @@ function MSync.modules.MBSync.init( transaction )
         Description: Function to ban a player
         Returns: nothing
     ]]
-    function MSync.modules.MBSync.banUser(ply, calling_ply, length, reason, allserver)
+    function MSync.modules.[info.ModuleIdentifier].banUser(ply, calling_ply, length, reason, allserver)
         local banUserQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, lenght_unix, server_group)
             VALUES (
@@ -73,7 +78,7 @@ function MSync.modules.MBSync.init( transaction )
         Description: Function to ban a userid
         Returns: nothing
     ]]
-    function MSync.modules.MBSync.banUserID(userid, calling_ply, length, reason, allserver)
+    function MSync.modules.[info.ModuleIdentifier].banUserID(userid, calling_ply, length, reason, allserver)
         local banUserIdQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, lenght_unix, server_group)
             VALUES (
@@ -104,7 +109,7 @@ function MSync.modules.MBSync.init( transaction )
         Description: Function to edit a ban
         Returns: nothing
     ]]
-    function MSync.modules.MBSync.editBan(banId, reason, lenght, calling_ply, allserver)
+    function MSync.modules.[info.ModuleIdentifier].editBan(banId, reason, lenght, calling_ply, allserver)
         local editBanQ = MSync.DBServer:prepare( [[
             UPDATE `tbl_mbsync`
             SET 
@@ -132,7 +137,7 @@ function MSync.modules.MBSync.init( transaction )
         Description: Function to unban a banId
         Returns: nothing
     ]]
-    function MSync.modules.MBSync.unBanUserID(calling_ply, banId)
+    function MSync.modules.[info.ModuleIdentifier].unBanUserID(calling_ply, banId)
         local unBanUserIdQ = MSync.DBServer:prepare( [[
             UPDATE `tbl_mbsync`
             SET ban_lifted=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?)
@@ -149,7 +154,7 @@ function MSync.modules.MBSync.init( transaction )
         Description: Function to unban a user
         Returns: nothing
     ]]
-    function MSync.modules.MBSync.unBanUser(ply, calling_ply)
+    function MSync.modules.[info.ModuleIdentifier].unBanUser(ply, calling_ply)
         local unBanUserQ = MSync.DBServer:prepare( [[
             UPDATE `tbl_mbsync`
             SET 
@@ -171,7 +176,7 @@ function MSync.modules.MBSync.init( transaction )
         Description: Function to get all bans
         Returns: nothing
     ]]
-    function MSync.modules.MBSync.getBans(ply)
+    function MSync.modules.[info.ModuleIdentifier].getBans(ply)
         local getBansQ = MSync.DBServer:prepare( [[
             SELECT 
                 tbl_mbsync.p_id, 
@@ -232,7 +237,7 @@ function MSync.modules.MBSync.init( transaction )
         Description: Function to get all active bans
         Returns: nothing
     ]]
-    function MSync.modules.MBSync.getActiveBans()
+    function MSync.modules.[info.ModuleIdentifier].getActiveBans()
         local getActiveBansQ = MSync.DBServer:prepare( [[
             SELECT 
                 tbl_mbsync.*,
@@ -288,7 +293,7 @@ end
 --[[
     Define net receivers and util.AddNetworkString
 ]]
-function MSync.modules.MBSync.net() 
+function MSync.modules.[info.ModuleIdentifier].net() 
     net.Receive( "my_message", function( len, pl )
         if ( IsValid( pl ) and pl:IsPlayer() ) then
             print( "Message from " .. pl:Nick() .. " received. Its length is " .. len .. "." )
@@ -301,14 +306,14 @@ end
 --[[
     Define ulx Commands and overwrite common ulx functions (module does not get loaded until ulx has fully been loaded)
 ]]
-function MSync.modules.MBSync.ulx() 
+function MSync.modules.[info.ModuleIdentifier].ulx() 
     
 end
 
 --[[
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
-function MSync.modules.MBSync.hooks() 
+function MSync.modules.[info.ModuleIdentifier].hooks() 
     hook.Add("initialize", "msync_sampleModule_init", function()
         
     end)
@@ -317,4 +322,4 @@ end
 --[[
     Return info ( Just for single module loading )
 ]]
-return MSync.modules.MBSync.info
+return MSync.modules.[info.ModuleIdentifier].info
