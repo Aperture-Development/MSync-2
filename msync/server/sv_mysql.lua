@@ -28,6 +28,14 @@ function MSync.mysql.initialize()
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
+                CREATE TABLE IF NOT EXISTS `tbl_server_grp` (
+                    `p_group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    `group_name` VARCHAR(15) NOT NULL,
+                    UNIQUE INDEX `group_UNIQUE` (`group_name`)
+                );
+            ]] ))
+            
+            initDatabase:addQuery(MSync.DBServer:query( [[
                 CREATE TABLE IF NOT EXISTS `tbl_msync_servers` (
                     `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     `server_name` VARCHAR(75) NOT NULL,
@@ -35,15 +43,8 @@ function MSync.mysql.initialize()
                     `ip` INT NOT NULL,
                     `port` VARCHAR(5) NOT NULL,
                     `server_group` INT UNSIGNED NOT NULL,
+                    FOREIGN KEY (server_group) REFERENCES tbl_server_grp(p_group_id),
                     UNIQUE INDEX `server_UNIQUE` (`ip`, `port`)
-                );
-            ]] ))
-
-            initDatabase:addQuery(MSync.DBServer:query( [[
-                CREATE TABLE IF NOT EXISTS `tbl_server_grp` (
-                    `p_group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                    `group_name` VARCHAR(15) NOT NULL,
-                    UNIQUE INDEX `group_UNIQUE` (`group_name`)
                 );
             ]] ))
 
