@@ -34,7 +34,7 @@ function MSync.mysql.initialize()
                     `options` VARCHAR(100) NOT NULL DEFAULT '[]',
                     `ip` INT NOT NULL,
                     `port` VARCHAR(5) NOT NULL,
-                    `server_group` INT UNSIGNED,
+                    `server_group` INT UNSIGNED NOT NULL,
                     UNIQUE INDEX `server_UNIQUE` (`ip`, `port`)
                 );
             ]] ))
