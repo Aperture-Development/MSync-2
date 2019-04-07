@@ -15,7 +15,7 @@ MSync 2 is a new version of https://github.com/Aperture-Development/MSync
 
 It requires [MySQLoo](https://github.com/FredyH/MySQLOO) to work.
 
-++**Why version 2?**++
+**Why version 2?**
 
 Let's be honest here, version one is a broken piece of shit. It errors out everywhere, the GUI does not work and when you remove it, all bans and stuff are lost, because we overwrite the origiinal commands.
 
@@ -41,7 +41,7 @@ MSync 2 is Split up in 3 versions:
 
 **STEAK** is the stable version of MSync 2. This version is safe to be used on your server.
 
-++**Why do all versions are named after food?**++
+**Why do all versions are named after food?**
 
 Because it's a joke, as you maybe know, Debian distributions are named after the characters of Toy Story, and I thought its funny to have something like that for our Addons.
 
@@ -79,12 +79,12 @@ When the server is started, everything should be ready for MSync 2. You can acce
 
 # Features
 
-++**Server Groups:**++
+**Server Groups:**
 
 >Server groups allow you to group your servers in sub teams. Modules will just sync things that are explicity told to sync it across all servers, otherwise it will just sync it with servers that have the same server group.
 
 
-++**MRSync:**++
+**MRSync:**
 
 >**M**ySQL **R**ank **Sync**hronisation
 >
@@ -97,7 +97,7 @@ There is a rank blacklist for ranks that dont get saved to the database. Just ad
 The server_group option allows you to do just that. Just sub-categorise your servers and your ranks now just get synced within this group. You can exclude ranks from that rule and force them to synchronise across all servers using the allserver table, all ranks in that table get saved as ranks for the whole network.
 
 
-++**MBSync:**++
+**MBSync:**
 
 >**M**ySQL **B**an **Sync**hronisation
 >
@@ -116,7 +116,7 @@ The server_group option allows you to do just that. Just sub-categorise your ser
 >!mbsync - Opens Ban list
 
 
-++**Planned Features**++
+**Planned Features**
 
 >- UTime synchronisation - Codename: MUSync
 >- MySQL Warning system - Codename: MWS
