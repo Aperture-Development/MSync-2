@@ -4,8 +4,8 @@ MSync.modules = MSync.modules or {}
  * @file       sv_mbsync.lua
  * @package    MySQL Ban Sync
  * @author     Aperture Development
- * @license    root_dir/LICENCE
- * @version    0.0.3
+ * @license    root_dir/LICENSE
+ * @version    0.0.4
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "0.0.3"
+    Version = "0.0.4"
 }
 
 --[[
@@ -35,7 +35,7 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
             `admin_id` INT UNSIGNED NOT NULL,
             `reason` VARCHAR(45) NOT NULL,
             `date_unix` float NOT NULL,
-            `lenght_unix` float NOT NULL,
+            `length_unix` float NOT NULL,
             `server_group` INT UNSIGNED NOT NULL,
             `ban_lifted` INT UNSIGNED,
             FOREIGN KEY (server_group) REFERENCES tbl_server_grp(p_group_id),
@@ -50,7 +50,7 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
     ]]
     function MSync.modules.[info.ModuleIdentifier].banUser(ply, calling_ply, length, reason, allserver)
         local banUserQ = MSync.DBServer:prepare( [[
-            INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, lenght_unix, server_group)
+            INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
             VALUES (
                 (SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?), 
                 (SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?), 
@@ -64,7 +64,7 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
         banUserQ:setString(4, calling_ply:SteamID64())
         banUserQ:setString(5, reason)
         banUserQ:setNumber(6, os.time())
-        banUserQ:setNumber(7, lenght)
+        banUserQ:setNumber(7, length)
         if not allserver then
             banUserQ:setString(8, MSync.settings.data.serverGroup)
         else
@@ -80,9 +80,9 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
     ]]
     function MSync.modules.[info.ModuleIdentifier].banUserID(userid, calling_ply, length, reason, allserver)
         local banUserIdQ = MSync.DBServer:prepare( [[
-            INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, lenght_unix, server_group)
+            INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
             VALUES (
-                (SELECT p_user_id FROM tbl_users WHERE steamid=? OR steamid64=? OR p_user_id=?), 
+                (SELECT p_user_id FROM tbl_users WHERE steamid=? OR steamid64=?), 
                 (SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?), 
             ?, ?, ?,
                 (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
@@ -90,16 +90,15 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
         ]] )
         banUserIdQ:setString(1, userid)
         banUserIdQ:setString(2, userid)
-        banUserIdQ:setString(3, userid)
-        banUserIdQ:setString(4, calling_ply:SteamID())
-        banUserIdQ:setString(5, calling_ply:SteamID64())
-        banUserIdQ:setString(6, reason)
-        banUserIdQ:setNumber(7, os.time())
-        banUserIdQ:setNumber(8, lenght)
+        banUserIdQ:setString(3, calling_ply:SteamID())
+        banUserIdQ:setString(4, calling_ply:SteamID64())
+        banUserIdQ:setString(5, reason)
+        banUserIdQ:setNumber(6, os.time())
+        banUserIdQ:setNumber(7, length)
         if not allserver then
-            banUserIdQ:setString(9, MSync.settings.data.serverGroup)
+            banUserIdQ:setString(8, MSync.settings.data.serverGroup)
         else
-            banUserIdQ:setString(9, "allservers")
+            banUserIdQ:setString(8, "allservers")
         end
             
         banUserIdQ:start()
@@ -109,18 +108,18 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
         Description: Function to edit a ban
         Returns: nothing
     ]]
-    function MSync.modules.[info.ModuleIdentifier].editBan(banId, reason, lenght, calling_ply, allserver)
+    function MSync.modules.[info.ModuleIdentifier].editBan(banId, reason, length, calling_ply, allserver)
         local editBanQ = MSync.DBServer:prepare( [[
             UPDATE `tbl_mbsync`
             SET 
                 reason=?,
-                lenght_unix=?,
+                length_unix=?,
                 adminid=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?),
                 server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
             WHERE p_ID=?
         ]] )
         editBanQ:setString(1, reason)
-        editBanQ:setString(2, lenght)
+        editBanQ:setString(2, length)
         editBanQ:setString(3, calling_ply:SteamID())
         editBanQ:setString(4, calling_ply:SteamID64())
         if not allserver then
@@ -182,7 +181,7 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
                 tbl_mbsync.p_id, 
                 tbl_mbsync.reason, 
                 tbl_mbsync.date_unix,
-                tbl_mbsync.lenght_unix,
+                tbl_mbsync.length_unix,
                 banned.steamid AS 'banned.steamid',
                 banned.steamid64 AS 'banned.steamid64',
                 banned.nickname AS 'banned.nickname',
@@ -205,32 +204,44 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
             ;
         ]] )
         end
-        --[[
-            Ban Table Lua structure:
-            bans = {
-                [tbl_mbsync.p_id] = {
-                    reason =  tbl_mbsync.reason
-                    banDate = tbl_mbsync.date_unix
-                    banLenght = tbl_mbsync.lenght_unix
+        
+
+        function getBansQ.onData( q, data, ply )
+            
+            local banTable = {}
+
+            print("[MBSync] Recieved all ban data")
+
+            for k,v in pairs(data) do
+
+                banTable[v.p_id] = {
+                    reason = v.reason
+                    banDate = os.date( "%H:%M:%S - %d/%m/%Y" , v.date_unix )
+                    banlength = v.length_unix
                     bannedUser = {
-                        steamid = banned.steamid
-                        steamid64 = banned.steamid64
-                        nickname = banned.nickname
-                    }
+                        steamid = v['banned.steamid'],
+                        steamid64 = v['banned.steamid64'],
+                        nickname = v['banned.nickname']
+                    },
                     banningAdmin = {
-                        steamid = admin.steamid
-                        steamid64 = admin.steamid64
-                        nickname = admin.nickname
-                    }
+                        steamid = v['admin.steamid'],
+                        steamid64 = v['admin.steamid64'],
+                        nickname = v['admin.nickname']
+                    },
                     unBanningAdmin = {
-                        steamid = unban_admin.steamid
-                        steamid64 = unban_admin.steamid64
-                        nickname = unban_admin.nickname
+                        steamid = v['unban_admin.steamid'],
+                        steamid64 = v['unban_admin.steamid64'],
+                        nickname = v['unban_admin.nickname']
                     }
                 }
-            }
-        ]]
-        banunBanUserQUserQ:start()
+
+            end
+
+            MSync.modules.[info.ModuleIdentifier].sendSettings(ply, banTable)
+
+        end
+
+        getBansQ:start()
     end
 
     --[[
@@ -243,8 +254,8 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
                 tbl_mbsync.*,
                 banned.steamid,
                 banned.steamid64,
-                banned.nickname,
-                admin.nickname
+                banned.nickname AS 'banned.nickname',
+                admin.nickname AS 'admin.nickname'
             FROM `tbl_mbsync`
             LEFT JOIN tbl_users AS banned
                 ON tbl_mbsync.userid = banned.p_group_id
@@ -253,8 +264,8 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
             WHERE
                 ban_lifted IS NULL AND
                 (
-                    (date_unix+lenght_unix)>? OR
-                     lenght_unix=0
+                    (date_unix+length_unix)>? OR
+                     length_unix=0
                 ) AND
                 (
                     server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name=?) OR
@@ -263,26 +274,31 @@ function MSync.modules.[info.ModuleIdentifier].init( transaction )
         ]] )
         getActiveBansQ:setNumber(1, os.time())
         getActiveBansQ:setString(8, MSync.settings.data.serverGroup)
-        --[[
-            Ban Table Lua structure:
-            activeBans = {
-                [banned.steamid64] = {
-                    banId = tbl_mbsync.p_id
-                    reason = tbl_mbsync.reason
-                    timestamp = tbl_mbsync.date_unix
-                    length = tbl_mbsync.lenght_unix
-                    banned = {
-                        steamid = banned.steamid
-                        Nickname = banned.nickname
-                    }
-                    adminNickname = admin.nickname
-                }
-            }
-        ]]
+        
         function getActiveBansQ.onData( q, data )
-            if data.rank == ply:GetUserGroup() then return end;
+            
+            local banTable = {}
 
-            ply:SetUserGroup(data[1].rank)
+            print("[MBSync] Recieved ban data")
+
+            for k,v in pairs(data) do
+
+                banTable[v.steamid64] = {
+                    banId = v.p_id,
+                    reason = v.reason,
+                    timestamp = v.date_unix,
+                    length = v.length_unix,
+                    banned = {
+                        steamid = v.steamid
+                        Nickname = v["banned.nickname"]
+                    },
+                    adminNickname = v["admin.nickname"]
+                }
+
+            end
+
+            MSync.modules.[info.ModuleIdentifier].banTable = banTable
+
         end
 
         getActiveBansQ:start()
@@ -294,13 +310,34 @@ end
     Define net receivers and util.AddNetworkString
 ]]
 function MSync.modules.[info.ModuleIdentifier].net() 
-    net.Receive( "my_message", function( len, pl )
-        if ( IsValid( pl ) and pl:IsPlayer() ) then
-            print( "Message from " .. pl:Nick() .. " received. Its length is " .. len .. "." )
-        else
-            print( "Message from server received. Its length is " .. len .. "." )
-        end
-    end )
+
+    --[[
+        Description: Function to send a message to a player
+        Arguments:
+            player [player] - the player that wants to open the admin GUI
+            text [string] - the text you want to send to the client
+        Returns: nothing
+    ]]  
+    util.AddNetworkString("msync."..[info.ModuleIdentifier]..".sendMessage")
+    function MSync.modules.[info.ModuleIdentifier].sendSettings(ply, text)
+        net.Start("msync."..[info.ModuleIdentifier]..".sendMessage")
+            net.WriteString(text)
+        net.Send(ply)
+    end
+
+    --[[
+        Description: Function to send the ban list to a player
+        Arguments:
+            player [player] - the player that wants to open the admin GUI
+            banTable [table] - the ban table
+        Returns: nothing
+    ]]  
+    util.AddNetworkString("msync."..[info.ModuleIdentifier]..".sendBanTable")
+    function MSync.modules.[info.ModuleIdentifier].sendSettings(ply, banTable)
+        net.Start("msync."..[info.ModuleIdentifier]..".sendBanTable")
+            net.WriteTable(banTable)
+        net.Send(ply)
+    end
 end
 
 --[[
