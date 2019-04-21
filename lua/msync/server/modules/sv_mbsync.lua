@@ -340,6 +340,71 @@ MSync.modules[info.ModuleIdentifier].net = function()
     end
 
     --[[
+        Edit Ban
+        - R
+        Reciever:
+            returns:
+                table = {
+                    banid [number] - the ban id
+                    reason [string] - the ban string
+                    length [number] - the ban length in minutes
+                    allserver [bool] - if the ban should apply to all servers
+                }
+            calls:
+                MSync.modules[info.ModuleIdentifier].editBan(banId, reason, length, calling_ply, allserver)
+                
+        
+    ]]
+
+    --[[
+        Unban
+        - R
+        Reciever:
+            returns:
+                table = {
+                    type [number] - 0=BanID 1=SteamID 2=SteamID64
+                    string [string] - the unbanning id string, can be banid, steamid and steamid64
+                }
+            calls:
+                MSync.modules[info.ModuleIdentifier].unBanUser(ply, calling_ply)
+                MSync.modules[info.ModuleIdentifier].unBanUserID(calling_ply, banId)
+    ]]
+
+    --[[
+        Ban
+        - R
+        Reciever:
+            returns:
+                table = {
+                    target [player/entity] - the player to be banned
+                    length [number] - the ban length in minutes
+                    reason [string] - the ban reason
+                    allserver [bool] - if the ban is on all servers
+                }
+            calls:
+                MSync.modules[info.ModuleIdentifier].banUser(ply, calling_ply, length, reason, allserver)
+    ]]
+
+    --[[
+        Banid
+        - R
+        Reciever:
+            returns:
+                table = {
+                    userid [string] - Either SteamID or SteamID64
+                    length [number] - the ban length in minutes
+                    reason [string] - the ban reason
+                    allserver [bool] - if the ban is on all servers
+                }
+            calls:
+                MSync.modules[info.ModuleIdentifier].banUserID = function(userid, calling_ply, length, reason, allserver)
+    ]]
+
+    --[[
+        Checkban
+    ]]
+
+    --[[
         TODO: 
         - Edit Ban
         - unban
