@@ -361,28 +361,9 @@ MSync.modules[info.ModuleIdentifier].net = function()
         - R
         Reciever:
             returns:
-                table = {
-                    type [number] - 0=BanID 1=SteamID 2=SteamID64
-                    string [string] - the unbanning id string, can be banid, steamid and steamid64
-                }
+                id [number] - the banid
             calls:
-                MSync.modules[info.ModuleIdentifier].unBanUser(ply, calling_ply)
                 MSync.modules[info.ModuleIdentifier].unBanUserID(calling_ply, banId)
-    ]]
-
-    --[[
-        Ban
-        - R
-        Reciever:
-            returns:
-                table = {
-                    target [player/entity] - the player to be banned
-                    length [number] - the ban length in minutes
-                    reason [string] - the ban reason
-                    allserver [bool] - if the ban is on all servers
-                }
-            calls:
-                MSync.modules[info.ModuleIdentifier].banUser(ply, calling_ply, length, reason, allserver)
     ]]
 
     --[[
@@ -400,18 +381,6 @@ MSync.modules[info.ModuleIdentifier].net = function()
                 MSync.modules[info.ModuleIdentifier].banUserID = function(userid, calling_ply, length, reason, allserver)
     ]]
 
-    --[[
-        Checkban
-    ]]
-
-    --[[
-        TODO: 
-        - Edit Ban
-        - unban
-        - ban
-        - banid
-        - checkban
-    ]]
 end
 
 --[[
@@ -526,8 +495,24 @@ end
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
 MSync.modules[info.ModuleIdentifier].hooks = function() 
-    hook.Add("initialize", "msync_sampleModule_init", function()
-        
+    --[[
+        TODO: Improove hook
+
+        This hook starts the timers for the asynchronous ban data loading and the check if one of the online players has been banned
+    ]]
+    hook.Add("initialize", "msync."..(info.ModuleIdentifier)..".initializeHook", function()
+        timer.Create("msync."..(info.ModuleIdentifier)..".getActiveBans", 300, 0, function() 
+            MSync.modules[info.ModuleIdentifier].getActiveBans()
+        end)
+
+        timer.Create("msync."..(info.ModuleIdentifier)..".checkActivePlayers", 150, 0, function() 
+
+            for k,v in pairs(player.GetAll()) do
+                if MSync.modules[info.ModuleIdentifier].banTable[v:SteamID64()] then
+                    v:Kick()
+                else
+            end
+        end)
     end)
 end
 
