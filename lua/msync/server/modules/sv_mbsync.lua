@@ -202,19 +202,19 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Description: Function to unban a user
         Returns: nothing
     ]]
-    MSync.modules[info.ModuleIdentifier].unBanUser = function(ply, calling_ply)
+    MSync.modules[info.ModuleIdentifier].unBanUser = function(ply_steamid, calling_ply)
         local unBanUserQ = MSync.DBServer:prepare( [[
             UPDATE `tbl_mbsync`
             SET 
                 ban_lifted=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?)
             WHERE 
-                user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?) AND 
+                user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? OR steamid64=?) AND 
                 server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
         ]] )
         unBanUserQ:setString(1, calling_ply:SteamID())
         unBanUserQ:setString(2, calling_ply:SteamID64())
-        unBanUserQ:setString(3, ply:SteamID())
-        unBanUserQ:setString(4, ply:SteamID64())
+        unBanUserQ:setString(3, ply_steamid)
+        unBanUserQ:setString(4, ply_steamid)
         unBanUserQ:setString(5, MSync.settings.data.serverGroup)
 
         unBanUserQ.onError = function( q, err, sql )
@@ -403,7 +403,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Returns: nothing
     ]]  
     util.AddNetworkString("msync."..(info.ModuleIdentifier)..".sendMessage")
-    MSync.modules[info.ModuleIdentifier].sendSettings = function(ply, text)
+    MSync.modules[info.ModuleIdentifier].msg = function(ply, text)
         net.Start("msync."..(info.ModuleIdentifier)..".sendMessage")
             net.WriteString(text)
         net.Send(ply)
@@ -566,7 +566,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             Run ban function with given functions
         ]]
 
-        MSync.modules[info.ModuleIdentifier].banUserID = function(target_steamid, calling_ply, length, reason, allserver)
+        MSync.modules[info.ModuleIdentifier].banUserID(target_steamid, calling_ply, length, reason, allserver)
 
     end
     local BanPlayer = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".banSteamID", MSync.modules[info.ModuleIdentifier].Chat.banSteamID, "!mbanid" )
@@ -588,6 +588,15 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     MSync.modules[info.ModuleIdentifier].Chat.unBanID = function(calling_ply, target_steamid)
         if not calling_ply:query("msync."..(info.ModuleIdentifier)..".unBanID") then return end;
 
+        --[[
+            Check for empty or invalid steamid
+        ]]
+        if not target_steamid or not ULib.isValidSteamID(target_steamid) then return end
+
+        --[[
+            Unban user with given steamid
+        ]]
+        MSync.modules[info.ModuleIdentifier].unBanUser(target_steamid, calling_ply)
     end
     local BanPlayer = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".unBanID", MSync.modules[info.ModuleIdentifier].Chat.unBanID, "!munban" )
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="steamid"}
@@ -605,6 +614,37 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     MSync.modules[info.ModuleIdentifier].Chat.checkBan = function(calling_ply, target_steamid)
         if not calling_ply:query("msync."..(info.ModuleIdentifier)..".checkBan") then return end;
 
+        if not target_steamid or not ULib.isValidSteamID(target_steamid) then return end
+
+        if MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(target_steamid)] then
+
+            --[[
+                Load the ban date from the activa ben table to a local variable
+            ]]
+            local banData = MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(target_steamid)]
+
+            --[[
+                Translate ban length and Date into readable values
+            ]]
+
+            banData.timestamp = os.date( "%H:%M:%S - %d/%m/%Y", banData.timestamp)
+
+            if banData.length == 0 then
+                banData.length = "permanent"
+            else
+                banData.length = os.date( "%H:%M:%S - %d/%m/%Y", banData.timestamp + banData.length)
+            end
+
+            --[[
+                Message the ban informations to the asking player
+            ]]
+            MSync.modules[info.ModuleIdentifier].msg(calling_ply,"Player banned!\nBanID: "..banData.banId.."\nReason: "..banData.reason.."\nBanned by: "..banData.adminNickname.."\nBan Date: "..banData.timestamp.."\nBan lasting till: "..banData.length)
+        else
+            -- Respond that the player is not banned
+            MSync.modules[info.ModuleIdentifier].msg(calling_ply,"The target player is not banned from this server.")
+        end
+
+
     end
     local BanPlayer = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".checkBan", MSync.modules[info.ModuleIdentifier].Chat.checkBan, "!mcheck" )
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="steamid"}
@@ -621,7 +661,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     ]]
     MSync.modules[info.ModuleIdentifier].Chat.openBanTable = function(calling_ply)
         if not calling_ply:query("msync."..(info.ModuleIdentifier)..".openBanTable") then return end;
-
+        -- Open Ban Table
     end
     local BanPlayer = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".openBanTable", MSync.modules[info.ModuleIdentifier].openBanGUI, "!mbsync" )
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
