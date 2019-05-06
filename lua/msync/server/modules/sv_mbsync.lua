@@ -71,7 +71,19 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         else
             banUserQ:setString(8, "allservers")
         end
-            
+
+        banUserQ.onError = function( q, err, sql )
+            print("------------------------------------")
+            print("[MBSync] SQL Error!")
+            print("------------------------------------")
+            print("Please include this in a Bug report:\n")
+            print(err.."\n")
+            print("------------------------------------")
+            print("Do not include this, this is for debugging only:\n")
+            print(sql.."\n")
+            print("------------------------------------")
+        end
+
         banUserQ:start()
     end
 
@@ -101,6 +113,18 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         else
             banUserIdQ:setString(8, "allservers")
         end
+
+        banUserIdQ.onError = function( q, err, sql )
+            print("------------------------------------")
+            print("[MBSync] SQL Error!")
+            print("------------------------------------")
+            print("Please include this in a Bug report:\n")
+            print(err.."\n")
+            print("------------------------------------")
+            print("Do not include this, this is for debugging only:\n")
+            print(sql.."\n")
+            print("------------------------------------")
+        end
             
         banUserIdQ:start()
     end
@@ -129,6 +153,18 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             editBanQ:setString(5, "allservers")
         end
         editBanQ:setString(6, banId)
+
+        editBanQ.onError = function( q, err, sql )
+            print("------------------------------------")
+            print("[MBSync] SQL Error!")
+            print("------------------------------------")
+            print("Please include this in a Bug report:\n")
+            print(err.."\n")
+            print("------------------------------------")
+            print("Do not include this, this is for debugging only:\n")
+            print(sql.."\n")
+            print("------------------------------------")
+        end
             
         editBanQ:start()
     end
@@ -146,6 +182,18 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         unBanUserIdQ:setString(1, calling_ply:SteamID())
         unBanUserIdQ:setString(2, calling_ply:SteamID64())
         unBanUserIdQ:setString(3, banId)
+
+        unBanUserIdQ.onError = function( q, err, sql )
+            print("------------------------------------")
+            print("[MBSync] SQL Error!")
+            print("------------------------------------")
+            print("Please include this in a Bug report:\n")
+            print(err.."\n")
+            print("------------------------------------")
+            print("Do not include this, this is for debugging only:\n")
+            print(sql.."\n")
+            print("------------------------------------")
+        end
             
         unBanUserIdQ:start()
     end
@@ -168,6 +216,18 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         unBanUserQ:setString(3, ply:SteamID())
         unBanUserQ:setString(4, ply:SteamID64())
         unBanUserQ:setString(5, MSync.settings.data.serverGroup)
+
+        unBanUserQ.onError = function( q, err, sql )
+            print("------------------------------------")
+            print("[MBSync] SQL Error!")
+            print("------------------------------------")
+            print("Please include this in a Bug report:\n")
+            print(err.."\n")
+            print("------------------------------------")
+            print("Do not include this, this is for debugging only:\n")
+            print(sql.."\n")
+            print("------------------------------------")
+        end
             
         unBanUserQ:start()
     end
@@ -242,6 +302,18 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         end
 
+        getBansQ.onError = function( q, err, sql )
+            print("------------------------------------")
+            print("[MBSync] SQL Error!")
+            print("------------------------------------")
+            print("Please include this in a Bug report:\n")
+            print(err.."\n")
+            print("------------------------------------")
+            print("Do not include this, this is for debugging only:\n")
+            print(sql.."\n")
+            print("------------------------------------")
+        end
+
         getBansQ:start()
     end
 
@@ -300,6 +372,18 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
             MSync.modules[info.ModuleIdentifier].banTable = banTable
 
+        end
+
+        getActiveBansQ.onError = function( q, err, sql )
+            print("------------------------------------")
+            print("[MBSync] SQL Error!")
+            print("------------------------------------")
+            print("Please include this in a Bug report:\n")
+            print(err.."\n")
+            print("------------------------------------")
+            print("Do not include this, this is for debugging only:\n")
+            print(sql.."\n")
+            print("------------------------------------")
         end
 
         getActiveBansQ:start()
