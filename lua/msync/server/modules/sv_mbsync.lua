@@ -405,13 +405,38 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
         if not calling_ply:query("msync."..(info.ModuleIdentifier)..".banPlayer") then return end;
         if not IsValid(calling_ply) then return end;
 
-        MSync.modules[info.ModuleIdentifier].banUser(target_ply, calling_ply, length, reason, allserver)
+        if not target_ply then
+            -- Open GUI
+        else
+            if not IsValid(target_ply) then return end
 
-        
+            --[[
+                Set default values if empty and translate allserver string to bool
+            ]]
+            if not length then length = 0 end
+
+            if not allserver then 
+                allserver = true 
+            else
+                if allserver == "true" or allserver == "1" then
+                    allserver = true
+                else
+                    allserver = false
+                end
+            end
+
+            if not reason then reason = "No reason given" end
+
+            --[[
+                Run ban function with given variables
+            ]]
+            MSync.modules[info.ModuleIdentifier].banUser(target_ply, calling_ply, length, reason, allserver)
+        end        
     end
     local BanPlayer = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".banPlayer", MSync.modules[info.ModuleIdentifier].Chat.banPlayer, "!mban" )
     BanPlayer:addParam{ type=ULib.cmds.PlayerArg, hint="player", ULib.cmds.optional}
-	BanPlayer:addParam{ type=ULib.cmds.NumArg, hint="minutes, 0 for perma", ULib.cmds.optional, ULib.cmds.allowTimeString, min=0 }
+    BanPlayer:addParam{ type=ULib.cmds.NumArg, hint="minutes, 0 for perma", ULib.cmds.optional, ULib.cmds.allowTimeString, min=0 }
+    BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="true/false, if the player should be banned on all servers", ULib.cmds.optional }
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="reason", ULib.cmds.optional, ULib.cmds.takeRestOfLine, completes=ulx.common_kick_reasons }
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
     BanPlayer:help( "Opens the MBSync GUI ( without parameters ) or bans a player" )
@@ -430,10 +455,40 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     MSync.modules[info.ModuleIdentifier].Chat.banSteamID = function(calling_ply, target_steamid, length, allserver, reason)
         if not calling_ply:query("msync."..(info.ModuleIdentifier)..".banSteamID") then return end;
 
+        --[[
+            Check for empty or invalid steamid
+        ]]
+
+        if not target_steamid or not ULib.isValidSteamID(target_steamid) then return end
+
+        --[[
+            Set default values if empty and translate allserver string to bool
+        ]]
+        if not length then length = 0 end
+
+        if not allserver then 
+            allserver = true 
+        else
+            if allserver == "true" or allserver == "1" then
+                allserver = true
+            else
+                allserver = false
+            end
+        end
+
+        if not reason then reason = "No reason given" end
+
+        --[[
+            Run ban function with given functions
+        ]]
+
+        MSync.modules[info.ModuleIdentifier].banUserID = function(target_steamid, calling_ply, length, reason, allserver)
+
     end
     local BanPlayer = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".banSteamID", MSync.modules[info.ModuleIdentifier].Chat.banSteamID, "!mbanid" )
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="steamid"}
-	BanPlayer:addParam{ type=ULib.cmds.NumArg, hint="minutes, 0 for perma", ULib.cmds.optional, ULib.cmds.allowTimeString, min=0 }
+    BanPlayer:addParam{ type=ULib.cmds.NumArg, hint="minutes, 0 for perma", ULib.cmds.optional, ULib.cmds.allowTimeString, min=0 }
+    BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="true/false, if the player should be banned on all servers", ULib.cmds.optional }
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="reason", ULib.cmds.optional, ULib.cmds.takeRestOfLine, completes=ulx.common_kick_reasons }
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
     BanPlayer:help( "Opens MSync Settings." )
@@ -511,6 +566,8 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
                 if MSync.modules[info.ModuleIdentifier].banTable[v:SteamID64()] then
                     v:Kick()
                 else
+                    -- Do nothing
+                end
             end
         end)
     end)
