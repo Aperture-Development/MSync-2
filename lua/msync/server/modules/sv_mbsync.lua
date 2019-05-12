@@ -363,7 +363,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                     length = v.length_unix,
                     banned = {
                         steamid = v.steamid,
-                        Nickname = v["banned.nickname"]
+                        nickname = v["banned.nickname"]
                     },
                     adminNickname = v["admin.nickname"]
                 }
@@ -371,6 +371,34 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             end
 
             MSync.modules[info.ModuleIdentifier].banTable = banTable
+
+            --[[
+                Check if a banned player joined while the data wasn't synchronized
+            ]]
+            for k,v in pairs(player.GetAll()) do
+                if banTable[v:SteamID64()] then
+                    local ban = banTable[v:SteamID64()]
+                    --[[
+                        Translate ban data for ULib
+                    ]]
+                    local banData = {
+                        admin = ban.adminNickname,
+                        reason = ban.reason,
+                        unban = ban.length_unix,
+                        time = ban.date_unix
+                    }
+
+                    local message = ULib.getBanMessage( ban.banned.steamid, banData)
+
+                    v:Kick(message)
+                else
+                    -- Do nothing
+                end
+            end
+
+            --[[
+                TODO: After recieving data, we need to write the current ban data into ULib
+            ]]
 
         end
 
@@ -388,6 +416,37 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         getActiveBansQ:start()
     end
+
+    --[[
+        Description: Function to load the MSync settings file
+        Returns: true
+    ]]
+    MSync.modules[info.ModuleIdentifier].loadSettings = function()
+        if not file.Exists("msync/"..info.ModuleIdentifier..".txt", "DATA") then
+            MSync.modules[info.ModuleIdentifier].settings = {
+                syncDelay = 300
+            }
+            file.Write("msync/"..info.ModuleIdentifier..".txt", util.TableToJSON(MSync.modules[info.ModuleIdentifier].settings, true))
+        else
+            MSync.modules[info.ModuleIdentifier].settings = util.JSONToTable(file.Read("msync/mrsync.txt", "DATA"))
+        end
+
+        return true
+    end
+
+    --[[
+        Description: Function to save the MSync settings to the settings file
+        Returns: true if the settings file exists
+    ]]
+    MSync.modules[info.ModuleIdentifier].saveSettings = function()
+        file.Write("msync/"..info.ModuleIdentifier..".txt", util.TableToJSON(MSync.modules[info.ModuleIdentifier].settings, true))
+        return file.Exists("msync/"..info.ModuleIdentifier..".txt", "DATA")
+    end
+
+    --[[
+        Load settings when module finished loading
+    ]]
+    MSync.modules[info.ModuleIdentifier].loadSettings()
 end
 
 --[[
@@ -422,6 +481,53 @@ MSync.modules[info.ModuleIdentifier].net = function()
             net.WriteTable(banTable)
         net.Send(ply)
     end
+
+    --[[
+        Description: Net Receiver - Gets called when the client requests the settings table
+        Returns: nothing
+    ]]   
+    util.AddNetworkString("msync."..(info.ModuleIdentifier)..".banid")
+    net.Receive("msync."..(info.ModuleIdentifier)..".banid", function(len, ply)
+        if not ply:query("msync."..(info.ModuleIdentifier)..".banPlayer") then return end
+        
+        local ban = net.ReadTable()
+
+        --[[
+            Error check and fill in of default data
+        ]]
+        
+        if not ban.userid then return end;
+
+        if not ban.reason then ban.reason = "No reason given" end
+        if not ban.length then ban.length = 0 end
+
+        if not ban.allserver then
+            ban.allserver = true
+        else
+            if ban.allserver == "true" or ban.allserver == "1" then
+                ban.allserver = true
+            else
+                ban.allserver = false
+            end
+        end
+
+        --[[
+            Run ban function to ban the userid
+        ]]
+        MSync.modules[info.ModuleIdentifier].banUserID(ban.userid, ply, ban.length, ban.reason, ban.allserver)
+    end )
+
+    --[[
+        Description: Net Receiver - Gets called when the client requests the settings table
+        Returns: nothing
+    ]]   
+    util.AddNetworkString("msync."..(info.ModuleIdentifier)..".editBan")
+
+    --[[
+        Description: Net Receiver - Gets called when the client requests the settings table
+        Returns: nothing
+    ]]   
+    util.AddNetworkString("msync."..(info.ModuleIdentifier)..".unban")
 
     --[[
         Edit Ban
@@ -680,20 +786,48 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
         This hook starts the timers for the asynchronous ban data loading and the check if one of the online players has been banned
     ]]
     hook.Add("initialize", "msync."..(info.ModuleIdentifier)..".initializeHook", function()
-        timer.Create("msync."..(info.ModuleIdentifier)..".getActiveBans", 300, 0, function() 
+        timer.Create("msync."..(info.ModuleIdentifier)..".getActiveBans", MSync.modules[info.ModuleIdentifier].settings.syncDelay, 0, function() 
             MSync.modules[info.ModuleIdentifier].getActiveBans()
         end)
+    end)
 
-        timer.Create("msync."..(info.ModuleIdentifier)..".checkActivePlayers", 150, 0, function() 
+    hook.Add("CheckPassword", "MBSyncBanCheck", function( steamid64 )
+        if MSync.modules[info.ModuleIdentifier].banTable[steamid64] then
+            local ban = MSync.modules[info.ModuleIdentifier].banTable[steamid64]
 
-            for k,v in pairs(player.GetAll()) do
-                if MSync.modules[info.ModuleIdentifier].banTable[v:SteamID64()] then
-                    v:Kick()
-                else
-                    -- Do nothing
-                end
+            if ban.length == 0 then
+                local unbanDate = "Never"
+            else
+                local unbanDate = os.date( "%c", ban.timestamp+ban.length)
             end
-        end)
+            --[[
+                Print to console that a banned user tries to join
+            ]]
+            print("---== [MBSync] ==---")
+            print("A banned player tried to join the server.")
+            print("-- Informations --")
+            print("Nickname: "..ban.banned.nickname)
+            print("SteamID: "..ban.banned.steamid)
+            print("Ban Date: "..os.date( "%c", ban.timestamp))
+            print("Unban Date: "..unbanDate)
+            print("Banned by: "..ban.adminNickname)
+            print("---== [END] ==---")
+
+            --[[
+                Translate ban data for ULib
+            ]]
+            local banData = {
+                admin = ban.adminNickname,
+                reason = ban.reason,
+                unban = ban.length_unix,
+                time = ban.date_unix
+            }
+
+            local message = ULib.getBanMessage( ban.banned.steamid, banData)
+            return false, message
+        else
+            return
+        end
     end)
 end
 
