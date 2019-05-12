@@ -483,7 +483,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     end
 
     --[[
-        Description: Net Receiver - Gets called when the client requests the settings table
+        Description: Net Receiver - Gets called when the client banned a player with the ban gui
         Returns: nothing
     ]]   
     util.AddNetworkString("msync."..(info.ModuleIdentifier)..".banid")
@@ -518,58 +518,97 @@ MSync.modules[info.ModuleIdentifier].net = function()
     end )
 
     --[[
-        Description: Net Receiver - Gets called when the client requests the settings table
+        Description: Net Receiver - Gets called when the client edits a ban
         Returns: nothing
     ]]   
     util.AddNetworkString("msync."..(info.ModuleIdentifier)..".editBan")
+    net.Receive("msync."..(info.ModuleIdentifier)..".editBan", function(len, ply)
+        if not ply:query("msync."..(info.ModuleIdentifier)..".banPlayer") then return end
+        
+        local editedBan = net.ReadTable()
+
+        --[[
+            Error check and fill in of default data
+        ]]
+        
+        if not editedBan.banid then return end;
+
+        if not editedBan.reason then editedBan.reason = "No reason given" end
+        if not editedBan.length then editedBan.length = 0 end
+
+        if not editedBan.allserver then
+            editedBan.allserver = true
+        else
+            if editedBan.allserver == "true" or editedBan.allserver == "1" then
+                editedBan.allserver = true
+            else
+                editedBan.allserver = false
+            end
+        end
+
+        --[[
+            Run edit function to edit ban data
+        ]]
+        MSync.modules[info.ModuleIdentifier].editBan(editedBan.banid, editedBan.reason, editedBan.length, ply, editedBan.allserver)
+    end )
+
+    --[[
+        Description: Net Receiver - Gets called when the client tries to unban someone
+        Returns: nothing
+    ]]   
+    util.AddNetworkString("msync."..(info.ModuleIdentifier)..".unban")
+    net.Receive("msync."..(info.ModuleIdentifier)..".unban", function(len, ply)
+        if not ply:query("msync."..(info.ModuleIdentifier)..".unBanID") then return end
+        
+        local banid = net.ReadInt()
+
+        --[[
+            Error check and fill in of default data
+        ]]
+        
+        if not banid then return end;
+
+        --[[
+            Run edit function to edit ban data
+        ]]
+        MSync.modules[info.ModuleIdentifier].unBanUserID(ply, banid)
+    end )
+
+    --[[
+        Description: Function to send the mbsync settings to the client
+        Arguments:
+            player [player] - the player that wants to open the admin GUI
+        Returns: nothing
+    ]]   
+    util.AddNetworkString("msync."..info.ModuleIdentifier..".sendSettingsPly")
+    MSync.modules[info.ModuleIdentifier].sendSettings = function(ply)
+        net.Start("msync."..info.ModuleIdentifier..".sendSettingsPly")
+            net.WriteTable(MSync.modules[info.ModuleIdentifier].settings)
+        net.Send(ply)
+    end
+    
+    --[[
+        Description: Net Receiver - Gets called when the client requests the settings table
+        Returns: nothing
+    ]]   
+    util.AddNetworkString("msync."..info.ModuleIdentifier..".getSettings")
+    net.Receive("msync."..info.ModuleIdentifier..".getSettings", function(len, ply)
+        if not ply:query("msync.getSettings") then return end
+        
+        MSync.modules[info.ModuleIdentifier].sendSettings(ply)
+    end )
 
     --[[
         Description: Net Receiver - Gets called when the client requests the settings table
         Returns: nothing
     ]]   
-    util.AddNetworkString("msync."..(info.ModuleIdentifier)..".unban")
-
-    --[[
-        Edit Ban
-        - R
-        Reciever:
-            returns:
-                table = {
-                    banid [number] - the ban id
-                    reason [string] - the ban string
-                    length [number] - the ban length in minutes
-                    allserver [bool] - if the ban should apply to all servers
-                }
-            calls:
-                MSync.modules[info.ModuleIdentifier].editBan(banId, reason, length, calling_ply, allserver)
-                
+    util.AddNetworkString("msync."..info.ModuleIdentifier..".sendSettings")
+    net.Receive("msync."..info.ModuleIdentifier..".sendSettings", function(len, ply)
+        if not ply:query("msync.sendSettings") then return end
         
-    ]]
-
-    --[[
-        Unban
-        - R
-        Reciever:
-            returns:
-                id [number] - the banid
-            calls:
-                MSync.modules[info.ModuleIdentifier].unBanUserID(calling_ply, banId)
-    ]]
-
-    --[[
-        Banid
-        - R
-        Reciever:
-            returns:
-                table = {
-                    userid [string] - Either SteamID or SteamID64
-                    length [number] - the ban length in minutes
-                    reason [string] - the ban reason
-                    allserver [bool] - if the ban is on all servers
-                }
-            calls:
-                MSync.modules[info.ModuleIdentifier].banUserID = function(userid, calling_ply, length, reason, allserver)
-    ]]
+        MSync.modules[info.ModuleIdentifier].settings = net.ReadTable()
+        MSync.modules[info.ModuleIdentifier].saveSettings()
+    end )
 
 end
 
