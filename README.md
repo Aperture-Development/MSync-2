@@ -1,6 +1,6 @@
 # MSync-2
 
-![BuildStatus](https://tcci.aperture-development.de/app/rest/builds/buildType:(id:MSync2_Publish)/statusIcon.svg)
+![BuildStatus](https://tcci.aperture-development.de/app/rest/builds/buildType:(id:MSync2_BuildTestPublish)/statusIcon.svg)
 [![Issues](https://img.shields.io/github/issues-raw/Aperture-Development/MSync-2.svg)](https://github.com/Aperture-Development/MSync-2/issues)
 [![Chat](https://img.shields.io/discord/272563407209889792.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/JpDPa6w)
 ![Size](https://img.shields.io/github/repo-size/Aperture-Development/MSync-2.svg)
