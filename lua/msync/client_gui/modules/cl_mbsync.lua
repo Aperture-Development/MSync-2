@@ -29,7 +29,7 @@ MSync.modules[info.ModuleIdentifier].info = info
 --[[
     Define additional functions that are later used
 ]]
-MSync.modules[info.ModuleIdentifier].init = function() 
+MSync.modules[info.ModuleIdentifier].init = function()
 
     function MSync.modules.SampleModule.SampleFunction()
         return true
@@ -82,23 +82,26 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         DMenu:AddOption("Edit")
         DMenu:AddOption("Advanced Info")
         DMenu.OptionSelected = function(menu,optPnl,optStr)
-            if MSync.modules.MRSync.settings.syncall[line:GetValue(1)] then
-
-                ban_table:RemoveLine(lineID)
-                MSync.modules.MRSync.settings.syncall[line:GetValue(1)] = nil
-                MSync.modules.MRSync.sendSettings()
-
+            if optStr == "Unban" then
+                --
+            elseif optStr == "Edit" then
+                MSync.modules[info.ModuleIdentifier].editBanPanel()
+                print(line:GetColumnText( 1 ))
+            elseif optStr == "Advanced Info" then
+                MSync.modules[info.ModuleIdentifier].advancedInfoPanel()
             end
         end
     end
 
+    ban_table:AddLine( "1", "[ApDev] Rainbow Dash", "[ApDev] Rainbow Dash", "Permanent", "Fucking Around" )
+
     --test:SetFixedWidth( 0 )
 
     local search_button = vgui.Create( "DButton", panel )
-    search_button:SetText( "Search" )					
+    search_button:SetText( "Search" )
     search_button:SetPos( 270, 35 )
     search_button:SetSize( 130, 20 )
-    search_button.DoClick = function() 
+    search_button.DoClick = function()
         if search_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
@@ -108,10 +111,10 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     end
 
     local sortby_button = vgui.Create( "DButton", panel )
-    sortby_button:SetText( "Sort by: [INSERT]" )					
+    sortby_button:SetText( "Sort by: [INSERT]" )
     sortby_button:SetPos( 405, 35 )
     sortby_button:SetSize( 130, 20 )
-    sortby_button.DoClick = function() 
+    sortby_button.DoClick = function()
         if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
@@ -121,10 +124,10 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     end
 
     local listascdesc_button = vgui.Create( "DButton", panel )
-    listascdesc_button:SetText( "List: Asc/Desc" )					
+    listascdesc_button:SetText( "List: Asc/Desc" )
     listascdesc_button:SetPos( 540, 35 )
     listascdesc_button:SetSize( 110, 20 )
-    listascdesc_button.DoClick = function() 
+    listascdesc_button.DoClick = function()
         if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
@@ -134,10 +137,10 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     end
 
     local sync_button = vgui.Create( "DButton", panel )
-    sync_button:SetText( "Reload Bans" )					
+    sync_button:SetText( "Reload Bans" )
     sync_button:SetPos( 655, 35 )
     sync_button:SetSize( 130, 20 )
-    sync_button.DoClick = function() 
+    sync_button.DoClick = function()
         if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
@@ -147,11 +150,11 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     end
 
     local firstpage_button = vgui.Create( "DButton", panel )
-    firstpage_button:SetText( "<< First" )					
+    firstpage_button:SetText( "<< First" )
     firstpage_button:SetPos( 15, 461 )
     firstpage_button:SetSize( 191, 20 )
     firstpage_button:SetDisabled(true)
-    firstpage_button.DoClick = function() 
+    firstpage_button.DoClick = function()
         if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
@@ -161,11 +164,11 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     end
 
     local previouspage_button = vgui.Create( "DButton", panel )
-    previouspage_button:SetText( "< Previous" )					
+    previouspage_button:SetText( "< Previous" )
     previouspage_button:SetPos( 208, 461 )
     previouspage_button:SetSize( 191, 20 )
     previouspage_button:SetDisabled(true)
-    previouspage_button.DoClick = function() 
+    previouspage_button.DoClick = function()
         if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
@@ -175,10 +178,10 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     end
 
     local nextpage_button = vgui.Create( "DButton", panel )
-    nextpage_button:SetText( "Next >" )					
+    nextpage_button:SetText( "Next >" )
     nextpage_button:SetPos( 401, 461 )
     nextpage_button:SetSize( 191, 20 )
-    nextpage_button.DoClick = function() 
+    nextpage_button.DoClick = function()
         if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
@@ -188,10 +191,10 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     end
 
     local lastpage_button = vgui.Create( "DButton", panel )
-    lastpage_button:SetText( "Last >>" )					
+    lastpage_button:SetText( "Last >>" )
     lastpage_button:SetPos( 594, 461 )
     lastpage_button:SetSize( 191, 20 )
-    lastpage_button.DoClick = function() 
+    lastpage_button.DoClick = function()
         if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
@@ -366,27 +369,195 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         banreasonreason_text:SetContentAlignment( 7 )
 
         local close_button = vgui.Create( "DButton", panel )
-        close_button:SetText( "Close" )	
+        close_button:SetText( "Close" )
         close_button:SetPos( 15, 455 )
         close_button:SetSize( 320, 30 )
-        close_button.DoClick = function() 
+        close_button.DoClick = function()
             panel:Close()
         end
 
     end
 
     MSync.modules[info.ModuleIdentifier].editBanPanel = function()
+        local panel = vgui.Create( "DFrame" )
+        panel:SetSize( 350, 280 )
+        panel:SetTitle( "MBSync Edit Ban" )
+        panel:Center()
+        panel:MakePopup()
 
+        --[[
+            Info about the banned user
+        ]]
+
+        local nickname_text = vgui.Create( "DLabel", panel )
+        nickname_text:SetPos( 15, 35 )
+        nickname_text:SetColor( Color( 255, 255, 255 ) )
+        nickname_text:SetText( "Nickname:" )
+        nickname_text:SetSize(380, 15)
+
+        local nickname_textentry = vgui.Create( "DTextEntry", panel )
+        nickname_textentry:SetPos( 125, 35 )
+        nickname_textentry:SetSize( 210, 20 )
+        nickname_textentry:SetText( "[ApDev] Rainbow Dash" )
+        nickname_textentry:SetDisabled(true)
+
+        local steamid_text = vgui.Create( "DLabel", panel )
+        steamid_text:SetPos( 15, 60 )
+        steamid_text:SetColor( Color( 255, 255, 255 ) )
+        steamid_text:SetText( "SteamID:" )
+        steamid_text:SetSize(380, 15)
+
+        local steamid_textentry = vgui.Create( "DTextEntry", panel )
+        steamid_textentry:SetPos( 125, 60 )
+        steamid_textentry:SetSize( 210, 20 )
+        steamid_textentry:SetText( "STEAM_0:0:0" )
+        steamid_textentry:SetDisabled(true)
+
+        local steamid64_text = vgui.Create( "DLabel", panel )
+        steamid64_text:SetPos( 15, 85 )
+        steamid64_text:SetColor( Color( 255, 255, 255 ) )
+        steamid64_text:SetText( "SteamID64:" )
+        steamid64_text:SetSize(380, 15)
+
+        local steamid64_textentry = vgui.Create( "DTextEntry", panel )
+        steamid64_textentry:SetPos( 125, 85 )
+        steamid64_textentry:SetSize( 210, 20 )
+        steamid64_textentry:SetText( "7600000000" )
+        steamid64_textentry:SetDisabled(true)
+
+        --[[
+            Editable Data
+        ]]
+
+        local banlength_text = vgui.Create( "DLabel", panel )
+        banlength_text:SetPos( 15, 120 )
+        banlength_text:SetColor( Color( 255, 255, 255 ) )
+        banlength_text:SetText( "Ban Length:" )
+        banlength_text:SetSize(380, 15)
+
+        local banlength_textentry = vgui.Create( "DTextEntry", panel )
+        banlength_textentry:SetPos( 125, 120 )
+        banlength_textentry:SetSize( 210, 20 )
+        banlength_textentry:SetText( "Permanent" )
+        banlength_textentry:SetDisabled(false)
+
+        local banallservers_text = vgui.Create( "DLabel", panel )
+        banallservers_text:SetPos( 15, 145 )
+        banallservers_text:SetColor( Color( 255, 255, 255 ) )
+        banallservers_text:SetText( "Banned everywhere:" )
+        banallservers_text:SetSize(380, 15)
+
+        local banallservers_textentry = vgui.Create( "DComboBox", panel )
+        banallservers_textentry:SetPos( 125, 145 )
+        banallservers_textentry:SetSize( 210, 20 )
+        banallservers_textentry:SetValue( "true" )
+        banallservers_textentry:AddChoice( "true" )
+        banallservers_textentry:AddChoice( "false" )
+        banallservers_textentry:SetSortItems( false )
+        banallservers_textentry.OnSelect = function( self, index, value )
+            if value == "true" then
+                print("True")
+            elseif value == "false" then
+                print("False")
+            end
+        end
+
+        local banlreason_text = vgui.Create( "DLabel", panel )
+        banlreason_text:SetPos( 15, 170 )
+        banlreason_text:SetColor( Color( 255, 255, 255 ) )
+        banlreason_text:SetText( "Ban Reason:" )
+        banlreason_text:SetSize(380, 15)
+
+        local banreason_textentry = vgui.Create( "DTextEntry", panel )
+        banreason_textentry:SetPos( 125, 170 )
+        banreason_textentry:SetSize( 210, 20 )
+        banreason_textentry:SetText( "Permanent" )
+        banreason_textentry:SetDisabled(false)
+
+        --[[ 
+            Save and Cancel button
+        ]]
+
+        local save_button = vgui.Create( "DButton", panel )
+        save_button:SetText( "Save" )
+        save_button:SetPos( 15, 200 )
+        save_button:SetSize( 320, 30 )
+        save_button.DoClick = function()
+            local save_panel = vgui.Create( "DFrame" )
+            save_panel:SetSize( 350, 100 )
+            save_panel:SetTitle( "MBSync Edit Ban - Edit" )
+            save_panel:Center()
+            save_panel:MakePopup()
+
+            local save_text = vgui.Create( "DLabel", save_panel )
+            save_text:SetPos( 15, 20 )
+            save_text:SetColor( Color( 255, 255, 255 ) )
+            save_text:SetText( "This action will overwrite the ban with your edited data, are you sure you want to do that?" )
+            save_text:SetSize(320, 50)
+            save_text:SetWrap( true )
+
+            local accept_button = vgui.Create( "DButton", save_panel )
+            accept_button:SetText( "Accept" )
+            accept_button:SetPos( 15, 70 )
+            accept_button:SetSize( 160, 20 )
+            accept_button.DoClick = function()
+                panel:Close()
+                save_panel:Close()
+            end
+
+            local deny_button = vgui.Create( "DButton", save_panel )
+            deny_button:SetText( "Deny" )
+            deny_button:SetPos( 175, 70 )
+            deny_button:SetSize( 160, 20 )
+            deny_button.DoClick = function()
+                save_panel:Close()
+            end
+        end
+
+        local cancel_button = vgui.Create( "DButton", panel )
+        cancel_button:SetText( "Cancel" )
+        cancel_button:SetPos( 15, 235 )
+        cancel_button:SetSize( 320, 30 )
+        cancel_button.DoClick = function()
+            local cancel_panel = vgui.Create( "DFrame" )
+            cancel_panel:SetSize( 350, 100 )
+            cancel_panel:SetTitle( "MBSync Edit Ban - Cancel" )
+            cancel_panel:Center()
+            cancel_panel:MakePopup()
+
+            local cancel_text = vgui.Create( "DLabel", cancel_panel )
+            cancel_text:SetPos( 15, 20 )
+            cancel_text:SetColor( Color( 255, 255, 255 ) )
+            cancel_text:SetText( "When you cancel the edit, your progress will be lost. Are you sure you want to do that?" )
+            cancel_text:SetSize(320, 50)
+            cancel_text:SetWrap( true )
+
+            local accept_button = vgui.Create( "DButton", cancel_panel )
+            accept_button:SetText( "Accept" )
+            accept_button:SetPos( 15, 70 )
+            accept_button:SetSize( 160, 20 )
+            accept_button.DoClick = function()
+                panel:Close()
+                cancel_panel:Close()
+            end
+
+            local deny_button = vgui.Create( "DButton", cancel_panel )
+            deny_button:SetText( "Deny" )
+            deny_button:SetPos( 175, 70 )
+            deny_button:SetSize( 160, 20 )
+            deny_button.DoClick = function()
+                cancel_panel:Close()
+            end
+        end
     end
 
-    MSync.modules[info.ModuleIdentifier].advancedInfoPanel()
     return panel
 end
 
 --[[
     Define net receivers and util.AddNetworkString
 ]]
-MSync.modules[info.ModuleIdentifier].net = function() 
+MSync.modules[info.ModuleIdentifier].net = function()
     net.Receive( "my_message", function( len, pl )
         if ( IsValid( pl ) and pl:IsPlayer() ) then
             print( "Message from " .. pl:Nick() .. " received. Its length is " .. len .. "." )
@@ -399,21 +570,21 @@ end
 --[[
     Define ulx Commands and overwrite common ulx functions (module does not get loaded until ulx has fully been loaded)
 ]]
-MSync.modules[info.ModuleIdentifier].ulx = function() 
-    
+MSync.modules[info.ModuleIdentifier].ulx = function()
+    --
 end
 
 --[[
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
-MSync.modules[info.ModuleIdentifier].hooks = function() 
+MSync.modules[info.ModuleIdentifier].hooks = function()
     hook.Add("initialize", "msync_sampleModule_init", function()
-        
+        --
     end)
 end
 
 
-MSync.modules[info.ModuleIdentifier].clientPanel() 
+MSync.modules[info.ModuleIdentifier].clientPanel()
 
 --[[
     Return info ( Just for single module loading )
