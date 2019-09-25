@@ -1,6 +1,5 @@
 MSync = MSync or {}
 MSync.modules = MSync.modules or {}
-MSync.modules.MBSync = MSync.modules.SampleModule or {}
 --[[
  * @file       cl_mbsync.lua
  * @package    MySQL Ban Sync
@@ -43,6 +42,201 @@ end
 MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
     local pnl = vgui.Create( "DPanel", sheet )
     pnl:Dock(FILL)
+
+    local delay_text = vgui.Create( "DLabel", pnl )
+    delay_text:SetPos( 10, 5 )
+    delay_text:SetColor( Color( 0, 0, 0 ) )
+    delay_text:SetText( "Set the delay when MBSync should re-synchronize the bans." )
+    delay_text:SetSize(380, 15)
+
+    local delay_textentry = vgui.Create( "DTextEntry", pnl )
+    delay_textentry:SetPos( 10, 20 )
+    delay_textentry:SetSize( 220, 20 )
+    delay_textentry:SetPlaceholderText( "Timer Delay in seconds ( example: 300 )" )
+
+    local save_button = vgui.Create( "DButton", pnl )
+    save_button:SetText( "Save" )
+    save_button:SetPos( 230, 20 )
+    save_button:SetSize( 100, 20 )
+    save_button.DoClick = function()
+        if save_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
+            allserver_table:AddLine(allserver_textentry:GetValue())
+            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
+            allserver_textentry:SetText("")
+            MSync.modules.MRSync.sendSettings()
+        end
+    end
+
+    local bantable_text = vgui.Create( "DLabel", pnl )
+    bantable_text:SetPos( 10, 50 )
+    bantable_text:SetColor( Color( 0, 0, 0 ) )
+    bantable_text:SetText( "Ban table with ALL bans" )
+    bantable_text:SetSize(380, 15)
+
+    local search_textentry = vgui.Create( "DTextEntry", pnl )
+    search_textentry:SetPos( 10, 65 )
+    search_textentry:SetSize( 170, 20 )
+    search_textentry:SetPlaceholderText( "Nickname/SteamID/SID64/Admin" )
+
+    local search_button = vgui.Create( "DButton", pnl )
+    search_button:SetText( "Search" )
+    search_button:SetPos( 180, 65 )
+    search_button:SetSize( 60, 20 )
+    search_button.DoClick = function()
+        if search_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
+            allserver_table:AddLine(allserver_textentry:GetValue())
+            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
+            allserver_textentry:SetText("")
+            MSync.modules.MRSync.sendSettings()
+        end
+    end
+
+    --[[
+    local sort_button = vgui.Create( "DButton", pnl )
+    sort_button:SetText( "Sort by: [INSERT]" )
+    sort_button:SetPos( 240, 65 )
+    sort_button:SetSize( 120, 20 )
+    sort_button.DoClick = function()
+        if search_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
+            allserver_table:AddLine(allserver_textentry:GetValue())
+            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
+            allserver_textentry:SetText("")
+            MSync.modules.MRSync.sendSettings()
+        end
+    end
+    ]]
+
+    local reload_button = vgui.Create( "DButton", pnl )
+    reload_button:SetText( "Reload" )
+    reload_button:SetPos( 380, 65 )
+    reload_button:SetSize( 65, 20 )
+    reload_button.DoClick = function()
+        if reload_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
+            allserver_table:AddLine(allserver_textentry:GetValue())
+            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
+            allserver_textentry:SetText("")
+            MSync.modules.MRSync.sendSettings()
+        end
+    end
+
+    local ban_table = vgui.Create( "DListView", pnl )
+    ban_table:SetPos( 10, 85 )
+    ban_table:SetSize( 435, 240 )
+    ban_table:SetMultiSelect( false )
+    ban_table:AddColumn( "Ban ID" ):SetFixedWidth( 40 )
+    ban_table:AddColumn( "SteamID" )
+    ban_table:AddColumn( "Admin" )
+    ban_table:AddColumn( "Ban Length" )
+    ban_table:AddColumn( "Ban Reason" )
+    ban_table:AddColumn( "Unbanned" )
+    --local test = allserver_table:AddColumn( "Test" )
+    ban_table.OnRowRightClick = function(panel, lineID, line)
+        local ident = line:GetValue(1)
+        local cursor_x, cursor_y = panel:CursorPos()
+        local DMenu = vgui.Create("DMenu", panel)
+        DMenu:SetPos(cursor_x, cursor_y)
+        DMenu:AddOption("Unban")
+        DMenu:AddOption("Edit")
+        DMenu:AddOption("Advanced Info")
+        DMenu.OptionSelected = function(menu,optPnl,optStr)
+            if optStr == "Unban" then
+                --
+            elseif optStr == "Edit" then
+                MSync.modules[info.ModuleIdentifier].editBanPanel(line:GetColumnText( 1 ))
+            elseif optStr == "Advanced Info" then
+                MSync.modules[info.ModuleIdentifier].advancedInfoPanel(line:GetColumnText( 1 ))
+            end
+        end
+    end
+
+    ban_table:AddLine( "1", "[ApDev] Rainbow Dash", "X-Coder", "Permanent", "Fucking Around", "" )
+    ban_table:AddLine( "2", "X-Coder", "Altesismein", "3d", "Bugs", "[ApDev] Rainbow Dash" )
+    ban_table:AddLine( "3", "Altesismein", "[ApDev] Rainbow Dash", "20d", "Test", "X-Coder" )
+
+    --[[
+        Define sortby variable for sorting the ban table
+    ]]
+
+    local sortby = {
+        Column = 1,
+        Descending = true
+    }
+    ban_table:SortByColumn( sortby.Column, sortby.Descending )
+
+    local sortby_dropdown = vgui.Create( "DComboBox", pnl )
+    sortby_dropdown:SetPos( 240, 65 )
+    sortby_dropdown:SetSize( 140, 20 )
+    sortby_dropdown:SetValue( "Sort by: Ban ID/Desc" )
+    sortby_dropdown:AddChoice( "Ban ID" )
+    sortby_dropdown:AddChoice( "SteamID" )
+    sortby_dropdown:AddChoice( "Admin" )
+    sortby_dropdown:AddChoice( "Ban Length" )
+    sortby_dropdown:AddChoice( "Ban Reason" )
+    sortby_dropdown:AddChoice( "Unbanned" )
+    sortby_dropdown:SetSortItems( false )
+    sortby_dropdown.OnSelect = function( self, index, value )
+        --ban_table
+        if value == "Ban ID" then
+            sortby.Column = 1
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: Ban ID/Asc" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: Ban ID/Desc" )
+            end
+        elseif value == "SteamID" then
+            sortby.Column = 2
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: SID/ASC" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: SID/Desc" )
+            end
+        elseif value == "Admin" then
+            sortby.Column = 3
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: Admin/Asc" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: Admin/Desc" )
+            end
+        elseif value == "Ban Length" then
+            sortby.Column = 4
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: Length/Asc" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: Length/Desc" )
+            end
+        elseif value == "Ban Reason" then
+            sortby.Column = 5
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: Reason/Asc" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: Reason/Desc" )
+            end
+        elseif value == "Unbanned" then
+            sortby.Column = 6
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: Unbanned/Asc" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: Unbanned/Desc" )
+            end
+        end
+
+        if value then
+            ban_table:SortByColumn( sortby.Column, sortby.Descending )
+        end
+    end
+
     return pnl
 end
 
@@ -93,7 +287,9 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         end
     end
 
-    ban_table:AddLine( "1", "[ApDev] Rainbow Dash", "[ApDev] Rainbow Dash", "Permanent", "Fucking Around" )
+    ban_table:AddLine( "1", "[ApDev] Rainbow Dash", "X-Coder", "Permanent", "Fucking Around" )
+    ban_table:AddLine( "2", "X-Coder", "Altesismein", "3d", "Bugs" )
+    ban_table:AddLine( "3", "Altesismein", "[ApDev] Rainbow Dash", "20d", "Test" )
 
     --test:SetFixedWidth( 0 )
 
@@ -110,30 +306,63 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         end
     end
 
-    local sortby_button = vgui.Create( "DButton", panel )
-    sortby_button:SetText( "Sort by: [INSERT]" )
-    sortby_button:SetPos( 405, 35 )
-    sortby_button:SetSize( 130, 20 )
-    sortby_button.DoClick = function()
-        if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
+    --[[
+        Define sortby variable for sorting the ban table
+    ]]
+
+    local sortby = {
+        Column = 1,
+        Descending = true
+    }
+    ban_table:SortByColumn( sortby.Column, sortby.Descending )
+
+    local sortby_dropdown = vgui.Create( "DComboBox", panel )
+    sortby_dropdown:SetPos( 405, 35 )
+    sortby_dropdown:SetSize( 130, 20 )
+    sortby_dropdown:SetValue( "Sort by: Ban ID" )
+    sortby_dropdown:AddChoice( "Ban ID" )
+    sortby_dropdown:AddChoice( "Nickname" )
+    sortby_dropdown:AddChoice( "Admin" )
+    sortby_dropdown:AddChoice( "Ban Length" )
+    sortby_dropdown:AddChoice( "Ban Reason" )
+    sortby_dropdown:SetSortItems( false )
+    sortby_dropdown.OnSelect = function( self, index, value )
+        --ban_table
+        if value == "Ban ID" then
+            sortby.Column = 1
+            sortby_dropdown:SetValue( "Sort by: Ban ID" )
+        elseif value == "Nickname" then
+            sortby.Column = 2
+            sortby_dropdown:SetValue( "Sort by: Nickname" )
+        elseif value == "Admin" then
+            sortby.Column = 3
+            sortby_dropdown:SetValue( "Sort by: Admin" )
+        elseif value == "Ban Length" then
+            sortby.Column = 4
+            sortby_dropdown:SetValue( "Sort by: Ban Length" )
+        elseif value == "Ban Reason" then
+            sortby.Column = 5
+            sortby_dropdown:SetValue( "Sort by: Ban Reason" )
+        end
+
+        if value then
+            ban_table:SortByColumn( sortby.Column, sortby.Descending )
         end
     end
 
     local listascdesc_button = vgui.Create( "DButton", panel )
-    listascdesc_button:SetText( "List: Asc/Desc" )
+    listascdesc_button:SetText( "List: Desc" )
     listascdesc_button:SetPos( 540, 35 )
     listascdesc_button:SetSize( 110, 20 )
     listascdesc_button.DoClick = function()
-        if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
+        if sortby.Descending then
+            sortby.Descending = false
+            listascdesc_button:SetText( "List: Asc" )
+        else
+            sortby.Descending = true
+            listascdesc_button:SetText( "List: Desc" )
         end
+        ban_table:SortByColumn( sortby.Column, sortby.Descending )
     end
 
     local sync_button = vgui.Create( "DButton", panel )
@@ -141,12 +370,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     sync_button:SetPos( 655, 35 )
     sync_button:SetSize( 130, 20 )
     sync_button.DoClick = function()
-        if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
-        end
+        --
     end
 
     local firstpage_button = vgui.Create( "DButton", panel )
@@ -155,12 +379,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     firstpage_button:SetSize( 191, 20 )
     firstpage_button:SetDisabled(true)
     firstpage_button.DoClick = function()
-        if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
-        end
+        --
     end
 
     local previouspage_button = vgui.Create( "DButton", panel )
@@ -169,38 +388,25 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     previouspage_button:SetSize( 191, 20 )
     previouspage_button:SetDisabled(true)
     previouspage_button.DoClick = function()
-        if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
-        end
+        --
     end
 
     local nextpage_button = vgui.Create( "DButton", panel )
     nextpage_button:SetText( "Next >" )
     nextpage_button:SetPos( 401, 461 )
     nextpage_button:SetSize( 191, 20 )
+    nextpage_button:SetDisabled(true)
     nextpage_button.DoClick = function()
-        if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
-        end
+        --
     end
 
     local lastpage_button = vgui.Create( "DButton", panel )
     lastpage_button:SetText( "Last >>" )
     lastpage_button:SetPos( 594, 461 )
     lastpage_button:SetSize( 191, 20 )
+    lastpage_button:SetDisabled(true)
     lastpage_button.DoClick = function()
-        if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
-        end
+        --
     end
 
     MSync.modules[info.ModuleIdentifier].advancedInfoPanel = function()
@@ -257,7 +463,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         --adminheader_text:SetSize(320, 15)
         --adminheader_text:SetContentAlignment( 5 )
 
-        --[[
+        --[[ (i*30)+1
             Info about the banning Admin
         ]]
 
@@ -349,16 +555,28 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         remainingtime_textentry:SetText( "1d,13h" )
         remainingtime_textentry:SetDisabled(true)
 
+        local bangroup_text = vgui.Create( "DLabel", panel )
+        bangroup_text:SetPos( 15, 305 )
+        bangroup_text:SetColor( Color( 255, 255, 255 ) )
+        bangroup_text:SetText( "Ban Server Group:" )
+        bangroup_text:SetSize(380, 15)
+
+        local bangroup_textentry = vgui.Create( "DTextEntry", panel )
+        bangroup_textentry:SetPos( 125, 305 )
+        bangroup_textentry:SetSize( 210, 20 )
+        bangroup_textentry:SetText( "allservers" )
+        bangroup_textentry:SetDisabled(true)
+
         local banreason_text = vgui.Create( "DLabel", panel )
-        banreason_text:SetPos( 15, 320 )
+        banreason_text:SetPos( 15, 350 )
         banreason_text:SetColor( Color( 255, 255, 255 ) )
         banreason_text:SetText( "Ban Reason:" )
         banreason_text:SetSize(380, 15)
         banreason_text:SetDark(1)
 
         local banreason_panel = vgui.Create( "DPanel", panel )
-        banreason_panel:SetPos( 15, 340 )
-        banreason_panel:SetSize( 320, 110 )
+        banreason_panel:SetPos( 15, 370 )
+        banreason_panel:SetSize( 320, 80 )
 
         local banreasonreason_text = vgui.Create( "DLabel", banreason_panel )
         banreasonreason_text:SetPos( 5, 5 )
@@ -425,7 +643,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         steamid64_textentry:SetText( "7600000000" )
         steamid64_textentry:SetDisabled(true)
 
-        --[[
+        --[[ 
             Editable Data
         ]]
 
@@ -551,6 +769,8 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         end
     end
 
+    MSync.modules[info.ModuleIdentifier].advancedInfoPanel()
+
     return panel
 end
 
@@ -558,12 +778,38 @@ end
     Define net receivers and util.AddNetworkString
 ]]
 MSync.modules[info.ModuleIdentifier].net = function()
-    net.Receive( "my_message", function( len, pl )
-        if ( IsValid( pl ) and pl:IsPlayer() ) then
-            print( "Message from " .. pl:Nick() .. " received. Its length is " .. len .. "." )
-        else
-            print( "Message from server received. Its length is " .. len .. "." )
+    --[[
+        So basically we run into a problem as data packages have a size limit of 64KB, so if the ban table is big enough we cant send it over net.WriteTable.
+        The solution? We send it in single chunks.
+        We first need to request the table, that should return how much entries we have and then send us each data and at the end a "finished"
+        So first we need a net sender to request the data, then we need a reciever to recieve the package count, then one to recieve the actuall packages and last but not least one to finish the process.
+        Should not be that hard, eh? 
+
+        Notice: 
+        For future usage we may should make that a MSync function and not a MBSync function
+    ]]
+
+    --[[
+        Description: Function to unban a user using the banid
+        Arguments:
+            userid [number] - the ban id of the to be lifted ban
+        Returns: nothing
+    ]]
+    MSync.modules[info.ModuleIdentifier].sendSettings = function(userid)
+        if not type(userid) == "number" then
+            userid = tonumber(userid)
         end
+
+        net.Start("msync."..(info.ModuleIdentifier)..".unban")
+            net.WriteInt(userid)
+        net.SendToServer()
+    end
+    --[[
+        Description: Net Receiver - Gets called when the server wants to print something to the user chat
+        Returns: nothing
+    ]]
+    net.Receive( "msync."..(info.ModuleIdentifier)..".banid", function( len, ply )
+        chat.AddText( Color( 237, 135, 26 ), "[MBSync] ", Color( 255, 255, 255), net.ReadString())
     end )
 end
 
@@ -584,7 +830,8 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
 end
 
 
-MSync.modules[info.ModuleIdentifier].clientPanel()
+--MSync.modules[info.ModuleIdentifier].clientPanel()
+--MSync.AdminPanel.InitPanel()
 
 --[[
     Return info ( Just for single module loading )

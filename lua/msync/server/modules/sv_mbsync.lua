@@ -428,7 +428,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             }
             file.Write("msync/"..info.ModuleIdentifier..".txt", util.TableToJSON(MSync.modules[info.ModuleIdentifier].settings, true))
         else
-            MSync.modules[info.ModuleIdentifier].settings = util.JSONToTable(file.Read("msync/mrsync.txt", "DATA"))
+            MSync.modules[info.ModuleIdentifier].settings = util.JSONToTable(file.Read("msync/mbsync.txt", "DATA"))
         end
 
         return true
