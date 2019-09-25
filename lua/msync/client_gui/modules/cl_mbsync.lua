@@ -30,12 +30,124 @@ MSync.modules[info.ModuleIdentifier].info = info
 ]]
 MSync.modules[info.ModuleIdentifier].init = function()
 
-    function MSync.modules.SampleModule.SampleFunction()
-        return true
+    MSync.modules[info.ModuleIdentifier].banPanel = function()
+        local panel = vgui.Create( "DFrame" )
+        panel:SetSize( 800, 500 )
+        panel:SetTitle( "MBSync - Ban User " )
+        panel:Center()
+        panel:MakePopup()
     end
 
 end
 
+MSync.modules[info.ModuleIdentifier].banPanel = function()
+    local panel = vgui.Create( "DFrame" )
+    panel:SetSize( 350, 500 )
+    panel:SetTitle( "MBSync - Ban User " )
+    panel:Center()
+    panel:MakePopup()
+
+    local steamid_text = vgui.Create( "DLabel", panel )
+    steamid_text:SetPos( 15, 35 )
+    steamid_text:SetColor( Color( 255, 255, 255 ) )
+    steamid_text:SetText( "SteamID/SteamID64:" )
+    steamid_text:SetSize(380, 15)
+
+    local steamid_textentry = vgui.Create( "DTextEntry", panel )
+    steamid_textentry:SetPos( 125, 35 )
+    steamid_textentry:SetSize( 210, 20 )
+    steamid_textentry:SetPlaceholderText( "SteamID/SteamID64" )
+
+    local length_text = vgui.Create( "DLabel", panel )
+    length_text:SetPos( 15, 60 )
+    length_text:SetColor( Color( 255, 255, 255 ) )
+    length_text:SetText( "Length" )
+    length_text:SetSize(380, 15)
+
+    local length_textentry = vgui.Create( "DTextEntry", panel )
+    length_textentry:SetPos( 125, 60 )
+    length_textentry:SetSize( 210, 20 )
+    length_textentry:SetPlaceholderText( "Ban Length in Minutes, 0 = Permanent" )
+
+    local allservers_text = vgui.Create( "DLabel", panel )
+    allservers_text:SetPos( 15, 85 )
+    allservers_text:SetColor( Color( 255, 255, 255 ) )
+    allservers_text:SetText( "Banned everywhere:" )
+    allservers_text:SetSize(380, 15)
+
+    local allservers_dropdown = vgui.Create( "DComboBox", panel )
+    allservers_dropdown:SetPos( 125, 85 )
+    allservers_dropdown:SetSize( 210, 20 )
+    allservers_dropdown:SetValue( "True" )
+    allservers_dropdown:AddChoice( "True" )
+    allservers_dropdown:AddChoice( "False" )
+    allservers_dropdown:SetSortItems( false )
+    allservers_dropdown.OnSelect = function( self, index, value )
+        --
+    end
+
+    local reason_text = vgui.Create( "DLabel", panel )
+    reason_text:SetPos( 15, 110 )
+    reason_text:SetColor( Color( 255, 255, 255 ) )
+    reason_text:SetText( "Reason" )
+    reason_text:SetSize(380, 15)
+
+    local reasonMaxLen_text = vgui.Create( "DLabel", panel )
+    reasonMaxLen_text:SetPos( 280, 185 )
+    reasonMaxLen_text:SetColor( Color( 255, 255, 255 ) )
+    reasonMaxLen_text:SetText( "0/100" )
+    reasonMaxLen_text:SetSize(50, 15)
+    reasonMaxLen_text:SetContentAlignment( 9 )
+
+    local reason_textentry = vgui.Create( "DTextEntry", panel )
+    reason_textentry:SetPos( 15, 125 )
+    reason_textentry:SetSize( 320, 60 )
+    reason_textentry:SetPlaceholderText( "Leave empty for 'No Reason given'" )
+    reason_textentry:SetMultiline(true)
+    reason_textentry:SetUpdateOnType(true)
+    reason_textentry.OnValueChange = function( pnl, value )
+        print(value)
+        reasonMaxLen_text:SetText(string.len( value ).."/100")
+
+        if string.len( value ) > 100 then
+            reasonMaxLen_text:SetColor( Color( 255, 120, 120 ) )
+        else
+            reasonMaxLen_text:SetColor( Color( 255, 255, 255 ) )
+        end
+    end
+
+    --local bantype_dropdown = vgui.Create( "DComboBox", panel )
+    --bantype_dropdown:SetPos( 125, 35 )
+    --bantype_dropdown:SetSize( 210, 20 )
+    --bantype_dropdown:SetValue( "Recently Disconnected" )
+    --bantype_dropdown:AddChoice( "Recently Disconnected" )
+    --bantype_dropdown:AddChoice( "SteamID" )
+    --bantype_dropdown:SetSortItems( false )
+    --bantype_dropdown.OnSelect = function( self, index, value )
+        --
+    --end
+
+    local reasonMaxLen_text = vgui.Create( "DLabel", panel )
+    reasonMaxLen_text:SetPos( 15, 205 )
+    reasonMaxLen_text:SetColor( Color( 255, 255, 255 ) )
+    reasonMaxLen_text:SetText( "Recently Disconnected Players" )
+    reasonMaxLen_text:SetSize(380, 15)
+
+    local ban_table = vgui.Create( "DListView", panel )
+    ban_table:SetPos( 15, 220 )
+    ban_table:SetSize( 320, 200 )
+    ban_table:SetMultiSelect( false )
+    ban_table:AddColumn( "Nickname" )
+    ban_table:AddColumn( "SteamID" )
+    ban_table:AddColumn( "SteamID64" )
+    ban_table.OnRowSelected = function( lst, index, pnl )
+        steamid_textentry:SetText(pnl:GetColumnText( 2 ))
+    end
+
+    ban_table:AddLine( "[ApDev] Rainbow Dash", "STEAM_0:0:0", "76000000000" )
+end
+
+MSync.modules[info.ModuleIdentifier].banPanel()
 --[[
     Define the admin panel for the settings
 ]]
@@ -795,7 +907,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
             userid [number] - the ban id of the to be lifted ban
         Returns: nothing
     ]]
-    MSync.modules[info.ModuleIdentifier].sendSettings = function(userid)
+    MSync.modules[info.ModuleIdentifier].unban = function(userid)
         if not type(userid) == "number" then
             userid = tonumber(userid)
         end
@@ -824,9 +936,17 @@ end
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
 MSync.modules[info.ModuleIdentifier].hooks = function()
-    hook.Add("initialize", "msync_sampleModule_init", function()
-        --
-    end)
+    gameevent.Listen( "player_disconnect" )
+    hook.Add( "player_disconnect", "player_disconnect_example", function( data )
+        local name = data.name			// Same as Player:Nick()
+        local steamid = data.networkid		// Same as Player:SteamID()
+        local id = data.userid			// Same as Player:UserID()
+        local bot = data.bot			// Same as Player:IsBot()
+        local reason = data.reason		// Text reason for disconnected such as "Kicked by console!", "Timed out!", etc...
+
+        // Player has disconnected - this is more reliable than PlayerDisconnect
+
+    end )
 end
 
 

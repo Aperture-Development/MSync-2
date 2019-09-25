@@ -33,7 +33,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `user_id` INT UNSIGNED NOT NULL,
             `admin_id` INT UNSIGNED NOT NULL,
-            `reason` VARCHAR(45) NOT NULL,
+            `reason` VARCHAR(100) NOT NULL,
             `date_unix` float NOT NULL,
             `length_unix` float NOT NULL,
             `server_group` INT UNSIGNED NOT NULL,
