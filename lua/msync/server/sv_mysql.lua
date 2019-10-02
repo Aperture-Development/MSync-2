@@ -28,22 +28,23 @@ function MSync.mysql.initialize()
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
-                CREATE TABLE IF NOT EXISTS `tbl_msync_servers` (
-                    `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                    `server_name` VARCHAR(55) NOT NULL,
-                    `options` VARCHAR(100) NOT NULL DEFAULT '[]',
-                    `ip` INT NOT NULL,
-                    `port` VARCHAR(5) NOT NULL,
-                    `server_group` VARCHAR(45),
-                    UNIQUE INDEX `server_UNIQUE` (`ip`, `port`)
-                );
-            ]] ))
-
-            initDatabase:addQuery(MSync.DBServer:query( [[
                 CREATE TABLE IF NOT EXISTS `tbl_server_grp` (
                     `p_group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     `group_name` VARCHAR(15) NOT NULL,
                     UNIQUE INDEX `group_UNIQUE` (`group_name`)
+                );
+            ]] ))
+            
+            initDatabase:addQuery(MSync.DBServer:query( [[
+                CREATE TABLE IF NOT EXISTS `tbl_msync_servers` (
+                    `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    `server_name` VARCHAR(75) NOT NULL,
+                    `options` VARCHAR(100) NOT NULL DEFAULT '[]',
+                    `ip` INT NOT NULL,
+                    `port` VARCHAR(5) NOT NULL,
+                    `server_group` INT UNSIGNED NOT NULL,
+                    FOREIGN KEY (server_group) REFERENCES tbl_server_grp(p_group_id),
+                    UNIQUE INDEX `server_UNIQUE` (`ip`, `port`)
                 );
             ]] ))
 
@@ -144,7 +145,13 @@ function MSync.mysql.saveServer()
             )
             ON DUPLICATE KEY UPDATE server_name=VALUES(server_name), server_group=VALUES(server_group);
         ]] )
-        addServer:setString(1, GetHostName())
+        
+        local hostname = GetHostName()
+        
+        if string.len(hostname) > 75 then
+            hostname = string.sub( hostname, 1, 75 )
+        end
+        addServer:setString(1, hostname)
         addServer:setString(2, GetConVar( "hostip" ):GetString())
         addServer:setString(3, GetConVar( "hostport" ):GetString())
         addServer:setString(4, MSync.settings.data.serverGroup)
