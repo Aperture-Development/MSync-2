@@ -23,6 +23,7 @@ local info = {
 ]]
 MSync.modules[info.ModuleIdentifier] = MSync.modules[info.ModuleIdentifier] or {}
 MSync.modules[info.ModuleIdentifier].info = info
+MSync.modules[info.ModuleIdentifier].recentDisconnects = MSync.modules[info.ModuleIdentifier].recentDisconnects or {}
 
 --[[
     Define mysql table and additional functions that are later used
@@ -599,7 +600,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     end )
 
     --[[
-        Description: Net Receiver - Gets called when the client requests the settings table
+        Description: Net Receiver - Gets called when the client wants to open the ban gui
         Returns: nothing
     ]]   
     util.AddNetworkString("msync."..info.ModuleIdentifier..".sendSettings")
@@ -609,6 +610,34 @@ MSync.modules[info.ModuleIdentifier].net = function()
         MSync.modules[info.ModuleIdentifier].settings = net.ReadTable()
         MSync.modules[info.ModuleIdentifier].saveSettings()
     end )
+
+    --[[
+        Description: Function to send the 10 last disconnects to a player
+        Arguments:
+            player [player] - the player that requests the data
+        Returns: nothing
+    ]]
+    util.AddNetworkString("msync."..info.ModuleIdentifier..".openBanGUI")
+    MSync.modules[info.ModuleIdentifier].openBanGUI = function(ply)
+        local tableLength = #MSync.modules[info.ModuleIdentifier].recentDisconnects
+        local disconnectTable = {}
+
+        if not tableLength == 0 then
+            for i = 0, 9, 1 do
+                if MSync.modules[info.ModuleIdentifier].recentDisconnects[tableLength-i] then
+                    disconnectTable[i] = MSync.modules[info.ModuleIdentifier].recentDisconnects[tableLength-i]
+                else
+                    break
+                end
+            end
+        else
+            disconnectTable = {}
+        end
+
+        net.Start("msync."..info.ModuleIdentifier..".openBanGUI")
+            net.WriteTable(disconnectTable)
+        net.Send(ply)
+    end
 
 end
 
@@ -634,8 +663,8 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
         if not calling_ply:query("msync."..(info.ModuleIdentifier)..".banPlayer") then return end;
         if not IsValid(calling_ply) then return end;
 
-        if not target_ply then
-            -- Open GUI
+        if calling_ply == target_ply then
+            MSync.modules[info.ModuleIdentifier].openBanGUI(calling_ply)
         else
             if not IsValid(target_ply) then return end
 
@@ -644,8 +673,8 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             ]]
             if not length then length = 0 end
 
-            if not allserver then 
-                allserver = true 
+            if not allserver then
+                allserver = true
             else
                 if allserver == "true" or allserver == "1" then
                     allserver = true
@@ -804,11 +833,11 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
         Arguments:
             none
     ]]
-    MSync.modules[info.ModuleIdentifier].Chat.openBanTable = function(calling_ply)
+    MSync.modules[info.ModuleIdentifier].openBanTable = function(calling_ply)
         if not calling_ply:query("msync."..(info.ModuleIdentifier)..".openBanTable") then return end;
         -- Open Ban Table
     end
-    local BanPlayer = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".openBanTable", MSync.modules[info.ModuleIdentifier].openBanGUI, "!mbsync" )
+    local BanPlayer = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".openBanTable", MSync.modules[info.ModuleIdentifier].openBanTable, "!mbsync" )
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
     BanPlayer:help( "Opens MSync Settings." )
 
@@ -830,7 +859,7 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
         end)
     end)
 
-    hook.Add("CheckPassword", "MBSyncBanCheck", function( steamid64 )
+    hook.Add("CheckPassword", "msync."..(info.ModuleIdentifier)..".banCheck", function( steamid64 )
         if MSync.modules[info.ModuleIdentifier].banTable[steamid64] then
             local ban = MSync.modules[info.ModuleIdentifier].banTable[steamid64]
 
@@ -867,6 +896,17 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
         else
             return
         end
+    end)
+
+    hook.Add("PlayerDisconnected", "msync."..(info.ModuleIdentifier)..".saveDisconnects", function( ply )
+        local tableLength = #MSync.modules[info.ModuleIdentifier].recentDisconnects
+        local data = {
+            name = ply:Name(),
+            steamid = ply:SteamID(),
+            steamid64 = ply:SteamID64()
+        }
+
+        MSync.modules[info.ModuleIdentifier].recentDisconnects[tableLength] = data
     end)
 end
 
