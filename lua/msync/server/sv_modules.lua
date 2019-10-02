@@ -17,7 +17,7 @@ end
 --[[
     Description: initializes all modules
     Returns: nothing
-]]   
+]]
 function MSync.initModules()
     MSync.mysql.dbstatus = false
     if MSync.DBServer then
