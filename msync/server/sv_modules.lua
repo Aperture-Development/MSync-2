@@ -24,12 +24,13 @@ function MSync.initModules()
         local initTransaction = MSync.DBServer:createTransaction()
 
         for k,v in pairs(MSync.modules) do
-            if not MSync.settings.data.enabledModules[v["info"].ModuleIdentifier] then return end;
-            v["init"](initTransaction)
-            v["net"]()
-            v["ulx"]()
-            v["hooks"]()
-            print("["..v["info"]["Name"].."] Module loaded")
+            if MSync.settings.data.enabledModules[v["info"].ModuleIdentifier] then
+                v["init"](initTransaction)
+                v["net"]()
+                v["ulx"]()
+                v["hooks"]()
+                print("["..v["info"]["Name"].."] Module loaded")
+            end
         end
 
         function initTransaction.onSuccess()
