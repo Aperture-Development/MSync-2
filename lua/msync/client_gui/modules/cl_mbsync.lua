@@ -47,6 +47,14 @@ MSync.modules[info.ModuleIdentifier].init = function()
         steamid_textentry:SetPos( 125, 35 )
         steamid_textentry:SetSize( 210, 20 )
         steamid_textentry:SetPlaceholderText( "SteamID/SteamID64" )
+        --steamid_textentry:SetUpdateOnType(true)
+        --steamid_textentry.OnValueChange = function( pnl, value )
+        --    if string.len(value) == 0 then
+        --        ban_button:SetDisabled(true)
+        --    else
+        --        ban_button:SetDisabled(false)
+        --    end
+        --end
     
         local length_text = vgui.Create( "DLabel", panel )
         length_text:SetPos( 15, 60 )
@@ -137,6 +145,81 @@ MSync.modules[info.ModuleIdentifier].init = function()
         if tbl then
             for k,v in pairs(tbl) do
                 ban_table:AddLine( v.name, v.steamid, v.steamid64 )
+            end
+        end
+
+        local ban_button = vgui.Create( "DButton", panel )
+        ban_button:SetText( "Ban User" )
+        ban_button:SetPos( 15, 425 )
+        ban_button:SetSize( 320, 30 )
+        ban_button:SetDisabled(true)
+        ban_button.DoClick = function()
+            local banConfirm_panel = vgui.Create( "DFrame" )
+            banConfirm_panel:SetSize( 350, 100 )
+            banConfirm_panel:SetTitle( "MBSync Ban - Confirm" )
+            banConfirm_panel:Center()
+            banConfirm_panel:MakePopup()
+
+            local save_text = vgui.Create( "DLabel", banConfirm_panel )
+            save_text:SetPos( 15, 20 )
+            save_text:SetColor( Color( 255, 255, 255 ) )
+            save_text:SetText( "This action will ban the user with the given data, are you sure you want to do that?" )
+            save_text:SetSize(320, 50)
+            save_text:SetWrap( true )
+
+            local accept_button = vgui.Create( "DButton", banConfirm_panel )
+            accept_button:SetText( "Accept" )
+            accept_button:SetPos( 15, 70 )
+            accept_button:SetSize( 160, 20 )
+            accept_button.DoClick = function()
+                -- Ban user and close panel
+                panel:Close()
+                banConfirm_panel:Close()
+            end
+
+            local deny_button = vgui.Create( "DButton", banConfirm_panel )
+            deny_button:SetText( "Deny" )
+            deny_button:SetPos( 175, 70 )
+            deny_button:SetSize( 160, 20 )
+            deny_button.DoClick = function()
+                banConfirm_panel:Close()
+            end
+        end
+
+        local cancel_button = vgui.Create( "DButton", panel )
+        cancel_button:SetText( "Cancel" )
+        cancel_button:SetPos( 15, 460 )
+        cancel_button:SetSize( 320, 30 )
+        cancel_button.DoClick = function()
+            local cancel_panel = vgui.Create( "DFrame" )
+            cancel_panel:SetSize( 350, 100 )
+            cancel_panel:SetTitle( "MBSync Ban - Confirm" )
+            cancel_panel:Center()
+            cancel_panel:MakePopup()
+
+            local save_text = vgui.Create( "DLabel", cancel_panel )
+            save_text:SetPos( 15, 20 )
+            save_text:SetColor( Color( 255, 255, 255 ) )
+            save_text:SetText( "This action will cancel the ban, are you sure you want to do that?" )
+            save_text:SetSize(320, 50)
+            save_text:SetWrap( true )
+
+            local accept_button = vgui.Create( "DButton", cancel_panel )
+            accept_button:SetText( "Accept" )
+            accept_button:SetPos( 15, 70 )
+            accept_button:SetSize( 160, 20 )
+            accept_button.DoClick = function()
+                -- do nothing and close panel
+                panel:Close()
+                cancel_panel:Close()
+            end
+
+            local deny_button = vgui.Create( "DButton", cancel_panel )
+            deny_button:SetText( "Deny" )
+            deny_button:SetPos( 175, 70 )
+            deny_button:SetSize( 160, 20 )
+            deny_button.DoClick = function()
+                cancel_panel:Close()
             end
         end
     

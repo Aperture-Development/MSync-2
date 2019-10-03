@@ -899,6 +899,7 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
     end)
 
     hook.Add("PlayerDisconnected", "msync."..(info.ModuleIdentifier)..".saveDisconnects", function( ply )
+        if ply:IsBot() then return end
         local tableLength = #MSync.modules[info.ModuleIdentifier].recentDisconnects
         local data = {
             name = ply:Name(),
