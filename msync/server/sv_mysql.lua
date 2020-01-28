@@ -98,9 +98,15 @@ function MSync.mysql.addUser(ply)
         VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE nickname=VALUES(nickname);
     ]] )
+
+    local nickname = ply:Nick()
+    if string.len(nickname) > 30 then
+        nickname = string.sub( nickname, 1, 30 )
+    end
+
     addUserQ:setString(1, ply:SteamID())
     addUserQ:setString(2, ply:SteamID64())
-    addUserQ:setString(3, ply:Nick())
+    addUserQ:setString(3, nickname)
     addUserQ:setString(4, os.date("%Y-%m-%d %H:%M:%S", os.time()))
 
     function addUserQ.onSuccess()
