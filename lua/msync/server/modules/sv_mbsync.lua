@@ -140,7 +140,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             SET 
                 reason=?,
                 length_unix=?,
-                adminid=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?),
+                admin_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?),
                 server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
             WHERE p_ID=?
         ]] )
@@ -258,9 +258,9 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             LEFT JOIN tbl_server_grp 
                 ON tbl_mbsync.server_group = tbl_server_grp.p_group_id
             LEFT JOIN tbl_users AS banned 
-                ON tbl_mbsync.userid = banned.p_user_id
+                ON tbl_mbsync.user_id = banned.p_user_id
             LEFT JOIN tbl_users AS admin 
-                ON tbl_mbsync.adminid = admin.p_user_id
+                ON tbl_mbsync.admin_id = admin.p_user_id
             LEFT JOIN tbl_users AS unban_admin 
                 ON tbl_mbsync.ban_lifted = unban_admin.p_user_id
             ;
@@ -332,9 +332,9 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 admin.nickname AS 'admin.nickname'
             FROM `tbl_mbsync`
             LEFT JOIN tbl_users AS banned
-                ON tbl_mbsync.userid = banned.p_group_id
+                ON tbl_mbsync.user_id = banned.p_user_id
             LEFT JOIN tbl_users AS admin
-                ON tbl_mbsync.adminid = admin.p_group_id
+                ON tbl_mbsync.admin_id = admin.p_user_id
             WHERE
                 ban_lifted IS NULL AND
                 (
@@ -349,15 +349,13 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         getActiveBansQ:setNumber(1, os.time())
         getActiveBansQ:setString(8, MSync.settings.data.serverGroup)
         
-        function getActiveBansQ.onData( q, data )
+        function getActiveBansQ.onSuccess( q, data )
             
             local banTable = {}
 
             print("[MBSync] Recieved ban data")
-
             for k,v in pairs(data) do
-
-                banTable[v.steamid64] = {
+                banTable[v["steamid64"]] = {
                     banId = v.p_id,
                     reason = v.reason,
                     timestamp = v.date_unix,
@@ -368,7 +366,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                     },
                     adminNickname = v["admin.nickname"]
                 }
-
             end
 
             MSync.modules[info.ModuleIdentifier].banTable = banTable
@@ -442,6 +439,29 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
     MSync.modules[info.ModuleIdentifier].saveSettings = function()
         file.Write("msync/"..info.ModuleIdentifier..".txt", util.TableToJSON(MSync.modules[info.ModuleIdentifier].settings, true))
         return file.Exists("msync/"..info.ModuleIdentifier..".txt", "DATA")
+    end
+
+    --[[
+        Description: Function to split table into multible 10er parts
+        Returns: table split in 10er part counts
+    ]]
+    MSync.modules[info.ModuleIdentifier].splitTable = function(tbl)
+        local i = 0
+        local dataSet = 0
+        local splitTableData = {}
+
+        for k,v in pairs(tbl) do
+            if not splitTableData[dataSet] then splitTableData[dataSet] = {} end
+            if i == 10 then
+                dataSet = dataSet + 1
+                i = 0
+            else
+                splitTableData[dataSet][k] = v
+                i = i + 1
+            end
+        end
+
+        return splitTableData
     end
 
     --[[
@@ -638,6 +658,50 @@ MSync.modules[info.ModuleIdentifier].net = function()
             net.WriteTable(disconnectTable)
         net.Send(ply)
     end
+
+    --[[
+        Description: Function to send the data part count to the client
+        Arguments:
+            player [player] - the player that requests the data
+            number [interger] - the count of data parts to be sent to the player
+        Returns: nothing
+    ]]
+    util.AddNetworkString("msync."..info.ModuleIdentifier..".recieveDataCount")
+    MSync.modules[info.ModuleIdentifier].sendCount = function(ply, number)
+        print(number)
+        net.Start("msync."..info.ModuleIdentifier..".recieveDataCount")
+            net.WriteFloat(number)
+        net.Send(ply)
+    end
+
+    --[[
+        Description: Function to send a table part to a player
+        Arguments:
+            player [player] - the player that requests the data
+            part [table] - the table part that gets sent to the player
+        Returns: nothing
+    ]]
+    util.AddNetworkString("msync."..info.ModuleIdentifier..".recieveData")
+    MSync.modules[info.ModuleIdentifier].sendPart = function(ply, part)
+        net.Start("msync."..info.ModuleIdentifier..".recieveData")
+            net.WriteTable(part)
+        net.Send(ply)
+    end
+
+    --[[
+        Description: Net Receiver - Gets called when the client requests the ban data
+        Returns: nothing
+    ]]
+    util.AddNetworkString("msync."..info.ModuleIdentifier..".getBanTable")
+    net.Receive("msync."..info.ModuleIdentifier..".getBanTable", function(len, ply)
+        MSync.modules[info.ModuleIdentifier].sendCount(ply, math.Round(table.Count(MSync.modules[info.ModuleIdentifier].banTable) / 10))
+
+        local tempTable = MSync.modules[info.ModuleIdentifier].splitTable(MSync.modules[info.ModuleIdentifier].banTable)
+        PrintTable(tempTable)
+        for k,v in pairs(tempTable) do
+            MSync.modules[info.ModuleIdentifier].sendPart(ply, v)
+        end
+    end )
 
 end
 
@@ -841,6 +905,56 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
     BanPlayer:help( "Opens MSync Settings." )
 
+    --[[
+        TODO: The whole Command
+        Expected behaviour:
+        Edits the ban with the given banID
+
+        Arguments:
+            banID [number] - the ban id
+            length [number] - the ban length - OPTIONAL - Default: 0/Permanent
+            allserver [bool] - if its on all servers - OPTIONAL - Default: 0/false
+            reason [string] - the ban reason - OPTIONAL - Default: "banned by staff"
+    ]]
+    MSync.modules[info.ModuleIdentifier].Chat.editBan = function(calling_ply, ban_id, length, allserver, reason)
+        if not calling_ply:query("msync."..(info.ModuleIdentifier)..".editBan") then return end;
+        if not IsValid(calling_ply) then return end;
+
+        if calling_ply == target_ply then
+            MSync.modules[info.ModuleIdentifier].openBanGUI(calling_ply)
+        else
+            if not IsValid(target_ply) then return end
+
+            --[[
+                Set default values if empty and translate allserver string to bool
+            ]]
+            if not length then length = 0 end
+
+            if not allserver then
+                allserver = true
+            else
+                if allserver == "true" or allserver == "1" then
+                    allserver = true
+                else
+                    allserver = false
+                end
+            end
+
+            if not reason then reason = "No reason given" end
+
+            --[[
+                Run ban function with given variables
+            ]]
+            MSync.modules[info.ModuleIdentifier].editBan(ban_id, reason, length, calling_ply, allserver)
+        end
+    end
+    local EditBan = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".editBan", MSync.modules[info.ModuleIdentifier].Chat.editBan, "!medit" )
+    EditBan:addParam{ type=ULib.cmds.NumArg, hint="BanID"}
+    EditBan:addParam{ type=ULib.cmds.NumArg, hint="minutes, 0 for perma", ULib.cmds.optional, ULib.cmds.allowTimeString, min=0 }
+    EditBan:addParam{ type=ULib.cmds.StringArg, hint="true/false, if the player should be banned on all servers", ULib.cmds.optional }
+    EditBan:addParam{ type=ULib.cmds.StringArg, hint="reason", ULib.cmds.optional, ULib.cmds.takeRestOfLine, completes=ulx.common_kick_reasons }
+    EditBan:defaultAccess( ULib.ACCESS_SUPERADMIN )
+    EditBan:help( "Edits the given ban id with new ban data" )
 
 end
 
