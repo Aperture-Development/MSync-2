@@ -50,9 +50,17 @@ MSync.modules[info.ModuleIdentifier].init = function()
 
     MSync.modules[info.ModuleIdentifier].displayTable = function(panel, tbl, maxResults, page)
         panel:Clear()
+        print("displayTable")
         local table = MSync.modules[info.ModuleIdentifier].getTablePage(tbl, maxResults, page)
+        PrintTable(table)
+        local length = 0
         for k,v in pairs(table) do
-            panel:AddLine( v["id"], v["nickname"], v["admin"], v["date"], v["length"], v["reason"] )
+            if v['length'] == 0 then
+                length = "Permanent"
+            else
+                length = ULib.secondsToStringTime(v["length"])
+            end
+            panel:AddLine( v["banId"], v["nickname"], v["adminNickname"], os.date( "%H:%M:%S - %d/%m/%Y" , v["timestamp"]), length, v["reason"] )
         end
     end
 
@@ -492,7 +500,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         return data;
     end
 
-    local tempTable = fakeData()
+    local tempTable = MSync.modules[info.ModuleIdentifier].banTable
     local pages = MSync.modules[info.ModuleIdentifier].getTablePages(tempTable, 20)
     local tablePage = 0
 
@@ -577,25 +585,8 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
 
     MSync.modules[info.ModuleIdentifier].advancedInfoPanel = function(tbl)
 
-        local table = {
-            ["banNickname"] = "Example User",
-            ["banSteamID"] = "STEAM_0:0:12345",
-            ["banSteamID64"] = "7600000000001",
-            ["adminNickname"] = "Example Admin",
-            ["adminSteamID"] = "STEAM_0:0:12345",
-            ["adminSteamID64"] = "7600000000001",
-            ["banDate"] = "04/08/2020 15:14",
-            ["banLength"] = "20d",
-            ["unbanDate"] = "04/28/2020 15:14",
-            ["banRemaining"] = "20d",
-            ["banServerGroup"] = "allservers",
-            ["banReason"] = "Example Ban Reason"
-        }
-
-        tbl = table
-
         local panel = vgui.Create( "DFrame" )
-        panel:SetSize( 350, 500 )
+        panel:SetSize( 350, 455 )
         panel:SetTitle( "MBSync Advanced Ban Info" )
         panel:Center()
         panel:MakePopup()
@@ -680,103 +671,79 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         --adminnickname_textentry:SetText( "[ApDev] Rainbow Dash" )
         adminnickname_textentry:SetDisabled(true)
 
-        local adminsteamid_text = vgui.Create( "DLabel", panel )
-        adminsteamid_text:SetPos( 15, 145 )
-        adminsteamid_text:SetColor( Color( 255, 255, 255 ) )
-        adminsteamid_text:SetText( "Admin SteamID:" )
-        adminsteamid_text:SetSize(380, 15)
-
-        local adminsteamid_textentry = vgui.Create( "DTextEntry", panel )
-        adminsteamid_textentry:SetPos( 125, 145 )
-        adminsteamid_textentry:SetSize( 210, 20 )
-        --adminsteamid_textentry:SetText( "STEAM_0:0:0" )
-        adminsteamid_textentry:SetDisabled(true)
-
-        local adminsteamid64_text = vgui.Create( "DLabel", panel )
-        adminsteamid64_text:SetPos( 15, 170 )
-        adminsteamid64_text:SetColor( Color( 255, 255, 255 ) )
-        adminsteamid64_text:SetText( "Admin SteamID64:" )
-        adminsteamid64_text:SetSize(380, 15)
-
-        local adminsteamid64_textentry = vgui.Create( "DTextEntry", panel )
-        adminsteamid64_textentry:SetPos( 125, 170 )
-        adminsteamid64_textentry:SetSize( 210, 20 )
-        --adminsteamid64_textentry:SetText( "7600000000" )
-        adminsteamid64_textentry:SetDisabled(true)
-
         --[[
             Info about the ban
         ]]
 
         local bandate_text = vgui.Create( "DLabel", panel )
-        bandate_text:SetPos( 15, 205 )
+        bandate_text:SetPos( 15, 155 )
         bandate_text:SetColor( Color( 255, 255, 255 ) )
         bandate_text:SetText( "Ban Date:" )
         bandate_text:SetSize(380, 15)
 
         local bandate_textentry = vgui.Create( "DTextEntry", panel )
-        bandate_textentry:SetPos( 125, 205 )
+        bandate_textentry:SetPos( 125, 155 )
         bandate_textentry:SetSize( 210, 20 )
         --bandate_textentry:SetText( "24.09.2019 23:11" )
         bandate_textentry:SetDisabled(true)
 
         local banlength_text = vgui.Create( "DLabel", panel )
-        banlength_text:SetPos( 15, 230 )
+        banlength_text:SetPos( 15, 180 )
         banlength_text:SetColor( Color( 255, 255, 255 ) )
         banlength_text:SetText( "Ban Length:" )
         banlength_text:SetSize(380, 15)
 
         local banlength_textentry = vgui.Create( "DTextEntry", panel )
-        banlength_textentry:SetPos( 125, 230 )
+        banlength_textentry:SetPos( 125, 180 )
         banlength_textentry:SetSize( 210, 20 )
         --banlength_textentry:SetText( "Permanent" )
         banlength_textentry:SetDisabled(true)
 
         local unbandate_text = vgui.Create( "DLabel", panel )
-        unbandate_text:SetPos( 15, 255 )
+        unbandate_text:SetPos( 15, 205 )
         unbandate_text:SetColor( Color( 255, 255, 255 ) )
         unbandate_text:SetText( "Unban Date:" )
         unbandate_text:SetSize(380, 15)
 
         local unbandate_textentry = vgui.Create( "DTextEntry", panel )
-        unbandate_textentry:SetPos( 125, 255 )
+        unbandate_textentry:SetPos( 125, 205 )
         unbandate_textentry:SetSize( 210, 20 )
         --unbandate_textentry:SetText( "24.09.2019 23:11" )
         unbandate_textentry:SetDisabled(true)
 
         local remainingtime_text = vgui.Create( "DLabel", panel )
-        remainingtime_text:SetPos( 15, 280 )
+        remainingtime_text:SetPos( 15, 230 )
         remainingtime_text:SetColor( Color( 255, 255, 255 ) )
-        --remainingtime_text:SetText( "Time Remaining:" )
+        remainingtime_text:SetText( "Time Remaining:" )
         remainingtime_text:SetSize(380, 15)
 
         local remainingtime_textentry = vgui.Create( "DTextEntry", panel )
-        remainingtime_textentry:SetPos( 125, 280 )
+        remainingtime_textentry:SetPos( 125, 230 )
         remainingtime_textentry:SetSize( 210, 20 )
         --remainingtime_textentry:SetText( "1d,13h" )
         remainingtime_textentry:SetDisabled(true)
 
         local bangroup_text = vgui.Create( "DLabel", panel )
-        bangroup_text:SetPos( 15, 305 )
+        bangroup_text:SetPos( 15, 255 )
         bangroup_text:SetColor( Color( 255, 255, 255 ) )
-        --bangroup_text:SetText( "Ban Server Group:" )
+        bangroup_text:SetText( "Ban Server Group:" )
         bangroup_text:SetSize(380, 15)
 
         local bangroup_textentry = vgui.Create( "DTextEntry", panel )
-        bangroup_textentry:SetPos( 125, 305 )
+        bangroup_textentry:SetPos( 125, 255 )
         bangroup_textentry:SetSize( 210, 20 )
         --bangroup_textentry:SetText( "allservers" )
         bangroup_textentry:SetDisabled(true)
 
         local banreason_text = vgui.Create( "DLabel", panel )
-        banreason_text:SetPos( 15, 350 )
+        banreason_text:SetPos( 15, 300 )
         banreason_text:SetColor( Color( 255, 255, 255 ) )
         banreason_text:SetText( "Ban Reason:" )
         banreason_text:SetSize(380, 15)
         banreason_text:SetDark(1)
 
         local banreason_panel = vgui.Create( "DPanel", panel )
-        banreason_panel:SetPos( 15, 370 )
+        banreason_panel:SetPos( 15, 320 )
         banreason_panel:SetSize( 320, 80 )
 
         local banreasonreason_text = vgui.Create( "DLabel", banreason_panel )
@@ -789,7 +756,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
 
         local close_button = vgui.Create( "DButton", panel )
         close_button:SetText( "Close" )
-        close_button:SetPos( 15, 455 )
+        close_button:SetPos( 15, 410 )
         close_button:SetSize( 320, 30 )
         close_button.DoClick = function()
             panel:Close()
@@ -802,18 +769,16 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         ]]
 
         if not (tbl == nil) then
-            nickname_textentry:SetText( tbl["banNickname"] )
-            steamid_textentry:SetText( tbl["banSteamID"] )
-            steamid64_textentry:SetText( tbl["banSteamID64"] )
+            nickname_textentry:SetText( tbl["nickname"] )
+            steamid_textentry:SetText( tbl["steamid"] )
+            steamid64_textentry:SetText( tbl["steamid64"] )
             adminnickname_textentry:SetText( tbl["adminNickname"] )
-            adminsteamid_textentry:SetText( tbl["adminSteamID"] )
-            adminsteamid64_textentry:SetText( tbl["adminSteamID64"] )
-            bandate_textentry:SetText( tbl["banDate"] )
-            banlength_textentry:SetText( tbl["banLength"] )
-            unbandate_textentry:SetText( tbl["unbanDate"] )
-            remainingtime_textentry:SetText( tbl["banRemaining"] )
-            bangroup_textentry:SetText( tbl["banServerGroup"] )
-            banreasonreason_text:SetText( tbl["banReason"] )
+            bandate_textentry:SetText( os.date( "%H:%M:%S - %d/%m/%Y" ,tbl["timestamp"]) )
+            banlength_textentry:SetText( ULib.secondsToStringTime(tbl["length"]) )
+            unbandate_textentry:SetText( os.date( "%H:%M:%S - %d/%m/%Y" ,tbl["timestamp"] + tbl["length"]) )
+            remainingtime_textentry:SetText( ULib.secondsToStringTime((tbl["timestamp"] + tbl["length"])-os.time()) )
+            bangroup_textentry:SetText( '--NOT IMPLEMENTED YET--' )
+            banreasonreason_text:SetText( tbl["reason"] )
         end
 
     end
@@ -824,18 +789,6 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         panel:SetTitle( "MBSync Edit Ban" )
         panel:Center()
         panel:MakePopup()
-
-        local table = {
-            ["banID"] = "0",
-            ["banNickname"] = "Example User",
-            ["banSteamID"] = "STEAM_0:0:12345",
-            ["banSteamID64"] = "7600000000001",
-            ["banLength"] = "20d",
-            ["bannedEverywhere"] = "false",
-            ["banReason"] = "Example Ban Reason"
-        }
-
-        tbl = table
 
         --[[
             Info about the banned user
@@ -953,7 +906,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             accept_button:SetPos( 15, 70 )
             accept_button:SetSize( 160, 20 )
             accept_button.DoClick = function()
-                -- SEND DATA TO SERVER AND CLOSE PANEL
+                print( "msync.MBSync.editBan", tbl["banId"], banlength_textentry:GetValue(), banallservers_textentry:GetValue(), banreason_textentry:GetValue())
                 panel:Close()
                 save_panel:Close()
             end
@@ -1011,12 +964,12 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         ]]
 
         if not (tbl == nil) then
-            nickname_textentry:SetText( tbl["banNickname"] )
-            steamid_textentry:SetText( tbl["banSteamID"] )
-            steamid64_textentry:SetText( tbl["banSteamID64"] )
-            banlength_textentry:SetText( tbl["banLength"] )
-            banallservers_textentry:SetValue( tbl["bannedEverywhere"] )
-            banreason_textentry:SetText( tbl["banReason"] )
+            nickname_textentry:SetText( tbl["nickname"] )
+            steamid_textentry:SetText( tbl["steamid"] )
+            steamid64_textentry:SetText( tbl["steamid64"] )
+            banlength_textentry:SetText( tbl["length"] )
+            banallservers_textentry:SetValue( "--NOT IMPLEMENTED--" )
+            banreason_textentry:SetText( tbl["reason"] )
         end
     end
 
@@ -1037,16 +990,13 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         FUNCTION PART
         #############
     ]]
-    MSync.modules[info.ModuleIdentifier].advancedInfoPanel({})
-    MSync.modules[info.ModuleIdentifier].editBanPanel({})
     --[[
         Define sortby variable for sorting the ban table
     ]]
     local sortby = {
-        Column = 1,
-        Descending = true
+        Column = "banid",
+        Descending = false
     }
-    ban_table:SortByColumn( sortby.Column, sortby.Descending )
 
     local function checkPage()
         if ( (tablePage+1) >= pages ) then
@@ -1076,12 +1026,11 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         DMenu:AddOption("Advanced Info")
         DMenu.OptionSelected = function(menu,optPnl,optStr)
             if optStr == "Unban" then
-                --
+                MSync.modules[info.ModuleIdentifier].unban(line:GetColumnText( 1 ))
             elseif optStr == "Edit" then
-                MSync.modules[info.ModuleIdentifier].editBanPanel()
-                print(line:GetColumnText( 1 ))
+                MSync.modules[info.ModuleIdentifier].editBanPanel(tempTable[line:GetColumnText( 1 )])
             elseif optStr == "Advanced Info" then
-                MSync.modules[info.ModuleIdentifier].advancedInfoPanel()
+                MSync.modules[info.ModuleIdentifier].advancedInfoPanel(tempTable[line:GetColumnText( 1 )])
             end
         end
     end
@@ -1097,6 +1046,9 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         elseif value == "Admin" then
             sortby.Column = 3
             sortby_dropdown:SetValue( "Sort by: Admin" )
+        elseif value == "Ban Date" then
+            sortby.Column = 4
+            sortby_dropdown:SetValue( "Sort by: Ban Length" )
         elseif value == "Ban Length" then
             sortby.Column = 4
             sortby_dropdown:SetValue( "Sort by: Ban Length" )
@@ -1106,7 +1058,9 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         end
 
         if value then
-            ban_table:SortByColumn( sortby.Column, sortby.Descending )
+            tempTable = table.SortByMember( MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending )
+            MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, 0)
+            checkPage()
         end
     end
 
@@ -1118,7 +1072,9 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             sortby.Descending = true
             listascdesc_button:SetText( "List: Desc" )
         end
-        ban_table:SortByColumn( sortby.Column, sortby.Descending )
+        tempTable = table.SortByMember( MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending )
+        MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, 0)
+        checkPage()
     end
 
     search_button.DoClick = function()
@@ -1164,15 +1120,6 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         nextpage_button:SetDisabled(false)
         lastpage_button:SetDisabled(false)
     end
-
-    local testtbl = splitTable(tempTable)
-    local testierTable = {}
-
-    for k,v in pairs(testtbl) do
-        explodeTable(testierTable, v)
-    end
-
-    PrintTable(testierTable)
 
     MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, tablePage)
 
@@ -1245,7 +1192,6 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     net.Receive( "msync."..(info.ModuleIdentifier)..".recieveDataCount", function( len, ply )
         local num = net.ReadFloat()
-        print(num)
         if not MSync.modules[info.ModuleIdentifier].temporary["unfinished"] then
             MSync.modules[info.ModuleIdentifier].temporary["count"] = num
             MSync.modules[info.ModuleIdentifier].temporary["recieved"] = 0
@@ -1264,6 +1210,19 @@ MSync.modules[info.ModuleIdentifier].net = function()
 
         if MSync.modules[info.ModuleIdentifier].temporary["recieved"] == MSync.modules[info.ModuleIdentifier].temporary["count"] then
             MSync.modules[info.ModuleIdentifier].temporary = {}
+            local tempTable = {}
+            for k,v in pairs(MSync.modules[info.ModuleIdentifier].banTable) do
+                tempTable[v['banId']]                   = {}
+                tempTable[v['banId']]['banId']          = v['banId']
+                tempTable[v['banId']]['adminNickname']  = v['adminNickname']
+                tempTable[v['banId']]['nickname']       = v['banned']['nickname']
+                tempTable[v['banId']]['steamid']        = v['banned']['steamid']
+                tempTable[v['banId']]['steamid64']      = k
+                tempTable[v['banId']]['length']         = v['length']
+                tempTable[v['banId']]['reason']         = v['reason']
+                tempTable[v['banId']]['timestamp']      = v['timestamp']
+            end
+            MSync.modules[info.ModuleIdentifier].banTable = tempTable
         end
     end )
 end
