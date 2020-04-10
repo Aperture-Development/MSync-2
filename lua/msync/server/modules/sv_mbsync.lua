@@ -66,11 +66,29 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         banUserQ:setString(4, calling_ply:SteamID64())
         banUserQ:setString(5, reason)
         banUserQ:setNumber(6, os.time())
-        banUserQ:setNumber(7, length)
+        banUserQ:setNumber(7, length*60)
         if not allserver then
             banUserQ:setString(8, MSync.settings.data.serverGroup)
         else
             banUserQ:setString(8, "allservers")
+        end
+
+        banUserQ.onSuccess = function( q, data )
+            -- Notify the user about the ban and add it to ULib to prevent data loss on Addon Remove
+            -- Also, kick the user from the server
+            local banData = {
+                admin = calling_ply:Nick(),
+                reason = reason,
+                unban = os.time()+(length*60),
+                time = os.time()
+            }
+
+            PrintTable(banData)
+            PrintTable(data)
+
+            ply:Kick(ULib.getBanMessage( ply:SteamID(), banData))
+            MSync.modules[info.ModuleIdentifier].getActiveBans()
+            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Banned "..ply:Nick().." for "..ULib.secondsToStringTime(length).." with reason "..reason)
         end
 
         banUserQ.onError = function( q, err, sql )
@@ -349,7 +367,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         getActiveBansQ:setNumber(1, os.time())
         getActiveBansQ:setString(8, MSync.settings.data.serverGroup)
         
-        function getActiveBansQ.onSuccess( q, data )
+        getActiveBansQ.onSuccess = function( q, data )
             
             local banTable = {}
 
@@ -382,8 +400,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                     local banData = {
                         admin = ban.adminNickname,
                         reason = ban.reason,
-                        unban = ban.length_unix,
-                        time = ban.date_unix
+                        unban = ban.length+ban.timestamp,
+                        time = ban.timestamp
                     }
 
                     local message = ULib.getBanMessage( ban.banned.steamid, banData)
@@ -920,38 +938,32 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
         if not calling_ply:query("msync."..(info.ModuleIdentifier)..".editBan") then return end;
         if not IsValid(calling_ply) then return end;
 
-        if calling_ply == target_ply then
-            MSync.modules[info.ModuleIdentifier].openBanGUI(calling_ply)
+        --[[
+            Set default values if empty and translate allserver string to bool
+        ]]
+        if not length then length = 0 end
+
+        if not allserver then
+            allserver = true
         else
-            if not IsValid(target_ply) then return end
-
-            --[[
-                Set default values if empty and translate allserver string to bool
-            ]]
-            if not length then length = 0 end
-
-            if not allserver then
+            if allserver == "true" or allserver == "1" then
                 allserver = true
             else
-                if allserver == "true" or allserver == "1" then
-                    allserver = true
-                else
-                    allserver = false
-                end
+                allserver = false
             end
-
-            if not reason then reason = "No reason given" end
-
-            --[[
-                Run ban function with given variables
-            ]]
-            MSync.modules[info.ModuleIdentifier].editBan(ban_id, reason, length, calling_ply, allserver)
         end
+
+        if not reason then reason = "No reason given" end
+
+        --[[
+            Run ban function with given variables
+        ]]
+        MSync.modules[info.ModuleIdentifier].editBan(tostring(ban_id), tostring(reason), tostring(length), calling_ply, allserver)
     end
     local EditBan = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".editBan", MSync.modules[info.ModuleIdentifier].Chat.editBan, "!medit" )
     EditBan:addParam{ type=ULib.cmds.NumArg, hint="BanID"}
     EditBan:addParam{ type=ULib.cmds.NumArg, hint="minutes, 0 for perma", ULib.cmds.optional, ULib.cmds.allowTimeString, min=0 }
-    EditBan:addParam{ type=ULib.cmds.StringArg, hint="true/false, if the player should be banned on all servers", ULib.cmds.optional }
+    EditBan:addParam{ type=ULib.cmds.StringArg, hint="true/false, all servers?", ULib.cmds.optional }
     EditBan:addParam{ type=ULib.cmds.StringArg, hint="reason", ULib.cmds.optional, ULib.cmds.takeRestOfLine, completes=ulx.common_kick_reasons }
     EditBan:defaultAccess( ULib.ACCESS_SUPERADMIN )
     EditBan:help( "Edits the given ban id with new ban data" )
@@ -967,20 +979,19 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
 
         This hook starts the timers for the asynchronous ban data loading and the check if one of the online players has been banned
     ]]
-    hook.Add("initialize", "msync."..(info.ModuleIdentifier)..".initializeHook", function()
-        timer.Create("msync."..(info.ModuleIdentifier)..".getActiveBans", MSync.modules[info.ModuleIdentifier].settings.syncDelay, 0, function() 
-            MSync.modules[info.ModuleIdentifier].getActiveBans()
-        end)
+    timer.Create("msync."..(info.ModuleIdentifier)..".getActiveBans", MSync.modules[info.ModuleIdentifier].settings.syncDelay, 0, function() 
+        MSync.modules[info.ModuleIdentifier].getActiveBans()
     end)
+    MSync.modules[info.ModuleIdentifier].getActiveBans()
 
     hook.Add("CheckPassword", "msync."..(info.ModuleIdentifier)..".banCheck", function( steamid64 )
         if MSync.modules[info.ModuleIdentifier].banTable[steamid64] then
             local ban = MSync.modules[info.ModuleIdentifier].banTable[steamid64]
-
+            local unbanDate
             if ban.length == 0 then
-                local unbanDate = "Never"
+                unbanDate = "Never"
             else
-                local unbanDate = os.date( "%c", ban.timestamp+ban.length)
+                unbanDate = os.date( "%c", ban.timestamp+ban.length)
             end
             --[[
                 Print to console that a banned user tries to join
@@ -1001,8 +1012,8 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
             local banData = {
                 admin = ban.adminNickname,
                 reason = ban.reason,
-                unban = ban.length_unix,
-                time = ban.date_unix
+                unban = ban.timestamp+ban.length,
+                time = ban.timestamp
             }
 
             local message = ULib.getBanMessage( ban.banned.steamid, banData)
