@@ -74,6 +74,47 @@ MSync.modules[info.ModuleIdentifier].init = function()
         end
     end
 
+    MSync.modules[info.ModuleIdentifier].sortTable = function(tbl, key, asc)
+        local sorting = true
+        local tempTable = table.DeSanitise( tbl )
+        local keys = table.GetKeys( tempTable )
+    
+        while sorting do
+            sorting = false
+            for k,v in pairs(keys) do
+                local a, b
+                if not keys[k+1] then break end
+    
+                if type( tempTable[v][key] ) == "string" then
+                    a = tempTable[v][key]:lower()
+                    b = tempTable[keys[k+1]][key]:lower()
+                else
+                    a = tempTable[v][key]
+                    b = tempTable[keys[k+1]][key]
+                end
+    
+                if asc then
+                    if a > b then
+                        sorting = true
+                        local temp = tempTable[v]
+                        tempTable[v] = tempTable[keys[k+1]]
+                        tempTable[keys[k+1]] = temp
+                        break
+                    end
+                else
+                    if a < b then
+                        sorting = true
+                        local temp = tempTable[keys[k+1]]
+                        tempTable[keys[k+1]] = tempTable[v]
+                        tempTable[v] = temp
+                        break
+                    end
+                end
+            end
+        end
+        return tempTable
+    end
+
     MSync.modules[info.ModuleIdentifier].banPanel = function( tbl )
         local panel = vgui.Create( "DFrame" )
         panel:SetSize( 350, 500 )
@@ -482,26 +523,13 @@ end
 MSync.modules[info.ModuleIdentifier].clientPanel = function()
 
     --[[
-        Fake Data generator for testing purposes
+        Get Ban table and then wait for the reply before showing it
     ]]
-    local function fakeData() 
-        local data = {}
-        for i=0,111,1 do
-            --ban_table:AddLine( "1", "[ApDev] Rainbow Dash", "X-Coder", "Permanent", "Fucking Around" )
-            data[#data+1] = {
-                id = i+30,
-                nickname = "Fake Data "..i,
-                admin = "Fake Admin"..i+200,
-                length = i.."d",
-                reason = "Fake Reason"..i+400
-            }
-        end
 
-        return data;
-    end
+    MSync.modules[info.ModuleIdentifier].getBanTable()
 
-    local tempTable = MSync.modules[info.ModuleIdentifier].banTable
-    local pages = MSync.modules[info.ModuleIdentifier].getTablePages(tempTable, 20)
+    local tempTable = {}
+    local pages = 0
     local tablePage = 0
 
     local panel = vgui.Create( "DFrame" )
@@ -509,6 +537,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     panel:SetTitle( "MSync Admin Menu" )
     panel:Center()
     panel:MakePopup()
+    panel:SetBackgroundBlur( true )
 
     local search_textentry = vgui.Create( "DTextEntry", panel )
     search_textentry:SetPos( 15, 35 )
@@ -774,9 +803,15 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             steamid64_textentry:SetText( tbl["steamid64"] )
             adminnickname_textentry:SetText( tbl["adminNickname"] )
             bandate_textentry:SetText( os.date( "%H:%M:%S - %d/%m/%Y" ,tbl["timestamp"]) )
-            banlength_textentry:SetText( ULib.secondsToStringTime(tbl["length"]) )
-            unbandate_textentry:SetText( os.date( "%H:%M:%S - %d/%m/%Y" ,tbl["timestamp"] + tbl["length"]) )
-            remainingtime_textentry:SetText( ULib.secondsToStringTime((tbl["timestamp"] + tbl["length"])-os.time()) )
+            if not tbl["length"] == 0 then
+                banlength_textentry:SetText( ULib.secondsToStringTime(tbl["length"]) )
+                unbandate_textentry:SetText( os.date( "%H:%M:%S - %d/%m/%Y" ,tbl["timestamp"] + tbl["length"]) )
+                remainingtime_textentry:SetText( ULib.secondsToStringTime((tbl["timestamp"] + tbl["length"])-os.time()) )
+            else
+                banlength_textentry:SetText( "Permanent" )
+                unbandate_textentry:SetText( "Never" )
+                remainingtime_textentry:SetText( "Forever" )
+            end
             bangroup_textentry:SetText( '--NOT IMPLEMENTED YET--' )
             banreasonreason_text:SetText( tbl["reason"] )
         end
@@ -906,7 +941,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             accept_button:SetPos( 15, 70 )
             accept_button:SetSize( 160, 20 )
             accept_button.DoClick = function()
-                print( "msync.MBSync.editBan", tbl["banId"], banlength_textentry:GetValue(), banallservers_textentry:GetValue(), banreason_textentry:GetValue())
+                RunConsoleCommand( "msync.MBSync.editBan", tbl["banId"], banlength_textentry:GetValue(), banallservers_textentry:GetValue(), banreason_textentry:GetValue())
                 panel:Close()
                 save_panel:Close()
             end
@@ -994,7 +1029,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         Define sortby variable for sorting the ban table
     ]]
     local sortby = {
-        Column = "banid",
+        Column = "banId",
         Descending = false
     }
 
@@ -1038,27 +1073,27 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     sortby_dropdown.OnSelect = function( self, index, value )
         --ban_table
         if value == "Ban ID" then
-            sortby.Column = 1
+            sortby.Column = "banId"
             sortby_dropdown:SetValue( "Sort by: Ban ID" )
         elseif value == "Nickname" then
-            sortby.Column = 2
+            sortby.Column = "nickname"
             sortby_dropdown:SetValue( "Sort by: Nickname" )
         elseif value == "Admin" then
-            sortby.Column = 3
+            sortby.Column = "adminNickname"
             sortby_dropdown:SetValue( "Sort by: Admin" )
         elseif value == "Ban Date" then
-            sortby.Column = 4
+            sortby.Column = "timestamp"
             sortby_dropdown:SetValue( "Sort by: Ban Length" )
         elseif value == "Ban Length" then
-            sortby.Column = 4
+            sortby.Column = "length"
             sortby_dropdown:SetValue( "Sort by: Ban Length" )
         elseif value == "Ban Reason" then
-            sortby.Column = 5
+            sortby.Column = "reason"
             sortby_dropdown:SetValue( "Sort by: Ban Reason" )
         end
 
         if value then
-            tempTable = table.SortByMember( MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending )
+            tempTable = MSync.modules[info.ModuleIdentifier].sortTable(MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending)
             MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, 0)
             checkPage()
         end
@@ -1067,12 +1102,12 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     listascdesc_button.DoClick = function()
         if sortby.Descending then
             sortby.Descending = false
-            listascdesc_button:SetText( "List: Asc" )
+            listascdesc_button:SetText( "List: Desc" )
         else
             sortby.Descending = true
-            listascdesc_button:SetText( "List: Desc" )
+            listascdesc_button:SetText( "List: Asc" )
         end
-        tempTable = table.SortByMember( MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending )
+        tempTable = MSync.modules[info.ModuleIdentifier].sortTable(MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending)
         MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, 0)
         checkPage()
     end
@@ -1121,7 +1156,23 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         lastpage_button:SetDisabled(false)
     end
 
-    MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, tablePage)
+    timer.Create("msync.mbsync.waitForBanTable", 1, 0, function() 
+        if MSync.modules[info.ModuleIdentifier].temporary["unfinished"] then return end
+
+        tempTable = MSync.modules[info.ModuleIdentifier].sortTable(MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending)
+        pages = MSync.modules[info.ModuleIdentifier].getTablePages(tempTable, 20)
+        tablePage = 0
+
+        pageof_text:SetText( (tablePage+1).."/"..pages )
+
+        if pages > 1 then
+            nextpage_button:SetDisabled(false)
+            lastpage_button:SetDisabled(false)
+        end
+
+        MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, tablePage)
+        timer.Remove("msync.mbsync.waitForBanTable")
+    end)
 
 
     return panel
@@ -1171,6 +1222,14 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     net.Receive( "msync."..(info.ModuleIdentifier)..".openBanGUI", function( len, ply )
         MSync.modules[info.ModuleIdentifier].banPanel(net.ReadTable())
+    end )
+
+    --[[
+        Description: Net Receiver - Gets called when the client entered '!mbsync'
+        Returns: nothing
+    ]]
+    net.Receive( "msync."..(info.ModuleIdentifier)..".openBanTable", function( len, ply )
+        MSync.modules[info.ModuleIdentifier].clientPanel()
     end )
 
     --[[

@@ -556,6 +556,18 @@ MSync.modules[info.ModuleIdentifier].net = function()
     end
 
     --[[
+        Description: Function to open the ban table on the player
+        Arguments:
+            player [player] - the player that wants to open the admin GUI
+        Returns: nothing
+    ]]  
+    util.AddNetworkString("msync."..(info.ModuleIdentifier)..".openBanTable")
+    MSync.modules[info.ModuleIdentifier].openBanTable = function(ply)
+        net.Start("msync."..(info.ModuleIdentifier)..".openBanTable")
+        net.Send(ply)
+    end
+
+    --[[
         Description: Net Receiver - Gets called when the client banned a player with the ban gui
         Returns: nothing
     ]]   
@@ -949,11 +961,12 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
         Arguments:
             none
     ]]
-    MSync.modules[info.ModuleIdentifier].openBanTable = function(calling_ply)
+    MSync.modules[info.ModuleIdentifier].Chat.openBanTable = function(calling_ply)
         if not calling_ply:query("msync."..(info.ModuleIdentifier)..".openBanTable") then return end;
         -- Open Ban Table
+        MSync.modules[info.ModuleIdentifier].openBanTable(calling_ply)
     end
-    local BanPlayer = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".openBanTable", MSync.modules[info.ModuleIdentifier].openBanTable, "!mbsync" )
+    local BanPlayer = ulx.command( "MSync", "msync."..(info.ModuleIdentifier)..".openBanTable", MSync.modules[info.ModuleIdentifier].Chat.openBanTable, "!mbsync" )
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
     BanPlayer:help( "Opens MSync Settings." )
 
