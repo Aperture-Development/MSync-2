@@ -83,9 +83,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 time = os.time()
             }
 
-            PrintTable(banData)
-            PrintTable(data)
-
             ply:Kick(ULib.getBanMessage( ply:SteamID(), banData))
             MSync.modules[info.ModuleIdentifier].getActiveBans()
             MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Banned "..ply:Nick().." for "..ULib.secondsToStringTime(length).." with reason "..reason)
@@ -133,6 +130,23 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             banUserIdQ:setString(8, "allservers")
         end
 
+        banUserIdQ.onSuccess = function( q, data )
+            -- Notify the user about the ban and add it to ULib to prevent data loss on Addon Remove
+            -- Also, kick the user from the server
+            local banData = {
+                admin = calling_ply:Nick(),
+                reason = reason,
+                unban = os.time()+(length*60),
+                time = os.time()
+            }
+
+            if not player.GetBySteamID(userid) then return end
+
+            player.GetBySteamID(userid):Kick(ULib.getBanMessage( userid, banData))
+            MSync.modules[info.ModuleIdentifier].getActiveBans()
+            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Banned "..userid.." for "..ULib.secondsToStringTime(length).." with reason "..reason)
+        end
+
         banUserIdQ.onError = function( q, err, sql )
             print("------------------------------------")
             print("[MBSync] SQL Error!")
@@ -173,6 +187,11 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
         editBanQ:setString(6, banId)
 
+        editBanQ.onSuccess = function( q, data )
+            MSync.modules[info.ModuleIdentifier].getActiveBans()
+            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Edited ban with id "..banId.." with length "..length.." with reason "..reason)
+        end
+
         editBanQ.onError = function( q, err, sql )
             print("------------------------------------")
             print("[MBSync] SQL Error!")
@@ -201,6 +220,11 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         unBanUserIdQ:setString(1, calling_ply:SteamID())
         unBanUserIdQ:setString(2, calling_ply:SteamID64())
         unBanUserIdQ:setString(3, banId)
+
+        unBanUserIdQ.onSuccess = function( q, data )
+            MSync.modules[info.ModuleIdentifier].getActiveBans()
+            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Removed ban with id "..banId)
+        end
 
         unBanUserIdQ.onError = function( q, err, sql )
             print("------------------------------------")
@@ -235,6 +259,11 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         unBanUserQ:setString(3, ply_steamid)
         unBanUserQ:setString(4, ply_steamid)
         unBanUserQ:setString(5, MSync.settings.data.serverGroup)
+
+        unBanUserQ.onSuccess = function( q, data )
+            MSync.modules[info.ModuleIdentifier].getActiveBans()
+            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Unbanned "..ply_steamid)
+        end
 
         unBanUserQ.onError = function( q, err, sql )
             print("------------------------------------")
@@ -501,10 +530,15 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Returns: nothing
     ]]  
     util.AddNetworkString("msync."..(info.ModuleIdentifier)..".sendMessage")
-    MSync.modules[info.ModuleIdentifier].msg = function(ply, text)
-        net.Start("msync."..(info.ModuleIdentifier)..".sendMessage")
-            net.WriteString(text)
-        net.Send(ply)
+    MSync.modules[info.ModuleIdentifier].msg = function(ply, content, type)
+        if not type then type = 0 end
+        -- Basic message
+        if type == 0 then
+            net.Start("msync."..(info.ModuleIdentifier)..".sendMessage")
+                net.WriteFloat(type)
+                net.WriteString(content)
+            net.Send(ply)
+        end
     end
 
     --[[

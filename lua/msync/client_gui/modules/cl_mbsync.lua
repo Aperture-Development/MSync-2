@@ -1161,7 +1161,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the server wants to print something to the user chat
         Returns: nothing
     ]]
-    net.Receive( "msync."..(info.ModuleIdentifier)..".banid", function( len, ply )
+    net.Receive( "msync."..(info.ModuleIdentifier)..".sendMessage", function( len, ply )
         chat.AddText( Color( 237, 135, 26 ), "[MBSync] ", Color( 255, 255, 255), net.ReadString())
     end )
 
