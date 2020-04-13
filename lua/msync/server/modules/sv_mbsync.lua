@@ -284,7 +284,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Description: Function to get all bans
         Returns: nothing
     ]]
-    MSync.modules[info.ModuleIdentifier].getBans = function(ply)
+    MSync.modules[info.ModuleIdentifier].getBans = function(ply, fullTable)
         local getBansQ = MSync.DBServer:prepare( [[
             SELECT 
                 tbl_mbsync.p_id, 
@@ -315,38 +315,66 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         
         
 
-        function getBansQ.onData( q, data, ply )
+        getBansQ.onSuccess = function( q, data )
             
             local banTable = {}
 
             print("[MBSync] Recieved all ban data")
+            --PrintTable(data)
+            if fullTable then
+                for k,v in pairs(data) do
 
-            for k,v in pairs(data) do
-
-                banTable[v.p_id] = {
-                    reason = v.reason,
-                    banDate = os.date( "%H:%M:%S - %d/%m/%Y" , v.date_unix ),
-                    banlength = v.length_unix,
-                    bannedUser = {
-                        steamid = v['banned.steamid'],
-                        steamid64 = v['banned.steamid64'],
-                        nickname = v['banned.nickname']
-                    },
-                    banningAdmin = {
-                        steamid = v['admin.steamid'],
-                        steamid64 = v['admin.steamid64'],
-                        nickname = v['admin.nickname']
-                    },
-                    unBanningAdmin = {
-                        steamid = v['unban_admin.steamid'],
-                        steamid64 = v['unban_admin.steamid64'],
-                        nickname = v['unban_admin.nickname']
+                    banTable[v.p_id] = {
+                        banId = v.p_id,
+                        reason = v.reason,
+                        timestamp = v.date_unix,
+                        length = v.length_unix,
+                        servergroup = v["group_name"],
+                        banned = {
+                            steamid = v['banned.steamid'],
+                            steamid64 = v['banned.steamid64'],
+                            nickname = v['banned.nickname']
+                        },
+                        banningAdmin = {
+                            steamid = v['admin.steamid'],
+                            steamid64 = v['admin.steamid64'],
+                            nickname = v['admin.nickname']
+                        },
+                        unBanningAdmin = {
+                            steamid = v['unban_admin.steamid'],
+                            steamid64 = v['unban_admin.steamid64'],
+                            nickname = v['unban_admin.nickname']
+                        }
                     }
-                }
 
+                end
+            else
+                for k,v in pairs(data) do
+                    if not v['unban_admin.steamid'] and not ((v.date_unix+v.length_unix) < os.time()) then
+                        banTable[v["banned.steamid64"]] = {
+                            banId = v.p_id,
+                            reason = v.reason,
+                            timestamp = v.date_unix,
+                            length = v.length_unix,
+                            servergroup = v["group_name"],
+                            banned = {
+                                steamid = v["banned.steamid"],
+                                nickname = v["banned.nickname"],
+                                steamid64 = v["banned.steamid64"]
+                            },
+                            adminNickname = v["admin.nickname"]
+                        }
+                    end
+                end
             end
 
-            MSync.modules[info.ModuleIdentifier].sendSettings(ply, banTable)
+            --MSync.modules[info.ModuleIdentifier].sendSettings(ply, banTable)
+
+            MSync.modules[info.ModuleIdentifier].sendCount(ply, math.Round(table.Count(banTable) / 10))
+            local tempTable = MSync.modules[info.ModuleIdentifier].splitTable(banTable)
+            for k,v in pairs(tempTable) do
+                MSync.modules[info.ModuleIdentifier].sendPart(ply, v)
+            end
 
         end
 
@@ -758,12 +786,13 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".getBanTable")
     net.Receive("msync."..info.ModuleIdentifier..".getBanTable", function(len, ply)
-        MSync.modules[info.ModuleIdentifier].sendCount(ply, math.Round(table.Count(MSync.modules[info.ModuleIdentifier].banTable) / 10))
-
-        local tempTable = MSync.modules[info.ModuleIdentifier].splitTable(MSync.modules[info.ModuleIdentifier].banTable)
-        PrintTable(tempTable)
-        for k,v in pairs(tempTable) do
-            MSync.modules[info.ModuleIdentifier].sendPart(ply, v)
+        local fullTable = net.ReadBool()
+        if fullTable then 
+            if not ply:query("msync.openAdminGUI") then return end
+            MSync.modules[info.ModuleIdentifier].getBans(ply, fullTable)
+        else
+            if not ply:query("msync."..(info.ModuleIdentifier)..".openBanTable") then return end
+            MSync.modules[info.ModuleIdentifier].getBans(ply, false)
         end
     end )
 

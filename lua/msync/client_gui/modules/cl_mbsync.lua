@@ -50,9 +50,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
 
     MSync.modules[info.ModuleIdentifier].displayTable = function(panel, tbl, maxResults, page)
         panel:Clear()
-        print("displayTable")
         local table = MSync.modules[info.ModuleIdentifier].getTablePage(tbl, maxResults, page)
-        PrintTable(table)
         local length = 0
         for k,v in pairs(table) do
             if v['length'] == 0 then
@@ -113,6 +111,40 @@ MSync.modules[info.ModuleIdentifier].init = function()
             end
         end
         return tempTable
+    end
+
+    MSync.modules[info.ModuleIdentifier].searchTable = function(tbl, term)
+        local searchTerm = ""
+    
+        if type(term) == 'string' then
+            searchTerm = term:lower()
+        else
+            searchTerm = tostring(term):lower()
+        end
+    
+        local tempTbl = {}
+        local matches = false
+    
+        for k, v in pairs(tbl) do
+            matches = false
+            for k2, v2 in pairs(v) do
+                if type(v2) == 'string' then
+                    if string.match(v2:lower(), ".*"..searchTerm..".*") then
+                        matches = true
+                    end
+                else
+                    if string.match(tostring( v2 ):lower(), ".*"..searchTerm..".*") then
+                        matches = true
+                    end
+                end
+            end
+    
+            if matches then
+                tempTbl[k] = v
+            end
+        end
+    
+        return tempTbl
     end
 
     MSync.modules[info.ModuleIdentifier].banPanel = function( tbl )
@@ -812,7 +844,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
                 unbandate_textentry:SetText( "Never" )
                 remainingtime_textentry:SetText( "Forever" )
             end
-            bangroup_textentry:SetText( '--NOT IMPLEMENTED YET--' )
+            bangroup_textentry:SetText( tbl["servergroup"] )
             banreasonreason_text:SetText( tbl["reason"] )
         end
 
@@ -856,7 +888,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         local steamid64_text = vgui.Create( "DLabel", panel )
         steamid64_text:SetPos( 15, 85 )
         steamid64_text:SetColor( Color( 255, 255, 255 ) )
-        --steamid64_text:SetText( "SteamID64:" )
+        steamid64_text:SetText( "SteamID64:" )
         steamid64_text:SetSize(380, 15)
 
         local steamid64_textentry = vgui.Create( "DTextEntry", panel )
@@ -1003,7 +1035,11 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             steamid_textentry:SetText( tbl["steamid"] )
             steamid64_textentry:SetText( tbl["steamid64"] )
             banlength_textentry:SetText( tbl["length"] )
-            banallservers_textentry:SetValue( "--NOT IMPLEMENTED--" )
+            if tbl["servergroup"] == "allservers" then
+                banallservers_textentry:SetValue( "true" )
+            else
+                banallservers_textentry:SetValue( "false" )
+            end
             banreason_textentry:SetText( tbl["reason"] )
         end
     end
@@ -1063,9 +1099,9 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             if optStr == "Unban" then
                 MSync.modules[info.ModuleIdentifier].unban(line:GetColumnText( 1 ))
             elseif optStr == "Edit" then
-                MSync.modules[info.ModuleIdentifier].editBanPanel(tempTable[line:GetColumnText( 1 )])
+                MSync.modules[info.ModuleIdentifier].editBanPanel(MSync.modules[info.ModuleIdentifier].banTable[line:GetColumnText( 1 )])
             elseif optStr == "Advanced Info" then
-                MSync.modules[info.ModuleIdentifier].advancedInfoPanel(tempTable[line:GetColumnText( 1 )])
+                MSync.modules[info.ModuleIdentifier].advancedInfoPanel(MSync.modules[info.ModuleIdentifier].banTable[line:GetColumnText( 1 )])
             end
         end
     end
@@ -1093,7 +1129,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         end
 
         if value then
-            tempTable = MSync.modules[info.ModuleIdentifier].sortTable(MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending)
+            tempTable = MSync.modules[info.ModuleIdentifier].sortTable(tempTable, sortby.Column, sortby.Descending)
             MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, 0)
             checkPage()
         end
@@ -1107,20 +1143,44 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             sortby.Descending = true
             listascdesc_button:SetText( "List: Asc" )
         end
-        tempTable = MSync.modules[info.ModuleIdentifier].sortTable(MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending)
+        tempTable = MSync.modules[info.ModuleIdentifier].sortTable(tempTable, sortby.Column, sortby.Descending)
         MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, 0)
         checkPage()
     end
 
     search_button.DoClick = function()
         if search_textentry:GetValue() then
-            -- ASK SERVER FOR MATCHING DATA
+            tempTable = {}
+            tempTable = MSync.modules[info.ModuleIdentifier].searchTable(MSync.modules[info.ModuleIdentifier].banTable, search_textentry:GetValue())
+            tempTable = MSync.modules[info.ModuleIdentifier].sortTable(tempTable, sortby.Column, sortby.Descending)
+            MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, 0)
+            checkPage()
+        else
+            tempTable = MSync.modules[info.ModuleIdentifier].sortTable(MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending)
+            MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, 0)
+            checkPage()
         end
-        --MSync.modules[info.ModuleIdentifier].findMatchingData(tbl, term)
     end
 
     sync_button.DoClick = function()
-        -- DISABLE PANEL AND RE-ENABLE WHEN DATA RETURNED
+        MSync.modules[info.ModuleIdentifier].getBanTable()
+        timer.Create("msync.mbsync.waitForBanTable", 3, 0, function() 
+            if MSync.modules[info.ModuleIdentifier].temporary["unfinished"] then return end
+    
+            tempTable = MSync.modules[info.ModuleIdentifier].sortTable(MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending)
+            pages = MSync.modules[info.ModuleIdentifier].getTablePages(tempTable, 20)
+            tablePage = 0
+    
+            pageof_text:SetText( (tablePage+1).."/"..pages )
+    
+            if pages > 1 then
+                nextpage_button:SetDisabled(false)
+                lastpage_button:SetDisabled(false)
+            end
+    
+            MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, tablePage)
+            timer.Remove("msync.mbsync.waitForBanTable")
+        end)
     end
 
     firstpage_button.DoClick = function()
@@ -1280,6 +1340,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
                 tempTable[v['banId']]['length']         = v['length']
                 tempTable[v['banId']]['reason']         = v['reason']
                 tempTable[v['banId']]['timestamp']      = v['timestamp']
+                tempTable[v['banId']]['servergroup']    = v['servergroup']
             end
             MSync.modules[info.ModuleIdentifier].banTable = tempTable
         end
