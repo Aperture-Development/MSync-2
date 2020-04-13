@@ -350,7 +350,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 end
             else
                 for k,v in pairs(data) do
-                    if not v['unban_admin.steamid'] and not ((v.date_unix+v.length_unix) < os.time()) then
+                    if not v['unban_admin.steamid'] and ((not((v.date_unix+v.length_unix) < os.time())) or (v.length_unix==0)) then
                         banTable[v["banned.steamid64"]] = {
                             banId = v.p_id,
                             reason = v.reason,
@@ -369,8 +369,9 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             end
 
             --MSync.modules[info.ModuleIdentifier].sendSettings(ply, banTable)
-
-            MSync.modules[info.ModuleIdentifier].sendCount(ply, math.Round(table.Count(banTable) / 10))
+            -- We need to add 0.4 to the calculated number to guarantee that we always round up to the next highest number 
+            -- Luckily because we always calculate with whole numbers (there is no half ban) this should be enough to guarantee that we always send enough packages
+            MSync.modules[info.ModuleIdentifier].sendCount(ply, math.Round((table.Count(banTable) / 10)+0.4))
             local tempTable = MSync.modules[info.ModuleIdentifier].splitTable(banTable)
             for k,v in pairs(tempTable) do
                 MSync.modules[info.ModuleIdentifier].sendPart(ply, v)

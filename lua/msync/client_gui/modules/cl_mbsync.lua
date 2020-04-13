@@ -340,309 +340,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
             end
         end
     
-        ban_table:AddLine( "[ApDev] Rainbow Dash", "STEAM_0:0:0", "76000000000" )
     end
-
-end
-
---[[
-    Define the admin panel for the settings
-]]
-MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
-    local pnl = vgui.Create( "DPanel", sheet )
-    pnl:Dock(FILL)
-
-    local delay_text = vgui.Create( "DLabel", pnl )
-    delay_text:SetPos( 10, 5 )
-    delay_text:SetColor( Color( 0, 0, 0 ) )
-    delay_text:SetText( "Set the delay when MBSync should re-synchronize the bans." )
-    delay_text:SetSize(380, 15)
-
-    local delay_textentry = vgui.Create( "DTextEntry", pnl )
-    delay_textentry:SetPos( 10, 20 )
-    delay_textentry:SetSize( 220, 20 )
-    delay_textentry:SetPlaceholderText( "Timer Delay in seconds ( example: 300 )" )
-
-    local save_button = vgui.Create( "DButton", pnl )
-    save_button:SetText( "Save" )
-    save_button:SetPos( 230, 20 )
-    save_button:SetSize( 100, 20 )
-    save_button.DoClick = function()
-        if save_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
-        end
-    end
-
-    local bantable_text = vgui.Create( "DLabel", pnl )
-    bantable_text:SetPos( 10, 50 )
-    bantable_text:SetColor( Color( 0, 0, 0 ) )
-    bantable_text:SetText( "Ban table with ALL bans" )
-    bantable_text:SetSize(380, 15)
-
-    local search_textentry = vgui.Create( "DTextEntry", pnl )
-    search_textentry:SetPos( 10, 65 )
-    search_textentry:SetSize( 170, 20 )
-    search_textentry:SetPlaceholderText( "Nickname/SteamID/SID64/Admin" )
-
-    local search_button = vgui.Create( "DButton", pnl )
-    search_button:SetText( "Search" )
-    search_button:SetPos( 180, 65 )
-    search_button:SetSize( 60, 20 )
-    search_button.DoClick = function()
-        if search_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
-        end
-    end
-
-    --[[
-    local sort_button = vgui.Create( "DButton", pnl )
-    sort_button:SetText( "Sort by: [INSERT]" )
-    sort_button:SetPos( 240, 65 )
-    sort_button:SetSize( 120, 20 )
-    sort_button.DoClick = function()
-        if search_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
-        end
-    end
-    ]]
-
-    local reload_button = vgui.Create( "DButton", pnl )
-    reload_button:SetText( "Reload" )
-    reload_button:SetPos( 380, 65 )
-    reload_button:SetSize( 65, 20 )
-    reload_button.DoClick = function()
-        if reload_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
-        end
-    end
-
-    local ban_table = vgui.Create( "DListView", pnl )
-    ban_table:SetPos( 10, 85 )
-    ban_table:SetSize( 435, 240 )
-    ban_table:SetMultiSelect( false )
-    ban_table:AddColumn( "Ban ID" ):SetFixedWidth( 40 )
-    ban_table:AddColumn( "SteamID" )
-    ban_table:AddColumn( "Admin" )
-    ban_table:AddColumn( "Ban Length" )
-    ban_table:AddColumn( "Ban Reason" )
-    ban_table:AddColumn( "Unbanned" )
-    --local test = allserver_table:AddColumn( "Test" )
-    ban_table.OnRowRightClick = function(panel, lineID, line)
-        local ident = line:GetValue(1)
-        local cursor_x, cursor_y = panel:CursorPos()
-        local DMenu = vgui.Create("DMenu", panel)
-        DMenu:SetPos(cursor_x, cursor_y)
-        DMenu:AddOption("Unban")
-        DMenu:AddOption("Edit")
-        DMenu:AddOption("Advanced Info")
-        DMenu.OptionSelected = function(menu,optPnl,optStr)
-            if optStr == "Unban" then
-                --
-            elseif optStr == "Edit" then
-                MSync.modules[info.ModuleIdentifier].editBanPanel(line:GetColumnText( 1 ))
-            elseif optStr == "Advanced Info" then
-                MSync.modules[info.ModuleIdentifier].advancedInfoPanel(line:GetColumnText( 1 ))
-            end
-        end
-    end
-
-    --ban_table:AddLine( "1", "[ApDev] Rainbow Dash", "X-Coder", "Permanent", "Fucking Around", "" )
-    --ban_table:AddLine( "2", "X-Coder", "Altesismein", "3d", "Bugs", "[ApDev] Rainbow Dash" )
-    --ban_table:AddLine( "3", "Altesismein", "[ApDev] Rainbow Dash", "20d", "Test", "X-Coder" )
-
-    --[[
-        Define sortby variable for sorting the ban table
-    ]]
-
-    local sortby = {
-        Column = 1,
-        Descending = true
-    }
-    ban_table:SortByColumn( sortby.Column, sortby.Descending )
-
-    local sortby_dropdown = vgui.Create( "DComboBox", pnl )
-    sortby_dropdown:SetPos( 240, 65 )
-    sortby_dropdown:SetSize( 140, 20 )
-    sortby_dropdown:SetValue( "Sort by: Ban ID/Desc" )
-    sortby_dropdown:AddChoice( "Ban ID" )
-    sortby_dropdown:AddChoice( "SteamID" )
-    sortby_dropdown:AddChoice( "Admin" )
-    sortby_dropdown:AddChoice( "Ban Length" )
-    sortby_dropdown:AddChoice( "Ban Reason" )
-    sortby_dropdown:AddChoice( "Unbanned" )
-    sortby_dropdown:SetSortItems( false )
-    sortby_dropdown.OnSelect = function( self, index, value )
-        --ban_table
-        if value == "Ban ID" then
-            sortby.Column = 1
-            if sortby.Descending then
-                sortby.Descending = false
-                sortby_dropdown:SetValue( "Sort by: Ban ID/Asc" )
-            else
-                sortby.Descending = true
-                sortby_dropdown:SetValue( "Sort by: Ban ID/Desc" )
-            end
-        elseif value == "SteamID" then
-            sortby.Column = 2
-            if sortby.Descending then
-                sortby.Descending = false
-                sortby_dropdown:SetValue( "Sort by: SID/ASC" )
-            else
-                sortby.Descending = true
-                sortby_dropdown:SetValue( "Sort by: SID/Desc" )
-            end
-        elseif value == "Admin" then
-            sortby.Column = 3
-            if sortby.Descending then
-                sortby.Descending = false
-                sortby_dropdown:SetValue( "Sort by: Admin/Asc" )
-            else
-                sortby.Descending = true
-                sortby_dropdown:SetValue( "Sort by: Admin/Desc" )
-            end
-        elseif value == "Ban Length" then
-            sortby.Column = 4
-            if sortby.Descending then
-                sortby.Descending = false
-                sortby_dropdown:SetValue( "Sort by: Length/Asc" )
-            else
-                sortby.Descending = true
-                sortby_dropdown:SetValue( "Sort by: Length/Desc" )
-            end
-        elseif value == "Ban Reason" then
-            sortby.Column = 5
-            if sortby.Descending then
-                sortby.Descending = false
-                sortby_dropdown:SetValue( "Sort by: Reason/Asc" )
-            else
-                sortby.Descending = true
-                sortby_dropdown:SetValue( "Sort by: Reason/Desc" )
-            end
-        elseif value == "Unbanned" then
-            sortby.Column = 6
-            if sortby.Descending then
-                sortby.Descending = false
-                sortby_dropdown:SetValue( "Sort by: Unbanned/Asc" )
-            else
-                sortby.Descending = true
-                sortby_dropdown:SetValue( "Sort by: Unbanned/Desc" )
-            end
-        end
-
-        if value then
-            ban_table:SortByColumn( sortby.Column, sortby.Descending )
-        end
-    end
-
-    return pnl
-end
-
---[[
-    Define the client panel for client usage ( or as example: use it as additional admin gui which does not need msync.admingui permission)
-]]
-MSync.modules[info.ModuleIdentifier].clientPanel = function()
-
-    --[[
-        Get Ban table and then wait for the reply before showing it
-    ]]
-
-    MSync.modules[info.ModuleIdentifier].getBanTable()
-
-    local tempTable = {}
-    local pages = 0
-    local tablePage = 0
-
-    local panel = vgui.Create( "DFrame" )
-    panel:SetSize( 800, 450 )
-    panel:SetTitle( "MSync Admin Menu" )
-    panel:Center()
-    panel:MakePopup()
-    panel:SetBackgroundBlur( true )
-
-    local search_textentry = vgui.Create( "DTextEntry", panel )
-    search_textentry:SetPos( 15, 35 )
-    search_textentry:SetSize( 250, 20 )
-    search_textentry:SetPlaceholderText( "Nickname/SteamID/SID64/Admin" )
-
-    local ban_table = vgui.Create( "DListView", panel )
-    ban_table:SetPos( 15, 60 )
-    ban_table:SetSize( 770, 360 )
-    ban_table:SetMultiSelect( false )
-    ban_table:AddColumn( "Ban ID" ):SetFixedWidth( 50 )
-    ban_table:AddColumn( "Nickname" ):SetFixedWidth( 120 )
-    ban_table:AddColumn( "Admin" ):SetFixedWidth( 120 )
-    ban_table:AddColumn( "Ban Date" ):SetFixedWidth( 120 )
-    ban_table:AddColumn( "Ban Length" ):SetFixedWidth( 120 )
-    ban_table:AddColumn( "Ban Reason" )
-
-    local search_button = vgui.Create( "DButton", panel )
-    search_button:SetText( "Search" )
-    search_button:SetPos( 270, 35 )
-    search_button:SetSize( 130, 20 )
-
-    local sortby_dropdown = vgui.Create( "DComboBox", panel )
-    sortby_dropdown:SetPos( 405, 35 )
-    sortby_dropdown:SetSize( 130, 20 )
-    sortby_dropdown:SetValue( "Sort by: Ban ID" )
-    sortby_dropdown:AddChoice( "Ban ID" )
-    sortby_dropdown:AddChoice( "Nickname" )
-    sortby_dropdown:AddChoice( "Admin" )
-    sortby_dropdown:AddChoice( "Ban Length" )
-    sortby_dropdown:AddChoice( "Ban Reason" )
-    sortby_dropdown:SetSortItems( false )
-
-    local listascdesc_button = vgui.Create( "DButton", panel )
-    listascdesc_button:SetText( "List: Desc" )
-    listascdesc_button:SetPos( 540, 35 )
-    listascdesc_button:SetSize( 110, 20 )
-
-    local sync_button = vgui.Create( "DButton", panel )
-    sync_button:SetText( "Reload Bans" )
-    sync_button:SetPos( 655, 35 )
-    sync_button:SetSize( 130, 20 )
-
-    local firstpage_button = vgui.Create( "DButton", panel )
-    firstpage_button:SetText( "<< First" )
-    firstpage_button:SetPos( 15, 421 )
-    firstpage_button:SetSize( 185, 20 )
-    firstpage_button:SetDisabled(true)
-
-    local previouspage_button = vgui.Create( "DButton", panel )
-    previouspage_button:SetText( "< Previous" )
-    previouspage_button:SetPos( 200, 421 )
-    previouspage_button:SetSize( 185, 20 )
-    previouspage_button:SetDisabled(true)
-
-    local pageof_text = vgui.Create( "DLabel", panel )
-    pageof_text:SetPos( 385, 421 )
-    pageof_text:SetColor( Color( 255, 255, 255 ) )
-    pageof_text:SetText( "1/"..pages )
-    pageof_text:SetSize(30, 20)
-    pageof_text:SetContentAlignment( 5 )
-
-    local nextpage_button = vgui.Create( "DButton", panel )
-    nextpage_button:SetText( "Next >" )
-    nextpage_button:SetPos( 415, 421 )
-    nextpage_button:SetSize( 185, 20 )
-    nextpage_button:SetDisabled(true)
-
-    local lastpage_button = vgui.Create( "DButton", panel )
-    lastpage_button:SetText( "Last >>" )
-    lastpage_button:SetPos( 600, 421 )
-    lastpage_button:SetSize( 185, 20 )
-    lastpage_button:SetDisabled(true)
 
     MSync.modules[info.ModuleIdentifier].advancedInfoPanel = function(tbl)
 
@@ -835,7 +533,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             steamid64_textentry:SetText( tbl["steamid64"] )
             adminnickname_textentry:SetText( tbl["adminNickname"] )
             bandate_textentry:SetText( os.date( "%H:%M:%S - %d/%m/%Y" ,tbl["timestamp"]) )
-            if not tbl["length"] == 0 then
+            if not (tbl["length"] == 0) then
                 banlength_textentry:SetText( ULib.secondsToStringTime(tbl["length"]) )
                 unbandate_textentry:SetText( os.date( "%H:%M:%S - %d/%m/%Y" ,tbl["timestamp"] + tbl["length"]) )
                 remainingtime_textentry:SetText( ULib.secondsToStringTime((tbl["timestamp"] + tbl["length"])-os.time()) )
@@ -1043,6 +741,318 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             banreason_textentry:SetText( tbl["reason"] )
         end
     end
+
+end
+
+--[[
+    Define the admin panel for the settings
+]]
+MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
+    local pnl = vgui.Create( "DPanel", sheet )
+    pnl:Dock(FILL)
+
+    local delay_text = vgui.Create( "DLabel", pnl )
+    delay_text:SetPos( 10, 5 )
+    delay_text:SetColor( Color( 0, 0, 0 ) )
+    delay_text:SetText( "Set the delay when MBSync should re-synchronize the bans." )
+    delay_text:SetSize(380, 15)
+
+    local delay_textentry = vgui.Create( "DTextEntry", pnl )
+    delay_textentry:SetPos( 10, 20 )
+    delay_textentry:SetSize( 220, 20 )
+    delay_textentry:SetPlaceholderText( "Timer Delay in seconds ( example: 300 )" )
+
+    local save_button = vgui.Create( "DButton", pnl )
+    save_button:SetText( "Save" )
+    save_button:SetPos( 230, 20 )
+    save_button:SetSize( 100, 20 )
+
+    local bantable_text = vgui.Create( "DLabel", pnl )
+    bantable_text:SetPos( 10, 50 )
+    bantable_text:SetColor( Color( 0, 0, 0 ) )
+    bantable_text:SetText( "Ban table with ALL bans" )
+    bantable_text:SetSize(380, 15)
+
+    local search_textentry = vgui.Create( "DTextEntry", pnl )
+    search_textentry:SetPos( 10, 65 )
+    search_textentry:SetSize( 170, 20 )
+    search_textentry:SetPlaceholderText( "Nickname/SteamID/SID64/Admin" )
+
+    local search_button = vgui.Create( "DButton", pnl )
+    search_button:SetText( "Search" )
+    search_button:SetPos( 180, 65 )
+    search_button:SetSize( 60, 20 )
+
+    --[[
+    local sort_button = vgui.Create( "DButton", pnl )
+    sort_button:SetText( "Sort by: [INSERT]" )
+    sort_button:SetPos( 240, 65 )
+    sort_button:SetSize( 120, 20 )
+    sort_button.DoClick = function()
+        if search_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
+            allserver_table:AddLine(allserver_textentry:GetValue())
+            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
+            allserver_textentry:SetText("")
+            MSync.modules.MRSync.sendSettings()
+        end
+    end
+    ]]
+
+    local reload_button = vgui.Create( "DButton", pnl )
+    reload_button:SetText( "Reload" )
+    reload_button:SetPos( 380, 65 )
+    reload_button:SetSize( 65, 20 )
+
+    local ban_table = vgui.Create( "DListView", pnl )
+    ban_table:SetPos( 10, 85 )
+    ban_table:SetSize( 435, 240 )
+    ban_table:SetMultiSelect( false )
+    ban_table:AddColumn( "Ban ID" ):SetFixedWidth( 40 )
+    ban_table:AddColumn( "SteamID" )
+    ban_table:AddColumn( "Admin" )
+    ban_table:AddColumn( "Ban Length" )
+    ban_table:AddColumn( "Ban Reason" )
+    ban_table:AddColumn( "Unbanned" )
+    --local test = allserver_table:AddColumn( "Test" )
+
+    local sortby_dropdown = vgui.Create( "DComboBox", pnl )
+    sortby_dropdown:SetPos( 240, 65 )
+    sortby_dropdown:SetSize( 140, 20 )
+    sortby_dropdown:SetValue( "Sort by: Ban ID/Desc" )
+    sortby_dropdown:AddChoice( "Ban ID" )
+    sortby_dropdown:AddChoice( "SteamID" )
+    sortby_dropdown:AddChoice( "Admin" )
+    sortby_dropdown:AddChoice( "Ban Length" )
+    sortby_dropdown:AddChoice( "Ban Reason" )
+    sortby_dropdown:AddChoice( "Unbanned" )
+    sortby_dropdown:SetSortItems( false )
+
+    --[[
+        ############################
+        FUNCTIONALITY PART
+        ############################
+    ]]
+
+    local sortby = {
+        Column = 1,
+        Descending = true
+    }
+    ban_table:SortByColumn( sortby.Column, sortby.Descending )
+
+    save_button.DoClick = function()
+        --delay_textentry
+    end
+
+    search_button.DoClick = function()
+        -- search_textentry
+    end
+
+    reload_button.DoClick = function()
+        MSync.modules[info.ModuleIdentifier].getBanTable(true)
+
+        timer.Create("msync.mbsync.waitForBanTable", 1, 0, function() 
+            if MSync.modules[info.ModuleIdentifier].temporary["unfinished"] then return end
+    
+            tempTable = MSync.modules[info.ModuleIdentifier].banTable
+            --PrintTable(tempTable)
+            for k,v in pairs(tempTable) do
+                local length = ""
+                local unbanned = "false"
+
+                if v["unBanningAdmin"] then
+                    unbanned = "true"
+                end
+
+                if v["length"] == 0 then
+                    length = "Permanent"
+                else
+                    length = ULib.secondsToStringTime(v["length"])
+                end
+
+                ban_table:AddLine( v["banId"], v["nickname"], v["adminNickname"], length, v["reason"], unbanned)
+            end
+            timer.Remove("msync.mbsync.waitForBanTable")
+        end)
+    end
+
+    ban_table.OnRowRightClick = function(panel, lineID, line)
+        local ident = line:GetValue(1)
+        local cursor_x, cursor_y = panel:CursorPos()
+        local DMenu = vgui.Create("DMenu", panel)
+        DMenu:SetPos(cursor_x, cursor_y)
+        DMenu:AddOption("Unban")
+        DMenu:AddOption("Edit")
+        DMenu:AddOption("Advanced Info")
+        DMenu.OptionSelected = function(menu,optPnl,optStr)
+            if optStr == "Unban" then
+                MSync.modules[info.ModuleIdentifier].unban(line:GetColumnText( 1 ))
+            elseif optStr == "Edit" then
+                MSync.modules[info.ModuleIdentifier].editBanPanel(MSync.modules[info.ModuleIdentifier].banTable[line:GetColumnText( 1 )])
+            elseif optStr == "Advanced Info" then
+                MSync.modules[info.ModuleIdentifier].advancedInfoPanel(MSync.modules[info.ModuleIdentifier].banTable[line:GetColumnText( 1 )])
+            end
+        end
+    end
+
+    sortby_dropdown.OnSelect = function( self, index, value )
+        if value == "Ban ID" then
+            sortby.Column = 1
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: Ban ID/Asc" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: Ban ID/Desc" )
+            end
+        elseif value == "SteamID" then
+            sortby.Column = 2
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: SID/ASC" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: SID/Desc" )
+            end
+        elseif value == "Admin" then
+            sortby.Column = 3
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: Admin/Asc" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: Admin/Desc" )
+            end
+        elseif value == "Ban Length" then
+            sortby.Column = 4
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: Length/Asc" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: Length/Desc" )
+            end
+        elseif value == "Ban Reason" then
+            sortby.Column = 5
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: Reason/Asc" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: Reason/Desc" )
+            end
+        elseif value == "Unbanned" then
+            sortby.Column = 6
+            if sortby.Descending then
+                sortby.Descending = false
+                sortby_dropdown:SetValue( "Sort by: Unbanned/Asc" )
+            else
+                sortby.Descending = true
+                sortby_dropdown:SetValue( "Sort by: Unbanned/Desc" )
+            end
+        end
+
+        if value then
+            ban_table:SortByColumn( sortby.Column, sortby.Descending )
+        end
+    end
+
+    return pnl
+end
+
+--[[
+    Define the client panel for client usage ( or as example: use it as additional admin gui which does not need msync.admingui permission)
+]]
+MSync.modules[info.ModuleIdentifier].clientPanel = function()
+
+    --[[
+        Get Ban table and then wait for the reply before showing it
+    ]]
+
+    MSync.modules[info.ModuleIdentifier].getBanTable()
+
+    local tempTable = {}
+    local pages = 0
+    local tablePage = 0
+
+    local panel = vgui.Create( "DFrame" )
+    panel:SetSize( 800, 450 )
+    panel:SetTitle( "MSync Admin Menu" )
+    panel:Center()
+    panel:MakePopup()
+    panel:SetBackgroundBlur( true )
+
+    local search_textentry = vgui.Create( "DTextEntry", panel )
+    search_textentry:SetPos( 15, 35 )
+    search_textentry:SetSize( 250, 20 )
+    search_textentry:SetPlaceholderText( "Nickname/SteamID/SID64/Admin" )
+
+    local ban_table = vgui.Create( "DListView", panel )
+    ban_table:SetPos( 15, 60 )
+    ban_table:SetSize( 770, 360 )
+    ban_table:SetMultiSelect( false )
+    ban_table:AddColumn( "Ban ID" ):SetFixedWidth( 50 )
+    ban_table:AddColumn( "Nickname" ):SetFixedWidth( 120 )
+    ban_table:AddColumn( "Admin" ):SetFixedWidth( 120 )
+    ban_table:AddColumn( "Ban Date" ):SetFixedWidth( 120 )
+    ban_table:AddColumn( "Ban Length" ):SetFixedWidth( 120 )
+    ban_table:AddColumn( "Ban Reason" )
+
+    local search_button = vgui.Create( "DButton", panel )
+    search_button:SetText( "Search" )
+    search_button:SetPos( 270, 35 )
+    search_button:SetSize( 130, 20 )
+
+    local sortby_dropdown = vgui.Create( "DComboBox", panel )
+    sortby_dropdown:SetPos( 405, 35 )
+    sortby_dropdown:SetSize( 130, 20 )
+    sortby_dropdown:SetValue( "Sort by: Ban ID" )
+    sortby_dropdown:AddChoice( "Ban ID" )
+    sortby_dropdown:AddChoice( "Nickname" )
+    sortby_dropdown:AddChoice( "Admin" )
+    sortby_dropdown:AddChoice( "Ban Length" )
+    sortby_dropdown:AddChoice( "Ban Reason" )
+    sortby_dropdown:SetSortItems( false )
+
+    local listascdesc_button = vgui.Create( "DButton", panel )
+    listascdesc_button:SetText( "List: Desc" )
+    listascdesc_button:SetPos( 540, 35 )
+    listascdesc_button:SetSize( 110, 20 )
+
+    local sync_button = vgui.Create( "DButton", panel )
+    sync_button:SetText( "Reload Bans" )
+    sync_button:SetPos( 655, 35 )
+    sync_button:SetSize( 130, 20 )
+
+    local firstpage_button = vgui.Create( "DButton", panel )
+    firstpage_button:SetText( "<< First" )
+    firstpage_button:SetPos( 15, 421 )
+    firstpage_button:SetSize( 185, 20 )
+    firstpage_button:SetDisabled(true)
+
+    local previouspage_button = vgui.Create( "DButton", panel )
+    previouspage_button:SetText( "< Previous" )
+    previouspage_button:SetPos( 200, 421 )
+    previouspage_button:SetSize( 185, 20 )
+    previouspage_button:SetDisabled(true)
+
+    local pageof_text = vgui.Create( "DLabel", panel )
+    pageof_text:SetPos( 385, 421 )
+    pageof_text:SetColor( Color( 255, 255, 255 ) )
+    pageof_text:SetText( "1/"..pages )
+    pageof_text:SetSize(30, 20)
+    pageof_text:SetContentAlignment( 5 )
+
+    local nextpage_button = vgui.Create( "DButton", panel )
+    nextpage_button:SetText( "Next >" )
+    nextpage_button:SetPos( 415, 421 )
+    nextpage_button:SetSize( 185, 20 )
+    nextpage_button:SetDisabled(true)
+
+    local lastpage_button = vgui.Create( "DButton", panel )
+    lastpage_button:SetText( "Last >>" )
+    lastpage_button:SetPos( 600, 421 )
+    lastpage_button:SetSize( 185, 20 )
+    lastpage_button:SetDisabled(true)
 
 
     --[[
@@ -1298,10 +1308,12 @@ MSync.modules[info.ModuleIdentifier].net = function()
             userid [number] - the ban id of the to be lifted ban
         Returns: nothing
     ]]
-    MSync.modules[info.ModuleIdentifier].getBanTable = function()
+    MSync.modules[info.ModuleIdentifier].getBanTable = function(fulltable)
         MSync.modules[info.ModuleIdentifier].temporary = {}
+        MSync.modules[info.ModuleIdentifier].banTable = {}
 
         net.Start("msync."..(info.ModuleIdentifier)..".getBanTable")
+            net.WriteBool(fulltable)
         net.SendToServer()
     end
 
@@ -1325,6 +1337,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     net.Receive( "msync."..(info.ModuleIdentifier)..".recieveData", function( len, ply )
         MSync.modules[info.ModuleIdentifier].explodeTable(MSync.modules[info.ModuleIdentifier].banTable, net.ReadTable())
+        print(MSync.modules[info.ModuleIdentifier].temporary['recieved'])
         MSync.modules[info.ModuleIdentifier].temporary["recieved"] = MSync.modules[info.ModuleIdentifier].temporary["recieved"] + 1
 
         if MSync.modules[info.ModuleIdentifier].temporary["recieved"] == MSync.modules[info.ModuleIdentifier].temporary["count"] then
@@ -1341,6 +1354,12 @@ MSync.modules[info.ModuleIdentifier].net = function()
                 tempTable[v['banId']]['reason']         = v['reason']
                 tempTable[v['banId']]['timestamp']      = v['timestamp']
                 tempTable[v['banId']]['servergroup']    = v['servergroup']
+                if v['banningAdmin']['nickname'] then
+                    tempTable[v['banId']]['adminNickname']  = v['banningAdmin']['nickname']
+                end
+                if v['unBanningAdmin']['nickname'] then
+                    tempTable[v['banId']]['unBanningAdmin']  = v['unBanningAdmin']['nickname']
+                end
             end
             MSync.modules[info.ModuleIdentifier].banTable = tempTable
         end
