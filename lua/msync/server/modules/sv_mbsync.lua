@@ -754,21 +754,20 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".openBanGUI")
     MSync.modules[info.ModuleIdentifier].openBanGUI = function(ply)
-        local tableLength = #MSync.modules[info.ModuleIdentifier].recentDisconnects
+        local tableLength = table.Count(MSync.modules[info.ModuleIdentifier].recentDisconnects)
         local disconnectTable = {}
 
-        if not tableLength == 0 then
-            for i = 0, 9, 1 do
-                if MSync.modules[info.ModuleIdentifier].recentDisconnects[tableLength-i] then
-                    disconnectTable[i] = MSync.modules[info.ModuleIdentifier].recentDisconnects[tableLength-i]
-                else
-                    break
+        if tableLength > 0 then
+            local runs = 0
+            for k,v in pairs(MSync.modules[info.ModuleIdentifier].recentDisconnects) do
+                if runs > (tableLength - 10) then
+                    disconnectTable[k] = v
                 end
+                runs = runs + 1
             end
         else
             disconnectTable = {}
         end
-
         net.Start("msync."..info.ModuleIdentifier..".openBanGUI")
             net.WriteTable(disconnectTable)
         net.Send(ply)
