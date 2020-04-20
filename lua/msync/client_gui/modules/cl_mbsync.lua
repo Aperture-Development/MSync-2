@@ -76,13 +76,13 @@ MSync.modules[info.ModuleIdentifier].init = function()
         local sorting = true
         local tempTable = table.DeSanitise( tbl )
         local keys = table.GetKeys( tempTable )
-    
+
         while sorting do
             sorting = false
             for k,v in pairs(keys) do
                 local a, b
                 if not keys[k+1] then break end
-    
+
                 if type( tempTable[v][key] ) == "string" then
                     a = tempTable[v][key]:lower()
                     b = tempTable[keys[k+1]][key]:lower()
@@ -90,7 +90,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
                     a = tempTable[v][key]
                     b = tempTable[keys[k+1]][key]
                 end
-    
+
                 if asc then
                     if a > b then
                         sorting = true
@@ -115,16 +115,16 @@ MSync.modules[info.ModuleIdentifier].init = function()
 
     MSync.modules[info.ModuleIdentifier].searchTable = function(tbl, term)
         local searchTerm = ""
-    
+
         if type(term) == 'string' then
             searchTerm = term:lower()
         else
             searchTerm = tostring(term):lower()
         end
-    
+
         local tempTbl = {}
         local matches = false
-    
+
         for k, v in pairs(tbl) do
             matches = false
             for k2, v2 in pairs(v) do
@@ -138,12 +138,12 @@ MSync.modules[info.ModuleIdentifier].init = function()
                     end
                 end
             end
-    
+
             if matches then
                 tempTbl[k] = v
             end
         end
-    
+
         return tempTbl
     end
 
@@ -153,13 +153,13 @@ MSync.modules[info.ModuleIdentifier].init = function()
         panel:SetTitle( "MBSync - Ban User " )
         panel:Center()
         panel:MakePopup()
-    
+
         local steamid_text = vgui.Create( "DLabel", panel )
         steamid_text:SetPos( 15, 35 )
         steamid_text:SetColor( Color( 255, 255, 255 ) )
         steamid_text:SetText( "SteamID/SteamID64:" )
         steamid_text:SetSize(380, 15)
-    
+
         local steamid_textentry = vgui.Create( "DTextEntry", panel )
         steamid_textentry:SetPos( 125, 35 )
         steamid_textentry:SetSize( 210, 20 )
@@ -172,24 +172,24 @@ MSync.modules[info.ModuleIdentifier].init = function()
         --        ban_button:SetDisabled(false)
         --    end
         --end
-    
+
         local length_text = vgui.Create( "DLabel", panel )
         length_text:SetPos( 15, 60 )
         length_text:SetColor( Color( 255, 255, 255 ) )
         length_text:SetText( "Length" )
         length_text:SetSize(380, 15)
-    
+
         local length_textentry = vgui.Create( "DTextEntry", panel )
         length_textentry:SetPos( 125, 60 )
         length_textentry:SetSize( 210, 20 )
         length_textentry:SetPlaceholderText( "Ban Length in Minutes, 0 = Permanent" )
-    
+
         local allservers_text = vgui.Create( "DLabel", panel )
         allservers_text:SetPos( 15, 85 )
         allservers_text:SetColor( Color( 255, 255, 255 ) )
         allservers_text:SetText( "Banned everywhere:" )
         allservers_text:SetSize(380, 15)
-    
+
         local allservers_dropdown = vgui.Create( "DComboBox", panel )
         allservers_dropdown:SetPos( 125, 85 )
         allservers_dropdown:SetSize( 210, 20 )
@@ -200,20 +200,20 @@ MSync.modules[info.ModuleIdentifier].init = function()
         allservers_dropdown.OnSelect = function( self, index, value )
             --
         end
-    
+
         local reason_text = vgui.Create( "DLabel", panel )
         reason_text:SetPos( 15, 110 )
         reason_text:SetColor( Color( 255, 255, 255 ) )
         reason_text:SetText( "Reason" )
         reason_text:SetSize(380, 15)
-    
+
         local reasonMaxLen_text = vgui.Create( "DLabel", panel )
         reasonMaxLen_text:SetPos( 280, 185 )
         reasonMaxLen_text:SetColor( Color( 255, 255, 255 ) )
         reasonMaxLen_text:SetText( "0/100" )
         reasonMaxLen_text:SetSize(50, 15)
         reasonMaxLen_text:SetContentAlignment( 9 )
-    
+
         local reason_textentry = vgui.Create( "DTextEntry", panel )
         reason_textentry:SetPos( 15, 125 )
         reason_textentry:SetSize( 320, 60 )
@@ -223,14 +223,14 @@ MSync.modules[info.ModuleIdentifier].init = function()
         reason_textentry.OnValueChange = function( pnl, value )
             print(value)
             reasonMaxLen_text:SetText(string.len( value ).."/100")
-    
+
             if string.len( value ) > 100 then
                 reasonMaxLen_text:SetColor( Color( 255, 120, 120 ) )
             else
                 reasonMaxLen_text:SetColor( Color( 255, 255, 255 ) )
             end
         end
-    
+
         --local bantype_dropdown = vgui.Create( "DComboBox", panel )
         --bantype_dropdown:SetPos( 125, 35 )
         --bantype_dropdown:SetSize( 210, 20 )
@@ -241,13 +241,13 @@ MSync.modules[info.ModuleIdentifier].init = function()
         --bantype_dropdown.OnSelect = function( self, index, value )
             --
         --end
-    
+
         local reasonMaxLen_text = vgui.Create( "DLabel", panel )
         reasonMaxLen_text:SetPos( 15, 205 )
         reasonMaxLen_text:SetColor( Color( 255, 255, 255 ) )
         reasonMaxLen_text:SetText( "Recently Disconnected Players" )
         reasonMaxLen_text:SetSize(380, 15)
-    
+
         local ban_table = vgui.Create( "DListView", panel )
         ban_table:SetPos( 15, 220 )
         ban_table:SetSize( 320, 200 )
@@ -258,7 +258,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
         ban_table.OnRowSelected = function( lst, index, pnl )
             steamid_textentry:SetText(pnl:GetColumnText( 2 ))
         end
-    
+
         if tbl then
             for k,v in pairs(tbl) do
                 ban_table:AddLine( v.name, v.steamid, v.steamid64 )
@@ -339,7 +339,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
                 cancel_panel:Close()
             end
         end
-    
+
     end
 
     MSync.modules[info.ModuleIdentifier].advancedInfoPanel = function(tbl)
@@ -751,6 +751,8 @@ MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
     local pnl = vgui.Create( "DPanel", sheet )
     pnl:Dock(FILL)
 
+    MSync.modules[info.ModuleIdentifier].getSettings()
+
     local delay_text = vgui.Create( "DLabel", pnl )
     delay_text:SetPos( 10, 5 )
     delay_text:SetColor( Color( 0, 0, 0 ) )
@@ -783,23 +785,8 @@ MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
     search_button:SetPos( 180, 65 )
     search_button:SetSize( 60, 20 )
 
-    --[[
-    local sort_button = vgui.Create( "DButton", pnl )
-    sort_button:SetText( "Sort by: [INSERT]" )
-    sort_button:SetPos( 240, 65 )
-    sort_button:SetSize( 120, 20 )
-    sort_button.DoClick = function()
-        if search_button:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            allserver_table:AddLine(allserver_textentry:GetValue())
-            MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
-            allserver_textentry:SetText("")
-            MSync.modules.MRSync.sendSettings()
-        end
-    end
-    ]]
-
     local reload_button = vgui.Create( "DButton", pnl )
-    reload_button:SetText( "Reload" )
+    reload_button:SetText( "Load Data" )
     reload_button:SetPos( 380, 65 )
     reload_button:SetSize( 65, 20 )
 
@@ -839,22 +826,60 @@ MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
     }
     ban_table:SortByColumn( sortby.Column, sortby.Descending )
 
+    function displayTable(tbl)
+        ban_table:Clear()
+        for k,v in pairs(tbl) do
+            local length = ""
+            local unbanned = "false"
+
+            if v["unBanningAdmin"] then
+                unbanned = "true"
+            end
+
+            if v["length"] == 0 then
+                length = "Permanent"
+            else
+                length = ULib.secondsToStringTime(v["length"])
+            end
+
+            ban_table:AddLine( v["banId"], v["steamid"], v["adminNickname"], length, v["reason"], unbanned)
+        end
+    end
+
     save_button.DoClick = function()
-        --delay_textentry
+        local num = tonumber(delay_textentry:GetValue())
+        if num then
+            if num < 30 then
+                chat.AddText(Color(255, 60, 60),"[MBSync_ERROR] ",Color(255,170,0),"You should not select a value below ",Color(60, 255, 60),"30",Color(255,170,0)," seconds. We recommend to have it at ",Color(60, 255, 60),"300",Color(255,170,0)," seconds")
+            else
+                MSync.modules[info.ModuleIdentifier].settings["syncDelay"] = num
+                MSync.modules[info.ModuleIdentifier].sendSettings()
+            end
+        else
+            chat.AddText(Color(255, 60, 60),"[MBSync_ERROR] ",Color(255,170,0),"That is not a valid value!")
+        end
     end
 
     search_button.DoClick = function()
-        -- search_textentry
+        if search_textentry:GetValue() then
+            tempTable = {}
+            tempTable = MSync.modules[info.ModuleIdentifier].searchTable(MSync.modules[info.ModuleIdentifier].banTable, search_textentry:GetValue())
+            displayTable(tempTable)
+            ban_table:SortByColumn( sortby.Column, sortby.Descending )
+        else
+            tempTable = MSync.modules[info.ModuleIdentifier].banTable
+            displayTable(tempTable)
+            ban_table:SortByColumn( sortby.Column, sortby.Descending )
+        end
     end
 
     reload_button.DoClick = function()
         MSync.modules[info.ModuleIdentifier].getBanTable(true)
 
-        timer.Create("msync.mbsync.waitForBanTable", 1, 0, function() 
+        timer.Create("msync.mbsync.waitForBanTable", 1, 0, function()
             if MSync.modules[info.ModuleIdentifier].temporary["unfinished"] then return end
-    
+
             tempTable = MSync.modules[info.ModuleIdentifier].banTable
-            --PrintTable(tempTable)
             for k,v in pairs(tempTable) do
                 local length = ""
                 local unbanned = "false"
@@ -869,16 +894,27 @@ MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
                     length = ULib.secondsToStringTime(v["length"])
                 end
 
-                ban_table:AddLine( v["banId"], v["nickname"], v["adminNickname"], length, v["reason"], unbanned)
+                ban_table:AddLine( v["banId"], v["steamid"], v["adminNickname"], length, v["reason"], unbanned)
             end
             timer.Remove("msync.mbsync.waitForBanTable")
         end)
+        reload_button:SetText("Reload")
     end
 
     ban_table.OnRowRightClick = function(panel, lineID, line)
         local ident = line:GetValue(1)
         local cursor_x, cursor_y = panel:CursorPos()
+        print(cursor_x)
         local DMenu = vgui.Create("DMenu", panel)
+
+        if cursor_y > 170 then
+            cursor_y = 170
+        end
+
+        if cursor_x > 290 then
+            cursor_x = 290
+        end
+
         DMenu:SetPos(cursor_x, cursor_y)
         DMenu:AddOption("Unban")
         DMenu:AddOption("Edit")
@@ -955,6 +991,14 @@ MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
             ban_table:SortByColumn( sortby.Column, sortby.Descending )
         end
     end
+
+    timer.Create("msync.mbsync.waitForSettings", 1, 0, function()
+        if not MSync.modules[info.ModuleIdentifier].settings then return end
+
+        delay_textentry:SetText(MSync.modules[info.ModuleIdentifier].settings["syncDelay"])
+
+        timer.Remove("msync.mbsync.waitForSettings")
+    end)
 
     return pnl
 end
@@ -1174,20 +1218,20 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
 
     sync_button.DoClick = function()
         MSync.modules[info.ModuleIdentifier].getBanTable()
-        timer.Create("msync.mbsync.waitForBanTable", 3, 0, function() 
+        timer.Create("msync.mbsync.waitForBanTable", 3, 0, function()
             if MSync.modules[info.ModuleIdentifier].temporary["unfinished"] then return end
-    
+
             tempTable = MSync.modules[info.ModuleIdentifier].sortTable(MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending)
             pages = MSync.modules[info.ModuleIdentifier].getTablePages(tempTable, 20)
             tablePage = 0
-    
+
             pageof_text:SetText( (tablePage+1).."/"..pages )
-    
+
             if pages > 1 then
                 nextpage_button:SetDisabled(false)
                 lastpage_button:SetDisabled(false)
             end
-    
+
             MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, tablePage)
             timer.Remove("msync.mbsync.waitForBanTable")
         end)
@@ -1226,7 +1270,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         lastpage_button:SetDisabled(false)
     end
 
-    timer.Create("msync.mbsync.waitForBanTable", 1, 0, function() 
+    timer.Create("msync.mbsync.waitForBanTable", 1, 0, function()
         if MSync.modules[info.ModuleIdentifier].temporary["unfinished"] then return end
 
         tempTable = MSync.modules[info.ModuleIdentifier].sortTable(MSync.modules[info.ModuleIdentifier].banTable, sortby.Column, sortby.Descending)
@@ -1274,7 +1318,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
             userid = tonumber(userid)
         end
 
-        net.Start("msync."..(info.ModuleIdentifier)..".unban")
+        net.Start("msync."..info.ModuleIdentifier..".unban")
             net.WriteInt(userid)
         net.SendToServer()
     end
@@ -1282,7 +1326,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the server wants to print something to the user chat
         Returns: nothing
     ]]
-    net.Receive( "msync."..(info.ModuleIdentifier)..".sendMessage", function( len, ply )
+    net.Receive( "msync."..info.ModuleIdentifier..".sendMessage", function( len, ply )
         chat.AddText( Color( 237, 135, 26 ), "[MBSync] ", Color( 255, 255, 255), net.ReadString())
     end )
 
@@ -1290,7 +1334,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the client entered '!mban'
         Returns: nothing
     ]]
-    net.Receive( "msync."..(info.ModuleIdentifier)..".openBanGUI", function( len, ply )
+    net.Receive( "msync."..info.ModuleIdentifier..".openBanGUI", function( len, ply )
         MSync.modules[info.ModuleIdentifier].banPanel(net.ReadTable())
     end )
 
@@ -1298,7 +1342,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the client entered '!mbsync'
         Returns: nothing
     ]]
-    net.Receive( "msync."..(info.ModuleIdentifier)..".openBanTable", function( len, ply )
+    net.Receive( "msync."..info.ModuleIdentifier..".openBanTable", function( len, ply )
         MSync.modules[info.ModuleIdentifier].clientPanel()
     end )
 
@@ -1312,7 +1356,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         MSync.modules[info.ModuleIdentifier].temporary = {}
         MSync.modules[info.ModuleIdentifier].banTable = {}
 
-        net.Start("msync."..(info.ModuleIdentifier)..".getBanTable")
+        net.Start("msync."..info.ModuleIdentifier..".getBanTable")
             net.WriteBool(fulltable)
         net.SendToServer()
     end
@@ -1321,7 +1365,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the client entered '!mban'
         Returns: nothing
     ]]
-    net.Receive( "msync."..(info.ModuleIdentifier)..".recieveDataCount", function( len, ply )
+    net.Receive( "msync."..info.ModuleIdentifier..".recieveDataCount", function( len, ply )
         local num = net.ReadFloat()
         if not MSync.modules[info.ModuleIdentifier].temporary["unfinished"] then
             MSync.modules[info.ModuleIdentifier].temporary["count"] = num
@@ -1335,7 +1379,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the client entered '!mban'
         Returns: nothing
     ]]
-    net.Receive( "msync."..(info.ModuleIdentifier)..".recieveData", function( len, ply )
+    net.Receive( "msync."..info.ModuleIdentifier..".recieveData", function( len, ply )
         MSync.modules[info.ModuleIdentifier].explodeTable(MSync.modules[info.ModuleIdentifier].banTable, net.ReadTable())
         print(MSync.modules[info.ModuleIdentifier].temporary['recieved'])
         MSync.modules[info.ModuleIdentifier].temporary["recieved"] = MSync.modules[info.ModuleIdentifier].temporary["recieved"] + 1
@@ -1354,16 +1398,43 @@ MSync.modules[info.ModuleIdentifier].net = function()
                 tempTable[v['banId']]['reason']         = v['reason']
                 tempTable[v['banId']]['timestamp']      = v['timestamp']
                 tempTable[v['banId']]['servergroup']    = v['servergroup']
-                if v['banningAdmin']['nickname'] then
+                if v['banningAdmin'] then
                     tempTable[v['banId']]['adminNickname']  = v['banningAdmin']['nickname']
                 end
-                if v['unBanningAdmin']['nickname'] then
+                if v['unBanningAdmin'] then
                     tempTable[v['banId']]['unBanningAdmin']  = v['unBanningAdmin']['nickname']
                 end
             end
             MSync.modules[info.ModuleIdentifier].banTable = tempTable
         end
     end )
+
+    --[[
+        Description: Net Receiver - Gets called when the server sent settings
+        Returns: nothing
+    ]]
+    net.Receive( "msync."..info.ModuleIdentifier..".sendSettingsPly", function( len, ply )
+        MSync.modules[info.ModuleIdentifier].settings = net.ReadTable()
+    end )
+
+    --[[
+        Description: Function to request the settings from the server
+        Returns: nothing
+    ]]
+    MSync.modules[info.ModuleIdentifier].getSettings = function()
+        net.Start("msync."..info.ModuleIdentifier..".getSettings")
+        net.SendToServer()
+    end
+
+    --[[
+        Description: Function to request the settings from the server
+        Returns: nothing
+    ]]
+    MSync.modules[info.ModuleIdentifier].sendSettings = function()
+        net.Start("msync."..info.ModuleIdentifier..".sendSettings")
+            net.WriteTable(MSync.modules[info.ModuleIdentifier].settings)
+        net.SendToServer()
+    end
 end
 
 --[[
@@ -1379,10 +1450,6 @@ end
 MSync.modules[info.ModuleIdentifier].hooks = function()
     --
 end
-
-
---MSync.modules[info.ModuleIdentifier].clientPanel()
---MSync.AdminPanel.InitPanel()
 
 --[[
     Return info ( Just for single module loading )
