@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENSE
- * @version    0.0.5
+ * @version    0.0.6
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "0.0.5"
+    Version = "0.0.6"
 }
 
 --[[
@@ -76,16 +76,28 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         banUserQ.onSuccess = function( q, data )
             -- Notify the user about the ban and add it to ULib to prevent data loss on Addon Remove
             -- Also, kick the user from the server
+            local msgLength
+            local msgReason
             local banData = {
                 admin = calling_ply:Nick(),
                 reason = reason,
                 unban = os.time()+(length*60),
                 time = os.time()
             }
+            if length == 0 then
+                banData["unban"] = length
+                msgLength = "Permanent"
+            else
+                msgLength = ULib.secondsToStringTime(length)
+            end
 
-            ply:Kick(ULib.getBanMessage( ply:SteamID(), banData))
+            if reason == "" then
+                msgReason = "(None given)"
+            end
+
+            ply:Kick("\n"..ULib.getBanMessage( ply:SteamID(), banData))
             MSync.modules[info.ModuleIdentifier].getActiveBans()
-            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Banned "..ply:Nick().." for "..ULib.secondsToStringTime(length).." with reason "..reason)
+            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Banned "..ply:Nick().." for "..msgLength.." with reason "..msgReason)
         end
 
         banUserQ.onError = function( q, err, sql )
@@ -139,12 +151,25 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 unban = os.time()+(length*60),
                 time = os.time()
             }
+            if length == 0 then
+                banData["unban"] = length
+                msgLength = "Permanent"
+            else
+                msgLength = ULib.secondsToStringTime(length)
+            end
+
+            if reason == "" then
+                msgReason = "(None given)"
+            else
+                msgReason = reason
+            end
+
+            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Banned "..userid.." for "..msgLength.." with reason "..msgReason)
 
             if not player.GetBySteamID(userid) then return end
 
-            player.GetBySteamID(userid):Kick(ULib.getBanMessage( userid, banData))
+            player.GetBySteamID(userid):Kick("\n"..ULib.getBanMessage( userid, banData))
             MSync.modules[info.ModuleIdentifier].getActiveBans()
-            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Banned "..userid.." for "..ULib.secondsToStringTime(length).." with reason "..reason)
         end
 
         banUserIdQ.onError = function( q, err, sql )
@@ -956,13 +981,13 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
                 Translate ban length and Date into readable values
             ]]
 
-            banData.timestamp = os.date( "%H:%M:%S - %d/%m/%Y", banData.timestamp)
-
             if banData.length == 0 then
                 banData.length = "permanent"
             else
                 banData.length = os.date( "%H:%M:%S - %d/%m/%Y", banData.timestamp + banData.length)
             end
+
+            banData.timestamp = os.date( "%H:%M:%S - %d/%m/%Y", banData.timestamp)
 
             --[[
                 Message the ban informations to the asking player
