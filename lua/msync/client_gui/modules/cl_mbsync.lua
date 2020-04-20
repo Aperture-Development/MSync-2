@@ -1319,7 +1319,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         end
 
         net.Start("msync."..info.ModuleIdentifier..".unban")
-            net.WriteInt(userid)
+            net.WriteFloat(userid)
         net.SendToServer()
     end
     --[[
@@ -1327,7 +1327,10 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Returns: nothing
     ]]
     net.Receive( "msync."..info.ModuleIdentifier..".sendMessage", function( len, ply )
-        chat.AddText( Color( 237, 135, 26 ), "[MBSync] ", Color( 255, 255, 255), net.ReadString())
+        local type = net.ReadFloat()
+        if type == 0 then
+            chat.AddText( Color( 237, 135, 26 ), "[MBSync] ", Color( 255, 255, 255), net.ReadString())
+        end
     end )
 
     --[[

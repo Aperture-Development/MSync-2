@@ -219,7 +219,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         ]] )
         unBanUserIdQ:setString(1, calling_ply:SteamID())
         unBanUserIdQ:setString(2, calling_ply:SteamID64())
-        unBanUserIdQ:setString(3, banId)
+        unBanUserIdQ:setNumber(3, banId)
 
         unBanUserIdQ.onSuccess = function( q, data )
             MSync.modules[info.ModuleIdentifier].getActiveBans()
@@ -671,7 +671,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     net.Receive("msync."..info.ModuleIdentifier..".unban", function(len, ply)
         if not ply:query("msync."..info.ModuleIdentifier..".unBanID") then return end
 
-        local banid = net.ReadInt()
+        local banid = net.ReadFloat()
 
         --[[
             Error check and fill in of default data
