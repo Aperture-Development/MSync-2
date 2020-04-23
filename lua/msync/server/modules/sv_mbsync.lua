@@ -515,7 +515,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
     end
 
     --[[
-        Description: Function to get all active bans
+        Description: This function allows us to export our active bans into ULX
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].exportBansToULX = function()
@@ -593,6 +593,9 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         exportActiveBans:start()
     end
+    concommand.Add("msync."..info.ModuleIdentifier..".export", function( ply, cmd, args )
+        MSync.modules[info.ModuleIdentifier].exportBansToULX()
+    end)
 
     --[[
         Description: Function to load the MSync settings file
