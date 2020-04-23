@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    0.0.5
+ * @version    0.0.6
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "0.0.5"
+    Version = "0.0.6"
 }
 
 --[[
@@ -164,14 +164,6 @@ MSync.modules[info.ModuleIdentifier].init = function()
         steamid_textentry:SetPos( 125, 35 )
         steamid_textentry:SetSize( 210, 20 )
         steamid_textentry:SetPlaceholderText( "SteamID/SteamID64" )
-        --steamid_textentry:SetUpdateOnType(true)
-        --steamid_textentry.OnValueChange = function( pnl, value )
-        --    if string.len(value) == 0 then
-        --        ban_button:SetDisabled(true)
-        --    else
-        --        ban_button:SetDisabled(false)
-        --    end
-        --end
 
         local length_text = vgui.Create( "DLabel", panel )
         length_text:SetPos( 15, 60 )
@@ -197,9 +189,6 @@ MSync.modules[info.ModuleIdentifier].init = function()
         allservers_dropdown:AddChoice( "True" )
         allservers_dropdown:AddChoice( "False" )
         allservers_dropdown:SetSortItems( false )
-        allservers_dropdown.OnSelect = function( self, index, value )
-            --
-        end
 
         local reason_text = vgui.Create( "DLabel", panel )
         reason_text:SetPos( 15, 110 )
@@ -221,7 +210,6 @@ MSync.modules[info.ModuleIdentifier].init = function()
         reason_textentry:SetMultiline(true)
         reason_textentry:SetUpdateOnType(true)
         reason_textentry.OnValueChange = function( pnl, value )
-            print(value)
             reasonMaxLen_text:SetText(string.len( value ).."/100")
 
             if string.len( value ) > 100 then
@@ -230,17 +218,6 @@ MSync.modules[info.ModuleIdentifier].init = function()
                 reasonMaxLen_text:SetColor( Color( 255, 255, 255 ) )
             end
         end
-
-        --local bantype_dropdown = vgui.Create( "DComboBox", panel )
-        --bantype_dropdown:SetPos( 125, 35 )
-        --bantype_dropdown:SetSize( 210, 20 )
-        --bantype_dropdown:SetValue( "Recently Disconnected" )
-        --bantype_dropdown:AddChoice( "Recently Disconnected" )
-        --bantype_dropdown:AddChoice( "SteamID" )
-        --bantype_dropdown:SetSortItems( false )
-        --bantype_dropdown.OnSelect = function( self, index, value )
-            --
-        --end
 
         local reasonMaxLen_text = vgui.Create( "DLabel", panel )
         reasonMaxLen_text:SetPos( 15, 205 )
@@ -269,7 +246,6 @@ MSync.modules[info.ModuleIdentifier].init = function()
         ban_button:SetText( "Ban User" )
         ban_button:SetPos( 15, 425 )
         ban_button:SetSize( 320, 30 )
-        ban_button:SetDisabled(true)
         ban_button.DoClick = function()
             local banConfirm_panel = vgui.Create( "DFrame" )
             banConfirm_panel:SetSize( 350, 100 )
@@ -289,7 +265,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
             accept_button:SetPos( 15, 70 )
             accept_button:SetSize( 160, 20 )
             accept_button.DoClick = function()
-                -- Ban user and close panel
+                RunConsoleCommand("msync.MBSync.banSteamID", steamid_textentry:GetValue(), length_textentry:GetValue(), allservers_dropdown:GetValue(), reason_textentry:GetValue())
                 panel:Close()
                 banConfirm_panel:Close()
             end
@@ -380,7 +356,6 @@ MSync.modules[info.ModuleIdentifier].init = function()
         local nickname_textentry = vgui.Create( "DTextEntry", panel )
         nickname_textentry:SetPos( 125, 35 )
         nickname_textentry:SetSize( 210, 20 )
-        --nickname_textentry:SetText( "[ApDev] Rainbow Dash" )
         nickname_textentry:SetDisabled(true)
 
         local steamid_text = vgui.Create( "DLabel", panel )
@@ -392,7 +367,6 @@ MSync.modules[info.ModuleIdentifier].init = function()
         local steamid_textentry = vgui.Create( "DTextEntry", panel )
         steamid_textentry:SetPos( 125, 60 )
         steamid_textentry:SetSize( 210, 20 )
-        --steamid_textentry:SetText( "STEAM_0:0:0" )
         steamid_textentry:SetDisabled(true)
 
         local steamid64_text = vgui.Create( "DLabel", panel )
@@ -404,17 +378,9 @@ MSync.modules[info.ModuleIdentifier].init = function()
         local steamid64_textentry = vgui.Create( "DTextEntry", panel )
         steamid64_textentry:SetPos( 125, 85 )
         steamid64_textentry:SetSize( 210, 20 )
-        --steamid64_textentry:SetText( "7600000000" )
         steamid64_textentry:SetDisabled(true)
 
-        --local adminheader_text = vgui.Create( "DLabel", panel )
-        --adminheader_text:SetPos( 15, 110 )
-        --adminheader_text:SetColor( Color( 255, 255, 255 ) )
-        --adminheader_text:SetText( "Admin" )
-        --adminheader_text:SetSize(320, 15)
-        --adminheader_text:SetContentAlignment( 5 )
-
-        --[[ (i*30)+1
+        --[[
             Info about the banning Admin
         ]]
 
@@ -1319,7 +1285,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         end
 
         net.Start("msync."..info.ModuleIdentifier..".unban")
-            net.WriteInt(userid)
+            net.WriteFloat(userid)
         net.SendToServer()
     end
     --[[
@@ -1327,7 +1293,10 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Returns: nothing
     ]]
     net.Receive( "msync."..info.ModuleIdentifier..".sendMessage", function( len, ply )
-        chat.AddText( Color( 237, 135, 26 ), "[MBSync] ", Color( 255, 255, 255), net.ReadString())
+        local type = net.ReadFloat()
+        if type == 0 then
+            chat.AddText( Color( 237, 135, 26 ), "[MBSync] ", Color( 255, 255, 255), net.ReadString())
+        end
     end )
 
     --[[
@@ -1381,7 +1350,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     net.Receive( "msync."..info.ModuleIdentifier..".recieveData", function( len, ply )
         MSync.modules[info.ModuleIdentifier].explodeTable(MSync.modules[info.ModuleIdentifier].banTable, net.ReadTable())
-        print(MSync.modules[info.ModuleIdentifier].temporary['recieved'])
+
         MSync.modules[info.ModuleIdentifier].temporary["recieved"] = MSync.modules[info.ModuleIdentifier].temporary["recieved"] + 1
 
         if MSync.modules[info.ModuleIdentifier].temporary["recieved"] == MSync.modules[info.ModuleIdentifier].temporary["count"] then
