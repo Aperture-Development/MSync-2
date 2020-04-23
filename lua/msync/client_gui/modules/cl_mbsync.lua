@@ -356,7 +356,6 @@ MSync.modules[info.ModuleIdentifier].init = function()
         local nickname_textentry = vgui.Create( "DTextEntry", panel )
         nickname_textentry:SetPos( 125, 35 )
         nickname_textentry:SetSize( 210, 20 )
-        --nickname_textentry:SetText( "[ApDev] Rainbow Dash" )
         nickname_textentry:SetDisabled(true)
 
         local steamid_text = vgui.Create( "DLabel", panel )
@@ -368,7 +367,6 @@ MSync.modules[info.ModuleIdentifier].init = function()
         local steamid_textentry = vgui.Create( "DTextEntry", panel )
         steamid_textentry:SetPos( 125, 60 )
         steamid_textentry:SetSize( 210, 20 )
-        --steamid_textentry:SetText( "STEAM_0:0:0" )
         steamid_textentry:SetDisabled(true)
 
         local steamid64_text = vgui.Create( "DLabel", panel )
@@ -380,17 +378,9 @@ MSync.modules[info.ModuleIdentifier].init = function()
         local steamid64_textentry = vgui.Create( "DTextEntry", panel )
         steamid64_textentry:SetPos( 125, 85 )
         steamid64_textentry:SetSize( 210, 20 )
-        --steamid64_textentry:SetText( "7600000000" )
         steamid64_textentry:SetDisabled(true)
 
-        --local adminheader_text = vgui.Create( "DLabel", panel )
-        --adminheader_text:SetPos( 15, 110 )
-        --adminheader_text:SetColor( Color( 255, 255, 255 ) )
-        --adminheader_text:SetText( "Admin" )
-        --adminheader_text:SetSize(320, 15)
-        --adminheader_text:SetContentAlignment( 5 )
-
-        --[[ (i*30)+1
+        --[[
             Info about the banning Admin
         ]]
 
@@ -1360,7 +1350,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     net.Receive( "msync."..info.ModuleIdentifier..".recieveData", function( len, ply )
         MSync.modules[info.ModuleIdentifier].explodeTable(MSync.modules[info.ModuleIdentifier].banTable, net.ReadTable())
-        print(MSync.modules[info.ModuleIdentifier].temporary['recieved'])
+
         MSync.modules[info.ModuleIdentifier].temporary["recieved"] = MSync.modules[info.ModuleIdentifier].temporary["recieved"] + 1
 
         if MSync.modules[info.ModuleIdentifier].temporary["recieved"] == MSync.modules[info.ModuleIdentifier].temporary["count"] then

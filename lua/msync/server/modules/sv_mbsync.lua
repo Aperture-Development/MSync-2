@@ -45,7 +45,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         );
     ]] ))
 
-
     --[[
         Description: Function to ban a player
         Returns: nothing
@@ -60,12 +59,13 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
             );
         ]] )
+        local timestamp = os.time()
         banUserQ:setString(1, ply:SteamID())
         banUserQ:setString(2, ply:SteamID64())
         banUserQ:setString(3, calling_ply:SteamID())
         banUserQ:setString(4, calling_ply:SteamID64())
         banUserQ:setString(5, reason)
-        banUserQ:setNumber(6, os.time())
+        banUserQ:setNumber(6, timestamp)
         banUserQ:setNumber(7, length*60)
         if not allserver then
             banUserQ:setString(8, MSync.settings.data.serverGroup)
@@ -81,8 +81,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             local banData = {
                 admin = calling_ply:Nick(),
                 reason = reason,
-                unban = os.time()+(length*60),
-                time = os.time()
+                unban = timestamp+(length*60),
+                time = timestamp
             }
             if length == 0 then
                 banData["unban"] = length
@@ -129,12 +129,13 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
             );
         ]] )
+        local timestamp = os.time()
         banUserIdQ:setString(1, userid)
         banUserIdQ:setString(2, userid)
         banUserIdQ:setString(3, calling_ply:SteamID())
         banUserIdQ:setString(4, calling_ply:SteamID64())
         banUserIdQ:setString(5, reason)
-        banUserIdQ:setNumber(6, os.time())
+        banUserIdQ:setNumber(6, timestamp)
         banUserIdQ:setNumber(7, length)
         if not allserver then
             banUserIdQ:setString(8, MSync.settings.data.serverGroup)
@@ -148,8 +149,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             local banData = {
                 admin = calling_ply:Nick(),
                 reason = reason,
-                unban = os.time()+(length*60),
-                time = os.time()
+                unban = timestamp+(length*60),
+                time = timestamp
             }
             if length == 0 then
                 banData["unban"] = length
@@ -511,6 +512,86 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
 
         getActiveBansQ:start()
+    end
+
+    --[[
+        Description: Function to get all active bans
+        Returns: nothing
+    ]]
+    MSync.modules[info.ModuleIdentifier].exportBansToULX = function()
+        local exportActiveBans = MSync.DBServer:prepare( [[
+            SELECT 
+                tbl_mbsync.*,
+                banned.steamid,
+                banned.steamid64,
+                banned.nickname AS 'banned.nickname',
+                admin.nickname AS 'admin.nickname',
+                admin.steamid AS 'admin.steamid'
+            FROM `tbl_mbsync`
+            LEFT JOIN tbl_users AS banned
+                ON tbl_mbsync.user_id = banned.p_user_id
+            LEFT JOIN tbl_users AS admin
+                ON tbl_mbsync.admin_id = admin.p_user_id
+            WHERE
+                ban_lifted IS NULL AND
+                (
+                    (date_unix+length_unix)>? OR
+                     length_unix=0
+                ) AND
+                (
+                    server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name=?) OR
+                    server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers')
+                )
+        ]] )
+        exportActiveBans:setNumber(1, os.time())
+        exportActiveBans:setString(8, MSync.settings.data.serverGroup)
+
+        exportActiveBans.onSuccess = function( q, data )
+
+            local function escapeString( str )
+                if not str then
+                    return "NULL"
+                else
+                    return sql.SQLStr(str)
+                end
+            end
+
+            print("[MBSync] Exporting Bans to ULX")
+            for k,v in pairs(data) do
+                local unban
+                if v.length_unix == 0 then
+                    unban = 0
+                else
+                    unban = v.date_unix + v.length_unix
+                end
+
+                ULib.bans[ v["steamid"] ] = {
+                    admin = v["admin.nickname"],
+                    time = v.date_unix,
+                    unban = unban,
+                    reason = v.reason,
+                    name = v["banned.nickname"]
+                }
+                hook.Call( ULib.HOOK_USER_BANNED, _, v["steamid"], ULib.bans[ v["steamid"] ] )
+            end
+            ULib.fileWrite( ULib.BANS_FILE, ULib.makeKeyValues( ULib.bans ) )
+            print("[MBSync] Export finished")
+
+        end
+
+        exportActiveBans.onError = function( q, err, sql )
+            print("------------------------------------")
+            print("[MBSync] SQL Error!")
+            print("------------------------------------")
+            print("Please include this in a Bug report:\n")
+            print(err.."\n")
+            print("------------------------------------")
+            print("Do not include this, this is for debugging only:\n")
+            print(sql.."\n")
+            print("------------------------------------")
+        end
+
+        exportActiveBans:start()
     end
 
     --[[
@@ -1123,7 +1204,7 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
 
     hook.Add("PlayerDisconnected", "msync."..info.ModuleIdentifier..".saveDisconnects", function( ply )
         if ply:IsBot() then return end
-        local tableLength = #MSync.modules[info.ModuleIdentifier].recentDisconnects
+        local tableLength = table.Count(MSync.modules[info.ModuleIdentifier].recentDisconnects)
         local data = {
             name = ply:Name(),
             steamid = ply:SteamID(),
