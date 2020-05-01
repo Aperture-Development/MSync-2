@@ -26,7 +26,7 @@ function MSync.func.loadServer()
         timer.Remove("msync.t.checkForULXandULib")
         MSync.ulx.createPermissions()
         MSync.ulx.createCommands()
-        MSync.mysql.initialize() 
+        MSync.mysql.initialize()
     end)
 
     MSync.loadModules()
@@ -102,6 +102,6 @@ end
 function MSync.func.getSafeSettings()
     local settings = MSync.settings.data
     settings.mysql.password = nil
-    
+
     return settings
 end

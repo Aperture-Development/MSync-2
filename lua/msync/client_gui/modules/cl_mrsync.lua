@@ -22,7 +22,7 @@ MSync.modules.MRSync.info = {
 --[[
     Define additional functions that are later used
 ]]
-function MSync.modules.MRSync.init() 
+function MSync.modules.MRSync.init()
 
 end
 
@@ -67,10 +67,10 @@ function MSync.modules.MRSync.adminPanel(sheet)
     end
 
     local allserver_button = vgui.Create( "DButton", pnl )
-    allserver_button:SetText( "Add" )					
+    allserver_button:SetText( "Add" )
     allserver_button:SetPos( 275, 15 )
     allserver_button:SetSize( 130, 20 )
-    allserver_button.DoClick = function() 
+    allserver_button.DoClick = function()
         if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
@@ -116,10 +116,10 @@ function MSync.modules.MRSync.adminPanel(sheet)
     end
 
     local nosync_button = vgui.Create( "DButton", pnl )
-    nosync_button:SetText( "Add" )					
+    nosync_button:SetText( "Add" )
     nosync_button:SetPos( 275, 155 )
     nosync_button:SetSize( 130, 20 )
-    nosync_button.DoClick = function() 
+    nosync_button.DoClick = function()
         if nosync_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             nosync_table:AddLine(nosync_textentry:GetValue())
             MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] = true
@@ -136,22 +136,22 @@ function MSync.modules.MRSync.adminPanel(sheet)
         timer.Create("mrsync.t.checkSettings", 1, 0, function()
             if not MSync.modules.MRSync.settings then return end
 
-            for k,_ in pairs(MSync.modules.MRSync.settings.syncall) do 
+            for k,_ in pairs(MSync.modules.MRSync.settings.syncall) do
                 allserver_table:AddLine(k)
             end
-    
-            for k,_ in pairs(MSync.modules.MRSync.settings.nosync) do 
+
+            for k,_ in pairs(MSync.modules.MRSync.settings.nosync) do
                 nosync_table:AddLine(k)
             end
 
             timer.Remove("mrsync.t.checkSettings")
         end)
     else
-        for k,_ in pairs(MSync.modules.MRSync.settings.syncall) do 
+        for k,_ in pairs(MSync.modules.MRSync.settings.syncall) do
             allserver_table:AddLine(k)
         end
 
-        for k,_ in pairs(MSync.modules.MRSync.settings.nosync) do 
+        for k,_ in pairs(MSync.modules.MRSync.settings.nosync) do
             nosync_table:AddLine(k)
         end
     end
@@ -171,14 +171,14 @@ end
 --[[
     Define net receivers and util.AddNetworkString
 ]]
-function MSync.modules.MRSync.net() 
+function MSync.modules.MRSync.net()
 
     --[[
         Description: Function to send the mrsync settings to the client
         Arguments:
             player [player] - the player that wants to open the admin GUI
         Returns: nothing
-    ]]   
+    ]]
     function MSync.modules.MRSync.sendSettings()
         net.Start("msync.mrsync.sendSettings")
             net.WriteTable(MSync.modules.MRSync.settings)
@@ -190,7 +190,7 @@ function MSync.modules.MRSync.net()
         Arguments:
             player [player] - the player that wants to open the admin GUI
         Returns: nothing
-    ]]   
+    ]]
     function MSync.modules.MRSync.getSettings()
         net.Start("msync.mrsync.getSettings")
         net.SendToServer()
@@ -199,7 +199,7 @@ function MSync.modules.MRSync.net()
     --[[
         Description: Net Receiver - Gets called when the client requests the settings table
         Returns: nothing
-    ]]   
+    ]]
     net.Receive("msync.mrsync.sendSettingsPly", function(len, ply)
         MSync.modules.MRSync.settings = net.ReadTable()
     end )
@@ -208,14 +208,14 @@ end
 --[[
     Define ulx Commands and overwrite common ulx functions (module does not get loaded until ulx has fully been loaded)
 ]]
-function MSync.modules.MRSync.ulx() 
-    
+function MSync.modules.MRSync.ulx()
+
 end
 
 --[[
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
-function MSync.modules.MRSync.hooks() 
+function MSync.modules.MRSync.hooks()
 
 end
 

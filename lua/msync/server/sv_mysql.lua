@@ -7,11 +7,11 @@ MSync.func  = MSync.func or {}
 --[[
     Description: initializes the MySQL part
     Returns: nothing
-]]   
-function MSync.mysql.initialize() 
+]]
+function MSync.mysql.initialize()
     if (file.Exists( "bin/gmsv_mysqloo_linux.dll", "LUA" ) or file.Exists( "bin/gmsv_mysqloo_win32.dll", "LUA" )) and MSync.settings.data.mysql then
         require("mysqloo")
-        
+
         MSync.DBServer = mysqloo.connect(
             MSync.settings.data.mysql.host,
             MSync.settings.data.mysql.username,
@@ -34,7 +34,7 @@ function MSync.mysql.initialize()
                     UNIQUE INDEX `group_UNIQUE` (`group_name`)
                 );
             ]] ))
-            
+
             initDatabase:addQuery(MSync.DBServer:query( [[
                 CREATE TABLE IF NOT EXISTS `tbl_msync_servers` (
                     `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -59,7 +59,7 @@ function MSync.mysql.initialize()
                     UNIQUE INDEX `steamid64_UNIQUE` (`steamid64`)
                 );
             ]] ))
-            
+
             function initDatabase.onSuccess()
                 MSync.mysql.saveServer()
                 MSync.initModules()
@@ -89,10 +89,10 @@ end
     Description: Adds a user to the users table
     Arguments: player
     Returns: nothing
-]]   
+]]
 function MSync.mysql.addUser(ply)
     if not MSync.DBServer then print("[MSync] No Database connected yet. Please connect to a Database to be able to create users."); return end;
-    
+
     local addUserQ = MSync.DBServer:prepare( [[
         INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
         VALUES (?, ?, ?, ?)
@@ -123,8 +123,8 @@ end
 --[[
     Description: Function to print the MySQL informations to the console
     Returns: nothing
-]]   
-function MSync.mysql.getInfo() 
+]]
+function MSync.mysql.getInfo()
     print("--Database Server Information--")
     print("Version: "..MSync.DBServer:serverVersion())
     print("Fancy Version: "..MSync.DBServer:serverInfo())
@@ -134,7 +134,7 @@ end
 --[[
     Description: Function to save the server date to the database
     Returns: nothing
-]]   
+]]
 function MSync.mysql.saveServer()
 
     local addServerGroup = MSync.DBServer:prepare( [[
@@ -151,15 +151,16 @@ function MSync.mysql.saveServer()
             )
             ON DUPLICATE KEY UPDATE server_name=VALUES(server_name), server_group=VALUES(server_group);
         ]] )
-        
+
         local hostname = GetHostName()
-        
+        local ip, port = string.Split(game.GetIPAddress(), ":")
+
         if string.len(hostname) > 75 then
             hostname = string.sub( hostname, 1, 75 )
         end
         addServer:setString(1, hostname)
-        addServer:setString(2, GetConVar( "hostip" ):GetString())
-        addServer:setString(3, GetConVar( "hostport" ):GetString())
+        addServer:setString(2, ip)
+        addServer:setString(3, port)
         addServer:setString(4, MSync.settings.data.serverGroup)
 
         function addServer.onSuccess()
