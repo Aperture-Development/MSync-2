@@ -40,7 +40,7 @@ function MSync.mysql.initialize()
                     `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     `server_name` VARCHAR(75) NOT NULL,
                     `options` VARCHAR(100) NOT NULL DEFAULT '[]',
-                    `ip` INT NOT NULL,
+                    `ip` VARCHAR(15) NOT NULL,
                     `port` VARCHAR(5) NOT NULL,
                     `server_group` INT UNSIGNED NOT NULL,
                     FOREIGN KEY (server_group) REFERENCES tbl_server_grp(p_group_id),
@@ -153,14 +153,14 @@ function MSync.mysql.saveServer()
         ]] )
 
         local hostname = GetHostName()
-        local ip, port = string.Split(game.GetIPAddress(), ":")
+        local gameAddress = string.Split(game.GetIPAddress(), ":")
 
         if string.len(hostname) > 75 then
             hostname = string.sub( hostname, 1, 75 )
         end
         addServer:setString(1, hostname)
-        addServer:setString(2, ip)
-        addServer:setString(3, port)
+        addServer:setString(2, gameAddress[1])
+        addServer:setString(3, gameAddress[2])
         addServer:setString(4, MSync.settings.data.serverGroup)
 
         function addServer.onSuccess()
