@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENSE
- * @version    0.0.6
+ * @version    1.0.0
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "0.0.6"
+    Version = "1.0.0"
 }
 
 --[[
@@ -492,11 +492,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                     -- Do nothing
                 end
             end
-
-            --[[
-                TODO: After recieving data, we need to write the current ban data into ULib
-            ]]
-
         end
 
         getActiveBansQ.onError = function( q, err, sql )
@@ -911,8 +906,6 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     MSync.modules[info.ModuleIdentifier].Chat = MSync.modules[info.ModuleIdentifier].Chat or {}
 
     --[[
-        TODO: The whole Command
-        Expected behaviour:
         Without any argument, open ban GUI
         With arguments, run ban command
 
@@ -963,8 +956,6 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     BanPlayer:help( "Opens the MBSync GUI ( without parameters ) or bans a player" )
 
     --[[
-        TODO: The whole Command
-        Expected behaviour:
         ban the targeted steamid
 
         Arguments:
@@ -1012,11 +1003,9 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="true/false, if the player should be banned on all servers", ULib.cmds.optional }
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="reason", ULib.cmds.optional, ULib.cmds.takeRestOfLine, completes=ulx.common_kick_reasons }
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
-    BanPlayer:help( "Opens MSync Settings." )
+    BanPlayer:help( "Bans the given SteamID." )
 
     --[[
-        TODO: The whole Command
-        Expected behaviour:
         unban a user with the given steamid
 
         Arguments:
@@ -1038,11 +1027,9 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     local BanPlayer = ulx.command( "MSync", "msync."..info.ModuleIdentifier..".unBanID", MSync.modules[info.ModuleIdentifier].Chat.unBanID, "!munban" )
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="steamid"}
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
-    BanPlayer:help( "Opens MSync Settings." )
+    BanPlayer:help( "Unbans the given SteamID." )
 
     --[[
-        TODO: The whole Command
-        Expected behaviour:
         check if a player is banned
 
         Arguments:
@@ -1086,11 +1073,9 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     local BanPlayer = ulx.command( "MSync", "msync."..info.ModuleIdentifier..".checkBan", MSync.modules[info.ModuleIdentifier].Chat.checkBan, "!mcheck" )
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="steamid"}
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
-    BanPlayer:help( "Opens MSync Settings." )
+    BanPlayer:help( "Checks if there is currently a active ban for given SteamID." )
 
     --[[
-        TODO: The whole Command
-        Expected behaviour:
         opens the ban table
 
         Arguments:
@@ -1103,11 +1088,9 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     end
     local BanPlayer = ulx.command( "MSync", "msync."..info.ModuleIdentifier..".openBanTable", MSync.modules[info.ModuleIdentifier].Chat.openBanTable, "!mbsync" )
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
-    BanPlayer:help( "Opens MSync Settings." )
+    BanPlayer:help( "Opens the MBSync ban table, this table only shows active bans." )
 
     --[[
-        TODO: The whole Command
-        Expected behaviour:
         Edits the ban with the given banID
 
         Arguments:
@@ -1157,8 +1140,6 @@ end
 ]]
 MSync.modules[info.ModuleIdentifier].hooks = function()
     --[[
-        TODO: Improove hook
-
         This hook starts the timers for the asynchronous ban data loading and the check if one of the online players has been banned
     ]]
     timer.Create("msync."..info.ModuleIdentifier..".getActiveBans", MSync.modules[info.ModuleIdentifier].settings.syncDelay, 0, function()
