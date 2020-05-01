@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    0.0.6
+ * @version    1.0.0
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "0.0.6"
+    Version = "1.0.0"
 }
 
 --[[
@@ -1064,18 +1064,6 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     lastpage_button:SetSize( 185, 20 )
     lastpage_button:SetDisabled(true)
 
-
-    --[[
-        TODO: 
-        - Get Data from server on opening the panel
-        - Display data on table
-            - Each page has a 20 lines limit
-            - selecting the next page should be possible
-        - Function to select entry based on their BanID
-        - Function to search the data
-        - Function to Sort data beforehand
-        - 
-    ]]
     --[[
         #############
         FUNCTION PART
