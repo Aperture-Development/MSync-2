@@ -153,14 +153,14 @@ function MSync.mysql.saveServer()
         ]] )
 
         local hostname = GetHostName()
-        local ip, port = string.Split(game.GetIPAddress(), ":")
+        local gameAddress = string.Split(game.GetIPAddress(), ":")
 
         if string.len(hostname) > 75 then
             hostname = string.sub( hostname, 1, 75 )
         end
         addServer:setString(1, hostname)
-        addServer:setString(2, ip)
-        addServer:setString(3, port)
+        addServer:setString(2, gameAddress[1])
+        addServer:setString(3, gameAddress[2])
         addServer:setString(4, MSync.settings.data.serverGroup)
 
         function addServer.onSuccess()

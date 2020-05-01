@@ -12,6 +12,7 @@
 		"README.md",
 		"*.sql",
 		".git/*",
-		".git"
+		".git*",
+		".vscode*"
 	]
 }
