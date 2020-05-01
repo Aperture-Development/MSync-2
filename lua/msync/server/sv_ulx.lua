@@ -4,7 +4,7 @@ MSync.ulx = MSync.ulx or {}
 --[[
     Description: Function to create the ULX permissions
     Returns: nothing
-]] 
+]]
 function MSync.ulx.createPermissions()
     ULib.ucl.registerAccess("msync.getTable", "superadmin", "Allows player to get MSync tables", "MSync")
     ULib.ucl.registerAccess("msync.sendSettings", "superadmin", "Allows player to send settings to server", "MSync")
@@ -20,7 +20,7 @@ end
 --[[
     Description: Function to create the ULX commands
     Returns: nothing
-]] 
+]]
 function MSync.ulx.createCommands()
     function MSync.func.openAdminGUI(calling_ply)
         if not calling_ply:query("msync.openAdminGUI") then return end;
