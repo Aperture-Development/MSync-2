@@ -40,7 +40,7 @@ function MSync.mysql.initialize()
                     `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     `server_name` VARCHAR(75) NOT NULL,
                     `options` VARCHAR(100) NOT NULL DEFAULT '[]',
-                    `ip` INT NOT NULL,
+                    `ip` VARCHAR(15) NOT NULL,
                     `port` VARCHAR(5) NOT NULL,
                     `server_group` INT UNSIGNED NOT NULL,
                     FOREIGN KEY (server_group) REFERENCES tbl_server_grp(p_group_id),
