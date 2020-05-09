@@ -226,9 +226,12 @@ function MSync.AdminPanel.InitModuleSettings( sheet )
 
     for k, v in pairs(files) do
         local info = include("msync/client_gui/modules/"..v)
-        MSync.modules[info.ModuleIdentifier]["init"]()
-        MSync.modules[info.ModuleIdentifier]["net"]()
-        pnl:AddSheet( info.Name, MSync.modules[info.ModuleIdentifier].adminPanel(pnl))
+
+        if MSync.moduleState[info["ModuleIdentifier"]] then
+            MSync.modules[info.ModuleIdentifier]["init"]()
+            MSync.modules[info.ModuleIdentifier]["net"]()
+            pnl:AddSheet( info.Name, MSync.modules[info.ModuleIdentifier].adminPanel(pnl))
+        end
     end
 
     return pnl

@@ -22,12 +22,13 @@ end
 function MSync.initModules()
 
     for k,v in pairs(MSync.modules) do
-        if not MSync.moduleState[v["info"]["ModuleIdentifier"]] then return end;
-        v["init"]()
-        v["net"]()
-        v["ulx"]()
-        v["hooks"]()
-        print("["..v["info"]["Name"].."] Module loaded")
+        if MSync.moduleState[v["info"]["ModuleIdentifier"]] then
+            v["init"]()
+            v["net"]()
+            v["ulx"]()
+            v["hooks"]()
+            print("["..v["info"]["Name"].."] Module loaded")
+        end
     end
 
 end

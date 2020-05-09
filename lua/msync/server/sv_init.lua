@@ -100,7 +100,7 @@ end
     Returns: safe settings table
 ]]
 function MSync.func.getSafeSettings()
-    local settings = MSync.settings.data
+    local settings = table.Copy(MSync.settings.data)
     settings.mysql.password = nil
 
     return settings

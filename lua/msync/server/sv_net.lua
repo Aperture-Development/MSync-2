@@ -103,7 +103,6 @@ end )
 util.AddNetworkString("msync.getSettings")
 net.Receive("msync.getSettings", function(len, ply)
     if not ply:query("msync.getSettings") then return end
-
     MSync.net.sendTable(ply, "settings", MSync.func.getSafeSettings())
 end )
 
@@ -126,9 +125,9 @@ util.AddNetworkString("msync.toggleModule")
 net.Receive("msync.toggleModule", function(len, ply)
     if not ply:query("msync.toggleModule") then return end
 
+
     local ident = net.ReadString()
     local state = net.ReadString()
-
     if state == "Enable" then
         MSync.settings.data.enabledModules[ident] = true
     elseif state == "Disable" then
