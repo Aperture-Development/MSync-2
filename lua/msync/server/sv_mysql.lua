@@ -17,7 +17,7 @@ function MSync.mysql.initialize()
             MSync.settings.data.mysql.username,
             MSync.settings.data.mysql.password,
             MSync.settings.data.mysql.database,
-            MSync.settings.data.mysql.port
+            tonumber(MSync.settings.data.mysql.port) -- Just to be sure it deffinetly is a number
         )
 
         function MSync.DBServer.onConnected( db )
