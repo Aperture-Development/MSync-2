@@ -27,13 +27,13 @@ MSync.modules[info.ModuleIdentifier].info = info
 --[[
     Define mysql table and additional functions that are later used
 ]]
-MSync.modules[info.ModuleIdentifier].init = function( transaction ) 
+MSync.modules[info.ModuleIdentifier].init = function( transaction )
     transaction:addQuery( MSync.DBServer:query([[
         CREATE TABLE IF NOT EXISTS `tbl_SampleModule` (
             SampleData INT
         );
     ]] ))
-    
+
     MSync.modules[info.ModuleIdentifier].SampleFunction = function()
         return true
     end
@@ -43,7 +43,7 @@ end
 --[[
     Define net receivers and util.AddNetworkString
 ]]
-MSync.modules[info.ModuleIdentifier].net = function() 
+MSync.modules[info.ModuleIdentifier].net = function()
     net.Receive( "my_message", function( len, pl )
         if ( IsValid( pl ) and pl:IsPlayer() ) then
             print( "Message from " .. pl:Nick() .. " received. Its length is " .. len .. "." )
@@ -56,16 +56,16 @@ end
 --[[
     Define ulx Commands and overwrite common ulx functions (module does not get loaded until ulx has fully been loaded)
 ]]
-MSync.modules[info.ModuleIdentifier].ulx = function() 
-    
+MSync.modules[info.ModuleIdentifier].ulx = function()
+
 end
 
 --[[
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
-MSync.modules[info.ModuleIdentifier].hooks = function() 
+MSync.modules[info.ModuleIdentifier].hooks = function()
     hook.Add("initialize", "msync_sampleModule_init", function()
-        
+
     end)
 end
 

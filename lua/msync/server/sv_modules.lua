@@ -6,7 +6,7 @@ MSync.modules   = MSync.modules or {}
 --[[
     Description: Loads all server side modules
     Returns: nothing
-]]     
+]]
 function MSync.loadModules()
     local files, _ = file.Find("msync/server/modules/*.lua", "LUA")
     for k, v in pairs(files) do
@@ -53,7 +53,7 @@ end
     Description: Loads single modules
     Arguments: path to module
     Returns: nothing
-]]   
+]]
 function MSync.loadModule(path)
     local initTransaction = MSync.DBServer:createTransaction()
     local info = include(path)

@@ -10,8 +10,9 @@
 		"*samplemodule.lua",
 		"LICENSE",
 		"README.md",
-		"database.sql",
+		"*.sql",
 		".git/*",
-		".git"
+		".git*",
+		".vscode*"
 	]
 }
