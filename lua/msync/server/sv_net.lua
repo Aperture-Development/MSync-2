@@ -93,6 +93,10 @@ net.Receive("msync.sendSettings", function(len, ply)
         MSync.settings.data.mysql.password = password
     end
 
+    if not type(MSync.settings.data.mysql.port) == number then
+        MSync.settings.data.mysql.port = tonumber(MSync.settings.data.mysql.port)
+    end
+
     MSync.func.saveSettings()
 end )
 
