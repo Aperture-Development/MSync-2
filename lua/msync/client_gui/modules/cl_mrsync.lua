@@ -120,17 +120,17 @@ function MSync.modules.MRSync.adminPanel(sheet)
     nosync_button:SetPos( 275, 155 )
     nosync_button:SetSize( 130, 20 )
     nosync_button.DoClick = function()
-        if nosync_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
+        if nosync_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[nosync_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[nosync_textentry:GetValue()] then
             nosync_table:AddLine(nosync_textentry:GetValue())
-            MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] = true
+            MSync.modules.MRSync.settings.nosync[nosync_textentry:GetValue()] = true
             nosync_textentry:SetText("")
             MSync.modules.MRSync.sendSettings()
         end
     end
 
-    if MSync.DBStatus then
+    --if MSync.DBStatus then
         MSync.modules.MRSync.getSettings()
-    end
+    --end
 
     if not MSync.modules.MRSync.settings then
         timer.Create("mrsync.t.checkSettings", 1, 0, function()
