@@ -6,7 +6,7 @@ MSync.modules.MRSync = MSync.modules.MRSync or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.0.0
+ * @version    2.0.2
 ]]
 
 --[[
@@ -16,7 +16,7 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.0.0"
+    Version = "2.0.2"
 }
 
 --[[
@@ -71,7 +71,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
     allserver_button:SetPos( 275, 15 )
     allserver_button:SetSize( 130, 20 )
     allserver_button.DoClick = function()
-        if allserver_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
+        if not allserver_textentry:GetValue() == "" and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
             allserver_textentry:SetText("")
@@ -120,7 +120,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
     nosync_button:SetPos( 275, 155 )
     nosync_button:SetSize( 130, 20 )
     nosync_button.DoClick = function()
-        if nosync_textentry:GetValue() and not MSync.modules.MRSync.settings.nosync[nosync_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[nosync_textentry:GetValue()] then
+        if not nosync_textentry:GetValue() == "" and not MSync.modules.MRSync.settings.nosync[nosync_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[nosync_textentry:GetValue()] then
             nosync_table:AddLine(nosync_textentry:GetValue())
             MSync.modules.MRSync.settings.nosync[nosync_textentry:GetValue()] = true
             nosync_textentry:SetText("")
