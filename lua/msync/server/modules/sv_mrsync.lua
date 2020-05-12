@@ -6,7 +6,7 @@ MSync.modules.MRSync = MSync.modules.MRSync or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.0.0
+ * @version    2.0.1
 ]]
 
 --[[
@@ -16,7 +16,7 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.0.0"
+    Version = "2.0.1"
 }
 
 --[[
@@ -75,7 +75,9 @@ function MSync.modules.MRSync.init( transaction )
                 SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?
             ) AND (server_group=(
                 SELECT p_group_id FROM tbl_server_grp WHERE group_name=?
-            ) OR server_group='allservers');
+            ) OR server_group=(
+                SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers'
+            ));
         ]] )
         loadUserQ:setString(1, ply:SteamID())
         loadUserQ:setString(2, ply:SteamID64())
@@ -84,7 +86,7 @@ function MSync.modules.MRSync.init( transaction )
         function loadUserQ.onData( q, data )
             if data.rank == ply:GetUserGroup() then return end;
 
-            ply:SetUserGroup(data[1].rank)
+            ply:SetUserGroup(data.rank)
         end
 
         loadUserQ:start()
