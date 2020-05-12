@@ -36,6 +36,11 @@ function MSync.mysql.initialize()
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
+                INSERT INTO `tbl_server_grp` (group_name) VALUES ('allservers')
+                ON DUPLICATE KEY UPDATE group_name=VALUES(group_name);
+            ]] ))
+
+            initDatabase:addQuery(MSync.DBServer:query( [[
                 CREATE TABLE IF NOT EXISTS `tbl_msync_servers` (
                     `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     `server_name` VARCHAR(75) NOT NULL,
