@@ -7,6 +7,12 @@
 		"*.psd",
 		"*.vcproj",
 		"*.svn*",
-		"*samplemodule.lua"
+		"*samplemodule.lua",
+		"LICENSE",
+		"README.md",
+		"*.sql",
+		".git/*",
+		".git*",
+		".vscode*"
 	]
 }

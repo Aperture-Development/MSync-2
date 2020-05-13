@@ -6,7 +6,7 @@ MSync.AdminPanel = MSync.AdminPanel or {}
     Arguments: parent sheet
     Returns: panel
 ]]
-function MSync.AdminPanel.InitMySQL( sheet ) 
+function MSync.AdminPanel.InitMySQL( sheet )
     local pnl = vgui.Create( "DPanel", sheet )
 
     local mysqlip_text = vgui.Create( "DLabel", pnl )
@@ -97,10 +97,10 @@ function MSync.AdminPanel.InitMySQL( sheet )
     dbstatus:SetText( "DB Connection status: -Not Implemented-" )
 
     local save_button = vgui.Create( "DButton", pnl )
-    save_button:SetText( "Save Settings" )					
+    save_button:SetText( "Save Settings" )
     save_button:SetPos( 25, 290 )
     save_button:SetSize( 130, 30 )
-    save_button.DoClick = function() 
+    save_button.DoClick = function()
         MSync.settings.mysql.host = mysqlip:GetValue()
         MSync.settings.mysql.port = mysqlport:GetValue()
         MSync.settings.mysql.database = mysqldb:GetValue()
@@ -111,10 +111,10 @@ function MSync.AdminPanel.InitMySQL( sheet )
     end
 
     local saveconnect_button = vgui.Create( "DButton", pnl )
-    saveconnect_button:SetText( "Save and Connect" )					
+    saveconnect_button:SetText( "Save and Connect" )
     saveconnect_button:SetPos( 155, 290 )
     saveconnect_button:SetSize( 130, 30 )
-    saveconnect_button.DoClick = function() 
+    saveconnect_button.DoClick = function()
         MSync.settings.mysql.host = mysqlip:GetValue()
         MSync.settings.mysql.port = mysqlport:GetValue()
         MSync.settings.mysql.database = mysqldb:GetValue()
@@ -126,18 +126,18 @@ function MSync.AdminPanel.InitMySQL( sheet )
     end
 
     local connect_button = vgui.Create( "DButton", pnl )
-    connect_button:SetText( "Connect" )					
+    connect_button:SetText( "Connect" )
     connect_button:SetPos( 285, 290 )
     connect_button:SetSize( 130, 30 )
-    connect_button.DoClick = function() 
+    connect_button.DoClick = function()
         MSync.net.connectDB()
     end
 
     local reset_button = vgui.Create( "DButton", pnl )
-    reset_button:SetText( "Reset Settings" )					
+    reset_button:SetText( "Reset Settings" )
     reset_button:SetPos( 415, 290 )
     reset_button:SetSize( 130, 30 )
-    reset_button.DoClick = function() 
+    reset_button.DoClick = function()
         mysqlip:SetText("127.0.0.1")
         mysqlport:SetText("3306")
         mysqldb:SetText("msync")
@@ -180,7 +180,7 @@ end
     Arguments: parent sheet
     Returns: panel
 ]]
-function MSync.AdminPanel.InitModules( sheet ) 
+function MSync.AdminPanel.InitModules( sheet )
     local pnl = vgui.Create( "DPanel", sheet )
 
     local ModuleList = vgui.Create( "DListView", pnl )
@@ -219,16 +219,19 @@ end
     Arguments: parent sheet
     Returns: panel
 ]]
-function MSync.AdminPanel.InitModuleSettings( sheet ) 
+function MSync.AdminPanel.InitModuleSettings( sheet )
     local pnl = vgui.Create( "DColumnSheet", sheet )
 
     local files, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
 
     for k, v in pairs(files) do
         local info = include("msync/client_gui/modules/"..v)
-        MSync.modules[info.ModuleIdentifier]["init"]()
-        MSync.modules[info.ModuleIdentifier]["net"]()
-        pnl:AddSheet( info.Name, MSync.modules[info.ModuleIdentifier].adminPanel(pnl))
+
+        if MSync.moduleState[info["ModuleIdentifier"]] then
+            MSync.modules[info.ModuleIdentifier]["init"]()
+            MSync.modules[info.ModuleIdentifier]["net"]()
+            pnl:AddSheet( info.Name, MSync.modules[info.ModuleIdentifier].adminPanel(pnl))
+        end
     end
 
     return pnl

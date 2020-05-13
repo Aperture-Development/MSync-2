@@ -1,4 +1,4 @@
-if SERVER then 
+if SERVER then
     include("msync/sh_init.lua")
     AddCSLuaFile("msync/sh_init.lua")
 

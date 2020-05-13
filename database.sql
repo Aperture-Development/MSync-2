@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `tbl_mbsync` (
     `adminid` INT UNSIGNED NOT NULL,
     `reason` VARCHAR(45) NOT NULL,
     `date_unix` float NOT NULL,
-    `lenght_unix` float NOT NULL,
+    `length_unix` float NOT NULL,
     `server_group` INT UNSIGNED NOT NULL,
     `ban_lifted` INT UNSIGNED,
     FOREIGN KEY (server_group) REFERENCES tbl_server_grp(p_group_id),
