@@ -6,7 +6,7 @@ MSync.modules.MRSync = MSync.modules.MRSync or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.1.2
+ * @version    2.1.3
 ]]
 
 --[[
@@ -16,7 +16,7 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.1.2"
+    Version = "2.1.3"
 }
 
 --[[

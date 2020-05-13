@@ -6,7 +6,7 @@ MSync.modules.MRSync = MSync.modules.MRSync or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.1.2
+ * @version    2.1.3
 ]]
 
 --[[
@@ -16,7 +16,7 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.1.2"
+    Version = "2.1.3"
 }
 
 --[[
@@ -72,7 +72,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
     allserver_button:SetSize( 130, 20 )
     allserver_button.DoClick = function()
         if string.len(allserver_textentry:GetValue()) > 0 and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            if string.match(allserver_textentry:GetValue(), "^%s*$") or string.match(allserver_textentry:GetValue(), "%s+$") then return end
+            if string.match(allserver_textentry:GetValue(), "^%s*$") or string.match(allserver_textentry:GetValue(), "^%s") or string.match(allserver_textentry:GetValue(), "%s$") then return end
             allserver_table:AddLine(allserver_textentry:GetValue())
             MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] = true
             allserver_textentry:SetText("")
@@ -119,7 +119,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
     nosync_button:SetSize( 130, 20 )
     nosync_button.DoClick = function()
         if string.len(nosync_textentry:GetValue()) > 0 and not MSync.modules.MRSync.settings.nosync[nosync_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[nosync_textentry:GetValue()] then
-            if string.match(nosync_textentry:GetValue(), "^%s*$") or string.match(nosync_textentry:GetValue(), "%s+$") then return end
+            if string.match(nosync_textentry:GetValue(), "^%s*$") or string.match(nosync_textentry:GetValue(), "^%s") or string.match(nosync_textentry:GetValue(), "%s$") then return end
             nosync_table:AddLine(nosync_textentry:GetValue())
             MSync.modules.MRSync.settings.nosync[nosync_textentry:GetValue()] = true
             nosync_textentry:SetText("")
