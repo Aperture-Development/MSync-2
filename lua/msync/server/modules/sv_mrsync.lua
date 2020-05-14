@@ -6,7 +6,7 @@ MSync.modules.MRSync = MSync.modules.MRSync or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.0.2
+ * @version    2.1.3
 ]]
 
 --[[
@@ -16,7 +16,7 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.0.2"
+    Version = "2.1.3"
 }
 
 --[[
@@ -65,6 +65,35 @@ function MSync.modules.MRSync.init( transaction )
     end
 
     --[[
+        Description: Function to save a players rank using steamid and group name
+        Returns: nothing
+    ]]
+    function MSync.modules.MRSync.saveRankByID(steamid, group)
+
+        if MSync.modules.MRSync.settings.nosync[group] then return end;
+
+        local addUserRankQ = MSync.DBServer:prepare( [[
+            INSERT INTO `tbl_mrsync` (user_id, rank, server_group)
+            VALUES (
+                (SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?), 
+            ?, 
+                (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
+            )
+            ON DUPLICATE KEY UPDATE rank=VALUES(rank);
+        ]] )
+        addUserRankQ:setString(1, steamid)
+        addUserRankQ:setString(2, util.SteamIDTo64( steamid ))
+        addUserRankQ:setString(3, group)
+        if not MSync.modules.MRSync.settings.syncall[group] then
+            addUserRankQ:setString(4, MSync.settings.data.serverGroup)
+        else
+            addUserRankQ:setString(4, "allservers")
+        end
+
+        addUserRankQ:start()
+    end
+
+    --[[
         Description: Function to load a players rank
         Returns: nothing
     ]]
@@ -84,6 +113,11 @@ function MSync.modules.MRSync.init( transaction )
         loadUserQ:setString(3, MSync.settings.data.serverGroup)
 
         function loadUserQ.onData( q, data )
+            if not ULib.ucl.groups[data.rank] then
+                print("[MRSync] Could not load rank "..data.rank.." for "..ply:Nick()..". Rank does not exist on this server")
+                return
+            end
+
             if data.rank == ply:GetUserGroup() then return end;
 
             ply:SetUserGroup(data.rank)
@@ -185,12 +219,19 @@ end
 ]]
 function MSync.modules.MRSync.hooks()
 
+    -- Load rank on spawn
     hook.Add("PlayerInitialSpawn", "mrsync.H.loadRank", function(ply)
         MSync.modules.MRSync.loadRank(ply)
     end)
 
+    -- Save rank on disconnect
     hook.Add("PlayerDisconnected", "mrsync.H.saveRank", function(ply)
         MSync.modules.MRSync.saveRank(ply)
+    end)
+
+    -- Save rank on GroupChange
+    hook.Add("ULibUserGroupChange", "mrsync.H.saveRankOnUpdate", function(sid, _, _, new_group, _)
+        MSync.modules.MRSync.saveRankByID(sid, new_group)
     end)
 end
 
