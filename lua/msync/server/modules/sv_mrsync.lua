@@ -117,7 +117,6 @@ function MSync.modules.MRSync.init( transaction )
             ) OR server_group=(
                 SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers'
             ))
-            ORDER BY server_group ASC
             LIMIT 1;
         ]] )
         loadUserQ:setString(1, ply:SteamID())
