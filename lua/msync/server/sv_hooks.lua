@@ -24,7 +24,7 @@ end)
 --[[
         Description: Creates a entry to the database for every player that joins.
         Returns: nothing
-    ]]     
+    ]]
 hook.Add("PlayerInitialSpawn", "msync.createUser", function( ply )
     MSync.mysql.addUser(ply)
     MSync.net.sendTable(ply, "modulestate", MSync.settings.data.enabledModules)

@@ -26,7 +26,7 @@ function MSync.func.loadServer()
         timer.Remove("msync.t.checkForULXandULib")
         MSync.ulx.createPermissions()
         MSync.ulx.createCommands()
-        MSync.mysql.initialize() 
+        MSync.mysql.initialize()
     end)
 
     MSync.loadModules()
@@ -51,7 +51,7 @@ function MSync.func.loadSettings()
         MSync.settings.data = {
             mysql = {
                 host = "127.0.0.1",
-                port = "3306",
+                port = 3306,
                 username = "root",
                 password = "",
                 database = "msync"
@@ -100,8 +100,8 @@ end
     Returns: safe settings table
 ]]
 function MSync.func.getSafeSettings()
-    local settings = MSync.settings.data
+    local settings = table.Copy(MSync.settings.data)
     settings.mysql.password = nil
-    
+
     return settings
 end

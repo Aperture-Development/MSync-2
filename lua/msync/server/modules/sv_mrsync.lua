@@ -6,7 +6,7 @@ MSync.modules.MRSync = MSync.modules.MRSync or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.0.0
+ * @version    2.1.3
 ]]
 
 --[[
@@ -16,13 +16,13 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.0.0"
+    Version = "2.1.3"
 }
 
 --[[
     Define mysql table and additional functions that are later used
 ]]
-function MSync.modules.MRSync.init( transaction ) 
+function MSync.modules.MRSync.init( transaction )
     transaction:addQuery( MSync.DBServer:query([[
         CREATE TABLE IF NOT EXISTS `tbl_mrsync` (
             `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -34,14 +34,14 @@ function MSync.modules.MRSync.init( transaction )
             UNIQUE INDEX `user_UNIQUE` (`user_id`, `server_group`)
         );
     ]] ))
-    
+
     --[[
-        Description: Function to save a players rank
+        Description: Function to save a players rank using steamid and group name
         Returns: nothing
     ]]
-    function MSync.modules.MRSync.saveRank(ply)
+    function MSync.modules.MRSync.saveRankByID(steamid, group)
 
-        if MSync.modules.MRSync.settings.nosync[ply:GetUserGroup()] then return end;
+        if MSync.modules.MRSync.settings.nosync[group] then return end;
 
         local addUserRankQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mrsync` (user_id, rank, server_group)
@@ -52,16 +52,55 @@ function MSync.modules.MRSync.init( transaction )
             )
             ON DUPLICATE KEY UPDATE rank=VALUES(rank);
         ]] )
-        addUserRankQ:setString(1, ply:SteamID())
-        addUserRankQ:setString(2, ply:SteamID64())
-        addUserRankQ:setString(3, ply:GetUserGroup())
-        if not MSync.modules.MRSync.settings.syncall[ply:GetUserGroup()] then
+        addUserRankQ:setString(1, steamid)
+        addUserRankQ:setString(2, util.SteamIDTo64( steamid ))
+        addUserRankQ:setString(3, group)
+        if not MSync.modules.MRSync.settings.syncall[group] then
             addUserRankQ:setString(4, MSync.settings.data.serverGroup)
         else
             addUserRankQ:setString(4, "allservers")
         end
-            
+
         addUserRankQ:start()
+    end
+
+    --[[
+        Description: Function to validate user rank in DB is correct
+        Arguments:
+            - steamid [STRING] - the steamid of the user to validate
+            - group [STRING] - the group of the user to validate
+    ]]
+    function MSync.modules.MRSync.validateData( steamid, group )
+
+        if MSync.modules.MRSync.settings.nosync[group] then return end;
+
+        local removeOldRanksQ
+
+        if not MSync.modules.MRSync.settings.syncall[group] then
+
+            removeOldRanksQ = MSync.DBServer:prepare( [[
+                DELETE FROM `tbl_mrsync` WHERE user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?) AND server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers');
+            ]] )
+            removeOldRanksQ:setString(1, steamid)
+            removeOldRanksQ:setString(2, util.SteamIDTo64(steamid))
+
+            removeOldRanksQ.onSuccess = function( q, data )
+                MSync.modules.MRSync.saveRankByID(steamid, group)
+            end
+        else
+
+            removeOldRanksQ = MSync.DBServer:prepare( [[
+                DELETE FROM `tbl_mrsync` WHERE user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?) AND server_group<>(SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers');
+            ]] )
+            removeOldRanksQ:setString(1, steamid)
+            removeOldRanksQ:setString(2, util.SteamIDTo64(steamid))
+
+            removeOldRanksQ.onSuccess = function( q, data )
+                MSync.modules.MRSync.saveRankByID(steamid, group)
+            end
+        end
+
+        removeOldRanksQ:start()
     end
 
     --[[
@@ -70,21 +109,29 @@ function MSync.modules.MRSync.init( transaction )
     ]]
     function MSync.modules.MRSync.loadRank(ply)
         local loadUserQ = MSync.DBServer:prepare( [[
-            SELECT rank FROM `tbl_mrsync` 
+            SELECT `rank` FROM `tbl_mrsync` 
             WHERE user_id=(
                 SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?
             ) AND (server_group=(
                 SELECT p_group_id FROM tbl_server_grp WHERE group_name=?
-            ) OR server_group='allservers');
+            ) OR server_group=(
+                SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers'
+            ))
+            LIMIT 1;
         ]] )
         loadUserQ:setString(1, ply:SteamID())
         loadUserQ:setString(2, ply:SteamID64())
         loadUserQ:setString(3, MSync.settings.data.serverGroup)
 
         function loadUserQ.onData( q, data )
+            if not ULib.ucl.groups[data.rank] then
+                print("[MRSync] Could not load rank "..data.rank.." for "..ply:Nick()..". Rank does not exist on this server")
+                return
+            end
+
             if data.rank == ply:GetUserGroup() then return end;
 
-            ply:SetUserGroup(data[1].rank)
+            ply:SetUserGroup(data.rank)
         end
 
         loadUserQ:start()
@@ -130,40 +177,40 @@ end
 --[[
     Define net receivers and util.AddNetworkString
 ]]
-function MSync.modules.MRSync.net() 
+function MSync.modules.MRSync.net()
 
     --[[
         Description: Function to send the mrsync settings to the client
         Arguments:
             player [player] - the player that wants to open the admin GUI
         Returns: nothing
-    ]]   
+    ]]
     util.AddNetworkString("msync.mrsync.sendSettingsPly")
     function MSync.modules.MRSync.sendSettings(ply)
         net.Start("msync.mrsync.sendSettingsPly")
             net.WriteTable(MSync.modules.MRSync.settings)
         net.Send(ply)
     end
-    
+
     --[[
         Description: Net Receiver - Gets called when the client requests the settings table
         Returns: nothing
-    ]]   
+    ]]
     util.AddNetworkString("msync.mrsync.getSettings")
     net.Receive("msync.mrsync.getSettings", function(len, ply)
         if not ply:query("msync.getSettings") then return end
-        
+
         MSync.modules.MRSync.sendSettings(ply)
     end )
 
     --[[
         Description: Net Receiver - Gets called when the client requests the settings table
         Returns: nothing
-    ]]   
+    ]]
     util.AddNetworkString("msync.mrsync.sendSettings")
     net.Receive("msync.mrsync.sendSettings", function(len, ply)
         if not ply:query("msync.sendSettings") then return end
-        
+
         MSync.modules.MRSync.settings = net.ReadTable()
         MSync.modules.MRSync.saveSettings()
     end )
@@ -174,21 +221,30 @@ end
 --[[
     Define ulx Commands and overwrite common ulx functions (module does not get loaded until ulx has fully been loaded)
 ]]
-function MSync.modules.MRSync.ulx() 
-    
+function MSync.modules.MRSync.ulx()
+
 end
 
 --[[
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
-function MSync.modules.MRSync.hooks() 
+function MSync.modules.MRSync.hooks()
 
+    -- Load rank on spawn
     hook.Add("PlayerInitialSpawn", "mrsync.H.loadRank", function(ply)
         MSync.modules.MRSync.loadRank(ply)
     end)
 
+    -- Save rank on disconnect
     hook.Add("PlayerDisconnected", "mrsync.H.saveRank", function(ply)
-        MSync.modules.MRSync.saveRank(ply)
+        --MSync.modules.MRSync.saveRank(ply)
+        MSync.modules.MRSync.validateData(ply:SteamID(), ply:GetUserGroup())
+    end)
+
+    -- Save rank on GroupChange
+    hook.Add("ULibUserGroupChange", "mrsync.H.saveRankOnUpdate", function(sid, _, _, new_group, _)
+        --MSync.modules.MRSync.saveRankByID(sid, new_group)
+        MSync.modules.MRSync.validateData(sid, new_group)
     end)
 end
 

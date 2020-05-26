@@ -22,7 +22,7 @@ MSync.modules.SampleModule.info = {
 --[[
     Define additional functions that are later used
 ]]
-function MSync.modules.SampleModule.init() 
+function MSync.modules.SampleModule.init()
 
     function MSync.modules.SampleModule.SampleFunction()
         return true
@@ -51,7 +51,7 @@ end
 --[[
     Define net receivers and util.AddNetworkString
 ]]
-function MSync.modules.SampleModule.net() 
+function MSync.modules.SampleModule.net()
     net.Receive( "my_message", function( len, pl )
         if ( IsValid( pl ) and pl:IsPlayer() ) then
             print( "Message from " .. pl:Nick() .. " received. Its length is " .. len .. "." )
@@ -64,16 +64,16 @@ end
 --[[
     Define ulx Commands and overwrite common ulx functions (module does not get loaded until ulx has fully been loaded)
 ]]
-function MSync.modules.SampleModule.ulx() 
-    
+function MSync.modules.SampleModule.ulx()
+
 end
 
 --[[
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
-function MSync.modules.SampleModule.hooks() 
+function MSync.modules.SampleModule.hooks()
     hook.Add("initialize", "msync_sampleModule_init", function()
-        
+
     end)
 end
 
