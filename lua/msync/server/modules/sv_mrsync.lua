@@ -36,36 +36,6 @@ function MSync.modules.MRSync.init( transaction )
     ]] ))
 
     --[[
-        OBSOLETE
-        Description: Function to save a players rank
-        Returns: nothing
-    ]]
-    function MSync.modules.MRSync.saveRank(ply)
-
-        if MSync.modules.MRSync.settings.nosync[ply:GetUserGroup()] then return end;
-
-        local addUserRankQ = MSync.DBServer:prepare( [[
-            INSERT INTO `tbl_mrsync` (user_id, rank, server_group)
-            VALUES (
-                (SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?), 
-            ?, 
-                (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
-            )
-            ON DUPLICATE KEY UPDATE rank=VALUES(rank);
-        ]] )
-        addUserRankQ:setString(1, ply:SteamID())
-        addUserRankQ:setString(2, ply:SteamID64())
-        addUserRankQ:setString(3, ply:GetUserGroup())
-        if not MSync.modules.MRSync.settings.syncall[ply:GetUserGroup()] then
-            addUserRankQ:setString(4, MSync.settings.data.serverGroup)
-        else
-            addUserRankQ:setString(4, "allservers")
-        end
-
-        addUserRankQ:start()
-    end
-
-    --[[
         Description: Function to save a players rank using steamid and group name
         Returns: nothing
     ]]
@@ -120,7 +90,7 @@ function MSync.modules.MRSync.init( transaction )
         else
 
             removeOldRanksQ = MSync.DBServer:prepare( [[
-                DELETE FROM `tbl_mrsync` WHERE user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?);
+                DELETE FROM `tbl_mrsync` WHERE user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?) AND server_group<>(SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers');
             ]] )
             removeOldRanksQ:setString(1, steamid)
             removeOldRanksQ:setString(2, util.SteamIDTo64(steamid))
