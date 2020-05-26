@@ -126,6 +126,45 @@ function MSync.mysql.addUser(ply)
 end
 
 --[[
+    Description: Adds a userid to the users table
+    Arguments: 
+        - steamid [string] - the steamid of the player to be added
+        - nickname [string] - OPTIONAL: the nickname of the user to be created
+    Returns: nothing
+]]
+function MSync.mysql.addUserID(steamid, nickname)
+    if not MSync.DBServer then print("[MSync] No Database connected yet. Please connect to a Database to be able to create users."); return end;
+    if not string.match( steamid, "^STEAM_[0-1]:[0-1]:[0-9]+$" ) then return end;
+
+    nickname = nickname or "None Given"
+
+    local addUserQ = MSync.DBServer:prepare( [[
+        INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE nickname=VALUES(nickname);
+    ]] )
+
+    if string.len(nickname) > 30 then
+        nickname = string.sub( nickname, 1, 30 )
+    end
+
+    addUserQ:setString(1, steamid)
+    addUserQ:setString(2, util.SteamIDTo64(steamid))
+    addUserQ:setString(3, nickname)
+    addUserQ:setString(4, os.date("%Y-%m-%d %H:%M:%S", os.time()))
+
+    function addUserQ.onSuccess()
+        print("[MSync] User "..steamid.." successfully created")
+    end
+
+    function addUserQ.onError(q, err, sql)
+        print("[MSync] Failed to create user "..steamid.." !\nPlease report this to the developer: "..err)
+    end
+
+    addUserQ:start()
+end
+
+--[[
     Description: Function to print the MySQL informations to the console
     Returns: nothing
 ]]
