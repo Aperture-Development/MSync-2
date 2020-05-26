@@ -197,7 +197,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             );
         ]] )
         local timestamp = os.time()
-        print(timestamp)
+        print(reason)
         banUserIdQ:setString(1, userid)
         banUserIdQ:setString(2, userid)
         banUserIdQ:setString(3, calling_ply)
@@ -214,7 +214,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         banUserIdQ.onSuccess = function( q, data )
             -- Notify the user about the ban and add it to ULib to prevent data loss on Addon Remove
             -- Also, kick the user from the server
-            print(q)
             if calling_ply == "STEAM_0:0:0" then
                 adminNick = "(CONSOLE)"
             else
@@ -239,13 +238,13 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             else
                 msgReason = reason
             end
+            MSync.modules[info.ModuleIdentifier].getActiveBans()
 
             MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Banned "..userid.." for "..msgLength.." with reason "..msgReason)
 
             if not player.GetBySteamID(userid) then return end
 
             player.GetBySteamID(userid):Kick("\n"..ULib.getBanMessage( userid, banData))
-            MSync.modules[info.ModuleIdentifier].getActiveBans()
         end
 
         banUserIdQ.onError = function( q, err, sql )
@@ -354,14 +353,15 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             WHERE 
                 user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? OR steamid64=?) AND 
                 server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name=?) AND
-                (date_unix + length_unix) >= ?
+                ((date_unix + length_unix) >= ? OR length_unix = 0) AND
+                ban_lifted IS NULL
         ]] )
         unBanUserQ:setString(1, calling_ply)
         unBanUserQ:setString(2, util.SteamIDTo64(calling_ply))
         unBanUserQ:setString(3, ply_steamid)
         unBanUserQ:setString(4, ply_steamid)
         unBanUserQ:setString(5, MSync.settings.data.serverGroup)
-        unBanUserQ:setString(6, os.time())
+        unBanUserQ:setNumber(6, os.time())
 
         unBanUserQ.onSuccess = function( q, data )
             MSync.modules[info.ModuleIdentifier].getActiveBans()
@@ -528,7 +528,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         getActiveBansQ.onSuccess = function( q, data )
 
             local banTable = {}
-            PrintTable(data)
             print("[MBSync] Recieved ban data")
             for k,v in pairs(data) do
                 banTable[v["steamid64"]] = {
@@ -616,7 +615,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 )
         ]] )
         exportActiveBans:setNumber(1, os.time())
-        exportActiveBans:setString(8, MSync.settings.data.serverGroup)
+        exportActiveBans:setString(2, MSync.settings.data.serverGroup)
 
         exportActiveBans.onSuccess = function( q, data )
 
@@ -722,6 +721,10 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Load settings when module finished loading
     ]]
     MSync.modules[info.ModuleIdentifier].loadSettings()
+
+    if not MSync.modules[info.ModuleIdentifier].banTable then
+        MSync.modules[info.ModuleIdentifier].getActiveBans()
+    end
 end
 
 --[[
@@ -737,15 +740,19 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Returns: nothing
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".sendMessage")
-    MSync.modules[info.ModuleIdentifier].msg = function(ply, content, type)
+    MSync.modules[info.ModuleIdentifier].msg = function(ply, content, msgType)
+        if type(ply) == "string" and not ply == "STEAM_0:0:0" then
+            ply = player.GetBySteamID( ply )
+        end
+
         if not ply or ply == "STEAM_0:0:0" then
             print("[MBSync] "..content)
         else
-            if not type then type = 0 end
+            if not msgType then msgType = 0 end
             -- Basic message
-            if type == 0 then
+            if msgType == 0 then
                 net.Start("msync."..info.ModuleIdentifier..".sendMessage")
-                    net.WriteFloat(type)
+                    net.WriteFloat(msgType)
                     net.WriteString(content)
                 net.Send(ply)
             end
@@ -1082,7 +1089,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             end
         end
 
-        if not reason then reason = "No reason given" end
+        reason = reason or "No reason given"
 
         --[[
             Run ban function with given functions
