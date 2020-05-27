@@ -103,7 +103,7 @@ The server_group option allows you to do just that. Just sub-categorise your ser
 >
 >MBSync allos you to synchronise your bans across all servers ( network bans ). This Module is also server_group bound, means when you ban a user on a server in the group darkrp they dont get banned on servers with a different group.
 >
->Commands:
+>**Commands:**
 >
 >!mban - Opens ban GUI 
 >
@@ -114,6 +114,23 @@ The server_group option allows you to do just that. Just sub-categorise your ser
 >!munban [SteamID/SteamID64] - unbans a player
 >
 >!mbsync - Opens Ban list
+>
+>!mcheck [SteamID/SteamID64] - Checks if the given steamid if it is banned
+>
+>!medit [BanID] [Length] [Global] [Reason] - Edits a ban
+> 
+>
+>**Console Commands:**
+>
+>msync.mbsync.banPlayer [Name] [Length] [global] [Reason] - bans a player
+>
+>msync.mbsync.bansteamid [SteamID/SteamID64] [Length] [global] [Reason] - bans a players steamid
+>
+>msync.mbsync.unbanid [SteamID/SteamID64] - unbans a player
+>
+>msync.mbsync.checkBan [SteamID/SteamID64] - Checks if the given steamid if it is banned
+>
+>msync.mbsync.editBan [BanID] [Length] [Global] [Reason] - Edits a ban
 
 
 **Planned Features**
