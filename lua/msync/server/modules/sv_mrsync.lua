@@ -61,6 +61,23 @@ function MSync.modules.MRSync.init( transaction )
             addUserRankQ:setString(4, "allservers")
         end
 
+        addUserRankQ.onError = function( q, err, sql )
+            if string.match( err, "^Column 'user_id' cannot be null$" ) then
+                MSync.mysql.addUserID(steamid)
+                MSync.modules.MRSync.saveRankByID(steamid, group)
+            else
+                print("------------------------------------")
+                print("[MRSync] SQL Error!")
+                print("------------------------------------")
+                print("Please include this in a Bug report:\n")
+                print(err.."\n")
+                print("------------------------------------")
+                print("Do not include this, this is for debugging only:\n")
+                print(sql.."\n")
+                print("------------------------------------")
+            end
+        end
+
         addUserRankQ:start()
     end
 
@@ -97,6 +114,23 @@ function MSync.modules.MRSync.init( transaction )
 
             removeOldRanksQ.onSuccess = function( q, data )
                 MSync.modules.MRSync.saveRankByID(steamid, group)
+            end
+        end
+
+        removeOldRanksQ.onError = function( q, err, sql )
+            if string.match( err, "^Column 'user_id' cannot be null$" ) then
+                MSync.mysql.addUserID(steamid)
+                MSync.modules.MRSync.saveRankByID(steamid, group)
+            else
+                print("------------------------------------")
+                print("[MRSync] SQL Error!")
+                print("------------------------------------")
+                print("Please include this in a Bug report:\n")
+                print(err.."\n")
+                print("------------------------------------")
+                print("Do not include this, this is for debugging only:\n")
+                print(sql.."\n")
+                print("------------------------------------")
             end
         end
 
