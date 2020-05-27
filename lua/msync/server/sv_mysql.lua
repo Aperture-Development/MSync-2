@@ -24,7 +24,11 @@ function MSync.mysql.initialize()
             local initDatabase = MSync.DBServer:createTransaction()
 
             initDatabase:addQuery(MSync.DBServer:query([[
-                CREATE TABLE IF NOT EXISTS `tbl_msyncdb_version` ( `version` float NOT NULL );
+                CREATE TABLE IF NOT EXISTS `tbl_msyncdb_version` ( 
+                    `version` INT UNSIGNED NOT NULL, 
+                    `module_id` VARCHAR(25) NOT NULL,
+                    UNIQUE INDEX `module_UNIQUE` (`module_id`)
+                );
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
@@ -63,6 +67,11 @@ function MSync.mysql.initialize()
                     UNIQUE INDEX `steamid_UNIQUE` (`steamid`),
                     UNIQUE INDEX `steamid64_UNIQUE` (`steamid64`)
                 );
+            ]] ))
+
+            initDatabase:addQuery(MSync.DBServer:query( [[
+                INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined) VALUES ('STEAM_0:0:0', '76561197960265728', '(CONSOLE)', '2004-12-24 12:00:00')
+                ON DUPLICATE KEY UPDATE nickname=VALUES(nickname);
             ]] ))
 
             function initDatabase.onSuccess()
