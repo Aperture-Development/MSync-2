@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENSE
- * @version    1.0.1
+ * @version    1.1.0
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "1.0.1"
+    Version = "1.1.0"
 }
 
 --[[
@@ -197,7 +197,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             );
         ]] )
         local timestamp = os.time()
-        print(reason)
         banUserIdQ:setString(1, userid)
         banUserIdQ:setString(2, userid)
         banUserIdQ:setString(3, calling_ply)
@@ -248,15 +247,20 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
 
         banUserIdQ.onError = function( q, err, sql )
-            print("------------------------------------")
-            print("[MBSync] SQL Error!")
-            print("------------------------------------")
-            print("Please include this in a Bug report:\n")
-            print(err.."\n")
-            print("------------------------------------")
-            print("Do not include this, this is for debugging only:\n")
-            print(sql.."\n")
-            print("------------------------------------")
+            if string.match( err, "^Column 'user_id' cannot be null$" ) then
+                MSync.mysql.addUserID(userid)
+                MSync.modules[info.ModuleIdentifier].banUserID(userid, calling_ply, length, reason, allserver)
+            else
+                print("------------------------------------")
+                print("[MBSync] SQL Error!")
+                print("------------------------------------")
+                print("Please include this in a Bug report:\n")
+                print(err.."\n")
+                print("------------------------------------")
+                print("Do not include this, this is for debugging only:\n")
+                print(sql.."\n")
+                print("------------------------------------")
+            end
         end
 
         banUserIdQ:start()
@@ -1017,7 +1021,6 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
                 calling_steamid = calling_ply:SteamID()
             end
         end
-
         if not IsValid(target_ply) then return end
 
         --[[
@@ -1089,12 +1092,11 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             end
         end
 
-        reason = reason or "No reason given"
+        reason = reason or "(None given)"
 
         --[[
             Run ban function with given functions
         ]]
-
         MSync.modules[info.ModuleIdentifier].banUserID(target_steamid, calling_steamid, length, reason, allserver)
 
     end
@@ -1295,6 +1297,10 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
                 unban = ban.timestamp+ban.length,
                 time = ban.timestamp
             }
+
+            if ban.length == 0 then
+                banData["unban"] = ban.length
+            end
 
             local message = ULib.getBanMessage( ban.banned.steamid, banData)
             return false, message
