@@ -6,7 +6,7 @@ MSync.modules.MRSync = MSync.modules.MRSync or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.1.3
+ * @version    2.2.0
 ]]
 
 --[[
@@ -16,7 +16,7 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.1.3"
+    Version = "2.2.0"
 }
 
 --[[
@@ -34,35 +34,6 @@ function MSync.modules.MRSync.init( transaction )
             UNIQUE INDEX `user_UNIQUE` (`user_id`, `server_group`)
         );
     ]] ))
-
-    --[[
-        Description: Function to save a players rank
-        Returns: nothing
-    ]]
-    function MSync.modules.MRSync.saveRank(ply)
-
-        if MSync.modules.MRSync.settings.nosync[ply:GetUserGroup()] then return end;
-
-        local addUserRankQ = MSync.DBServer:prepare( [[
-            INSERT INTO `tbl_mrsync` (user_id, rank, server_group)
-            VALUES (
-                (SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?), 
-            ?, 
-                (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
-            )
-            ON DUPLICATE KEY UPDATE rank=VALUES(rank);
-        ]] )
-        addUserRankQ:setString(1, ply:SteamID())
-        addUserRankQ:setString(2, ply:SteamID64())
-        addUserRankQ:setString(3, ply:GetUserGroup())
-        if not MSync.modules.MRSync.settings.syncall[ply:GetUserGroup()] then
-            addUserRankQ:setString(4, MSync.settings.data.serverGroup)
-        else
-            addUserRankQ:setString(4, "allservers")
-        end
-
-        addUserRankQ:start()
-    end
 
     --[[
         Description: Function to save a players rank using steamid and group name
@@ -90,7 +61,80 @@ function MSync.modules.MRSync.init( transaction )
             addUserRankQ:setString(4, "allservers")
         end
 
+        addUserRankQ.onError = function( q, err, sql )
+            if string.match( err, "^Column 'user_id' cannot be null$" ) then
+                MSync.mysql.addUserID(steamid)
+                MSync.modules.MRSync.saveRankByID(steamid, group)
+            else
+                print("------------------------------------")
+                print("[MRSync] SQL Error!")
+                print("------------------------------------")
+                print("Please include this in a Bug report:\n")
+                print(err.."\n")
+                print("------------------------------------")
+                print("Do not include this, this is for debugging only:\n")
+                print(sql.."\n")
+                print("------------------------------------")
+            end
+        end
+
         addUserRankQ:start()
+    end
+
+    --[[
+        Description: Function to validate user rank in DB is correct
+        Arguments:
+            - steamid [STRING] - the steamid of the user to validate
+            - group [STRING] - the group of the user to validate
+    ]]
+    function MSync.modules.MRSync.validateData( steamid, group )
+
+        if MSync.modules.MRSync.settings.nosync[group] then return end;
+
+        local removeOldRanksQ
+
+        if not MSync.modules.MRSync.settings.syncall[group] then
+
+            removeOldRanksQ = MSync.DBServer:prepare( [[
+                DELETE FROM `tbl_mrsync` WHERE user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?) AND server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers');
+            ]] )
+            removeOldRanksQ:setString(1, steamid)
+            removeOldRanksQ:setString(2, util.SteamIDTo64(steamid))
+
+            removeOldRanksQ.onSuccess = function( q, data )
+                MSync.modules.MRSync.saveRankByID(steamid, group)
+            end
+        else
+
+            removeOldRanksQ = MSync.DBServer:prepare( [[
+                DELETE FROM `tbl_mrsync` WHERE user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?) AND server_group<>(SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers');
+            ]] )
+            removeOldRanksQ:setString(1, steamid)
+            removeOldRanksQ:setString(2, util.SteamIDTo64(steamid))
+
+            removeOldRanksQ.onSuccess = function( q, data )
+                MSync.modules.MRSync.saveRankByID(steamid, group)
+            end
+        end
+
+        removeOldRanksQ.onError = function( q, err, sql )
+            if string.match( err, "^Column 'user_id' cannot be null$" ) then
+                MSync.mysql.addUserID(steamid)
+                MSync.modules.MRSync.saveRankByID(steamid, group)
+            else
+                print("------------------------------------")
+                print("[MRSync] SQL Error!")
+                print("------------------------------------")
+                print("Please include this in a Bug report:\n")
+                print(err.."\n")
+                print("------------------------------------")
+                print("Do not include this, this is for debugging only:\n")
+                print(sql.."\n")
+                print("------------------------------------")
+            end
+        end
+
+        removeOldRanksQ:start()
     end
 
     --[[
@@ -99,14 +143,15 @@ function MSync.modules.MRSync.init( transaction )
     ]]
     function MSync.modules.MRSync.loadRank(ply)
         local loadUserQ = MSync.DBServer:prepare( [[
-            SELECT rank FROM `tbl_mrsync` 
+            SELECT `rank` FROM `tbl_mrsync` 
             WHERE user_id=(
                 SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?
             ) AND (server_group=(
                 SELECT p_group_id FROM tbl_server_grp WHERE group_name=?
             ) OR server_group=(
                 SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers'
-            ));
+            ))
+            LIMIT 1;
         ]] )
         loadUserQ:setString(1, ply:SteamID())
         loadUserQ:setString(2, ply:SteamID64())
@@ -226,12 +271,14 @@ function MSync.modules.MRSync.hooks()
 
     -- Save rank on disconnect
     hook.Add("PlayerDisconnected", "mrsync.H.saveRank", function(ply)
-        MSync.modules.MRSync.saveRank(ply)
+        --MSync.modules.MRSync.saveRank(ply)
+        MSync.modules.MRSync.validateData(ply:SteamID(), ply:GetUserGroup())
     end)
 
     -- Save rank on GroupChange
     hook.Add("ULibUserGroupChange", "mrsync.H.saveRankOnUpdate", function(sid, _, _, new_group, _)
-        MSync.modules.MRSync.saveRankByID(sid, new_group)
+        --MSync.modules.MRSync.saveRankByID(sid, new_group)
+        MSync.modules.MRSync.validateData(sid, new_group)
     end)
 end
 
