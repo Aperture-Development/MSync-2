@@ -108,7 +108,10 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].banUser = function(ply, calling_ply, length, reason, allserver)
-        if MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()] then MSync.modules[info.ModuleIdentifier].msg(calling_ply, "User "..ply:Nick().." is already banned from this server."); return end
+        if MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()] then
+            MSync.modules[info.ModuleIdentifier].editBan( MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()]['banId'], reason, length, calling_ply, allserver)
+            return
+        end
         local banUserQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
             VALUES (
@@ -186,7 +189,10 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].banUserID = function(userid, calling_ply, length, reason, allserver)
-        if MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)] then MSync.modules[info.ModuleIdentifier].msg(calling_ply, "User "..userid.." is already banned from this server."); return end
+        if MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)] then
+            MSync.modules[info.ModuleIdentifier].editBan( MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)]['banId'], reason, length, calling_ply, allserver)
+            return
+        end
         local banUserIdQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
             VALUES (
