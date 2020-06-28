@@ -109,6 +109,9 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
     ]]
     MSync.modules[info.ModuleIdentifier].banUser = function(ply, calling_ply, length, reason, allserver)
         if MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()] then
+            if not length == 0 then
+                length = ((os.time() - MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)].timestamp)+(length*60))/60
+            end
             MSync.modules[info.ModuleIdentifier].editBan( MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()]['banId'], reason, length, calling_ply, allserver)
             return
         end
@@ -157,7 +160,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 banData["unban"] = length
                 msgLength = "Permanent"
             else
-                msgLength = ULib.secondsToStringTime(length)
+                msgLength = ULib.secondsToStringTime(length*60)
             end
 
             if reason == "" then
@@ -190,6 +193,9 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
     ]]
     MSync.modules[info.ModuleIdentifier].banUserID = function(userid, calling_ply, length, reason, allserver)
         if MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)] then
+            if not (length == 0) then
+                length = ((os.time() - MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)].timestamp)+(length*60))/60
+            end
             MSync.modules[info.ModuleIdentifier].editBan( MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)]['banId'], reason, length, calling_ply, allserver)
             return
         end
@@ -235,7 +241,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 banData["unban"] = length
                 msgLength = "Permanent"
             else
-                msgLength = ULib.secondsToStringTime(length)
+                msgLength = ULib.secondsToStringTime(length*60)
             end
 
             if reason == "" then
@@ -295,7 +301,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         else
             editBanQ:setString(5, "allservers")
         end
-        editBanQ:setString(6, banId)
+        editBanQ:setString(6, tostring(banId))
 
         editBanQ.onSuccess = function( q, data )
             MSync.modules[info.ModuleIdentifier].getActiveBans()
@@ -1333,6 +1339,47 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
         }
 
         MSync.modules[info.ModuleIdentifier].recentDisconnects[tableLength] = data
+    end)
+
+    hook.Add("ULibPlayerBanned", "msync.mbsync.ulxban", function(steamid, banData)
+        local ban = {}
+
+        if banData.unban == 0 then
+            ban.length = 0
+        else
+            ban.length = (banData.unban-os.time())/60
+        end
+
+        if not banData.reason then
+            banData.reason = "(None given)"
+        end
+
+        if banData.modified_admin then
+            if banData.modified_admin == "(Console)" then
+                ban.admin = "STEAM_0:0:0"
+            else
+                ban.admin = string.match(banData.modified_admin, "STEAM_%d:%d:%d+")
+            end
+        else
+            if banData.admin == "(Console)" then
+                ban.admin = "STEAM_0:0:0"
+            else
+                ban.admin = string.match(banData.admin, "STEAM_%d:%d:%d+")
+            end
+        end
+
+        MSync.modules[info.ModuleIdentifier].banUserID(steamid, ban.admin, ban.length, banData.reason, false)
+    end)
+
+    hook.Add("ULibPlayerUnBanned", "msync.mbsync.ulxunban", function(steamid, admin)
+        local admin_id = ""
+        if not IsValid(admin) then
+            admin_id = "STEAM_0:0:0"
+        else
+            admin_id = admin:SteamID()
+        end
+
+        MSync.modules[info.ModuleIdentifier].unBanUser(steamid, admin_id)
     end)
 end
 
