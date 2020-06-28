@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENSE
- * @version    1.1.0
+ * @version    1.1.1
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "1.1.0"
+    Version = "1.1.1"
 }
 
 --[[
@@ -203,7 +203,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         banUserIdQ:setString(4, util.SteamIDTo64(calling_ply))
         banUserIdQ:setString(5, reason)
         banUserIdQ:setNumber(6, timestamp)
-        banUserIdQ:setNumber(7, length)
+        banUserIdQ:setNumber(7, length*60)
         if not allserver then
             banUserIdQ:setString(8, MSync.settings.data.serverGroup)
         else
@@ -281,7 +281,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             WHERE p_ID=?
         ]] )
         editBanQ:setString(1, reason)
-        editBanQ:setString(2, length)
+        editBanQ:setNumber(2, length*60)
         editBanQ:setString(3, calling_ply)
         editBanQ:setString(4, util.SteamIDTo64(calling_ply))
         if not allserver then
@@ -293,7 +293,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         editBanQ.onSuccess = function( q, data )
             MSync.modules[info.ModuleIdentifier].getActiveBans()
-            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Edited ban with id "..banId.." with length "..length.." with reason "..reason)
+            MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Edited ban with id "..banId.." with data: \nLength: "..ULib.secondsToStringTime(length*60).."\nReason: "..reason)
         end
 
         editBanQ.onError = function( q, err, sql )
@@ -745,21 +745,25 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".sendMessage")
     MSync.modules[info.ModuleIdentifier].msg = function(ply, content, msgType)
-        if type(ply) == "string" and not ply == "STEAM_0:0:0" then
+        if type(ply) == "string" and not (ply == "STEAM_0:0:0") then
             ply = player.GetBySteamID( ply )
         end
 
-        if not ply or ply == "STEAM_0:0:0" then
-            print("[MBSync] "..content)
-        else
-            if not msgType then msgType = 0 end
-            -- Basic message
-            if msgType == 0 then
-                net.Start("msync."..info.ModuleIdentifier..".sendMessage")
-                    net.WriteFloat(msgType)
-                    net.WriteString(content)
-                net.Send(ply)
+        if type(ply) == "Entity" or type(ply) == "Player" then
+            if not IsValid(ply) then
+                print("[MBSync] "..content)
+            else
+                if not msgType then msgType = 0 end
+                -- Basic message
+                if msgType == 0 then
+                    net.Start("msync."..info.ModuleIdentifier..".sendMessage")
+                        net.WriteFloat(msgType)
+                        net.WriteString(content)
+                    net.Send(ply)
+                end
             end
+        elseif ply == "STEAM_0:0:0" then
+            print("[MBSync] "..content)
         end
     end
 
@@ -1159,7 +1163,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             --[[
                 Load the ban date from the activa ben table to a local variable
             ]]
-            local banData = MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(target_steamid)]
+            local banData = table.Copy(MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(target_steamid)])
 
             --[[
                 Translate ban length and Date into readable values
@@ -1172,6 +1176,10 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             end
 
             banData.timestamp = os.date( "%H:%M:%S - %d/%m/%Y", banData.timestamp)
+
+            if string.len(banData.reason) <= 0 then
+                banData.reason = "None Given"
+            end
 
             --[[
                 Message the ban informations to the asking player
