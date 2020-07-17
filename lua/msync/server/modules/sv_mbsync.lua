@@ -892,9 +892,25 @@ MSync.modules[info.ModuleIdentifier].net = function()
         if not banid then return end;
 
         --[[
-            Run edit function to edit ban data
+            When unbanning someone using the banid, we need to still unban the user in ULX, so this is the best solution.
+
+            We loop trough the active ban table, search for the banid ( it has to be there, otherwise the user can't know it ) and then unban the steamid
+        ]]
+        local steamid = ""
+        for k,v in pairs(MSync.modules[info.ModuleIdentifier].banTable) do
+            if v.banid == banid then
+                steamid = v.banned['steamid']
+            end
+        end
+
+        --[[
+            Run unban function that takes the banid
         ]]
         MSync.modules[info.ModuleIdentifier].unBanUserID(ply, banid)
+
+        --[[
+            ULib.unban for con
+        ]]
     end )
 
     --[[
@@ -1149,6 +1165,11 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             Unban user with given steamid
         ]]
         MSync.modules[info.ModuleIdentifier].unBanUser(target_steamid, calling_steamid)
+
+        --[[
+            For ulx's sake, we unban the user in ulx for the case that a user has been banned using ulx ban and now gets unbanned using mbsync unbanid
+        ]]
+        ULib.unban(target_steamid, calling_ply)
     end
     local BanPlayer = ulx.command( "MSync", "msync."..info.ModuleIdentifier..".unBanID", MSync.modules[info.ModuleIdentifier].Chat.unBanID, "!munban" )
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="steamid"}
