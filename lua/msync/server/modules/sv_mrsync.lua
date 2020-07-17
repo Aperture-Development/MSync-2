@@ -1,6 +1,7 @@
 MSync = MSync or {}
 MSync.modules = MSync.modules or {}
 MSync.modules.MRSync = MSync.modules.MRSync or {}
+local userTransaction = userTransaction or {}
 --[[
  * @file       sv_mrsync.lua
  * @package    MySQL Rank Sync
@@ -37,6 +38,9 @@ function MSync.modules.MRSync.init( transaction )
 
     --[[
         Description: Function to save a players rank using steamid and group name
+        Arguments:
+            - steamid [string] : The steamid of the user to be saved
+            - group [string] : the group to be saved in combination with the steamid
         Returns: nothing
     ]]
     function MSync.modules.MRSync.saveRankByID(steamid, group)
@@ -139,6 +143,8 @@ function MSync.modules.MRSync.init( transaction )
 
     --[[
         Description: Function to load a players rank
+        Arguments:
+            - ply [playerEntity] : The player to be loaded
         Returns: nothing
     ]]
     function MSync.modules.MRSync.loadRank(ply)
@@ -158,6 +164,8 @@ function MSync.modules.MRSync.init( transaction )
         loadUserQ:setString(3, MSync.settings.data.serverGroup)
 
         function loadUserQ.onData( q, data )
+            print("Data!")
+            PrintTable(data)
             if not ULib.ucl.groups[data.rank] then
                 print("[MRSync] Could not load rank "..data.rank.." for "..ply:Nick()..". Rank does not exist on this server")
                 return
@@ -168,7 +176,41 @@ function MSync.modules.MRSync.init( transaction )
             ply:SetUserGroup(data.rank)
         end
 
+        function loadUserQ.onSuccess( q, data )
+            if not data[1] then
+                if ply:GetUserGroup() == "user" or MSync.modules.MRSync.settings.nosync[ply:GetUserGroup()] then return end
+
+                print("[MRSync] Assuming user has been removed from rank, setting them to default")
+
+                userTransaction[ply:SteamID64()] = true
+                ULib.ucl.removeUser(ply:SteamID())
+            end
+        end
+
         loadUserQ:start()
+    end
+
+    --[[
+        Description: Function to remove a user entirely from MRSync
+        Arguments:
+            - steamid [string] : The steamid of the user to be removed
+        Returns: nothing
+    ]]
+    function MSync.modules.MRSync.removeRank(steamid)
+
+        local removeUserRankQ = MSync.DBServer:prepare( [[
+            DELETE FROM `tbl_mrsync` WHERE 
+                user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?) AND 
+                (
+                    server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers') OR
+                    server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
+                );
+        ]] )
+        removeUserRankQ:setString(1, steamid)
+        removeUserRankQ:setString(2, util.SteamIDTo64( steamid ))
+        removeUserRankQ:setString(3, MSync.settings.data.serverGroup)
+
+        removeUserRankQ:start()
     end
 
     --[[
@@ -279,6 +321,16 @@ function MSync.modules.MRSync.hooks()
     hook.Add("ULibUserGroupChange", "mrsync.H.saveRankOnUpdate", function(sid, _, _, new_group, _)
         --MSync.modules.MRSync.saveRankByID(sid, new_group)
         MSync.modules.MRSync.validateData(sid, new_group)
+    end)
+
+    -- Remove Rank on ULX Remove
+    hook.Add("ULibUserRemoved", "mrsync.H.saveRankOnUpdate", function(sid)
+        if userTransaction[util.SteamIDTo64(sid)] then
+            userTransaction[util.SteamIDTo64(sid)] = nil
+            return
+        end
+
+        MSync.modules.MRSync.removeRank(sid)
     end)
 end
 
