@@ -24,6 +24,7 @@ local info = {
 MSync.modules[info.ModuleIdentifier] = MSync.modules[info.ModuleIdentifier] or {}
 MSync.modules[info.ModuleIdentifier].info = info
 MSync.modules[info.ModuleIdentifier].recentDisconnects = MSync.modules[info.ModuleIdentifier].recentDisconnects or {}
+local userTransactions = userTransactions or {}
 
 --[[
     Define mysql table and additional functions that are later used
@@ -909,8 +910,10 @@ MSync.modules[info.ModuleIdentifier].net = function()
         MSync.modules[info.ModuleIdentifier].unBanUserID(ply, banid)
 
         --[[
-            ULib.unban for con
+            For ulx's sake, we unban the user in ulx for the case that a user has been banned using ulx ban and now gets unbanned using mbsync unbanid
         ]]
+        userTransactions[util.SteamIDTo64(target_steamid)] = true
+        ULib.unban(target_steamid, calling_ply)
     end )
 
     --[[
@@ -1169,6 +1172,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
         --[[
             For ulx's sake, we unban the user in ulx for the case that a user has been banned using ulx ban and now gets unbanned using mbsync unbanid
         ]]
+        userTransactions[util.SteamIDTo64(target_steamid)] = true
         ULib.unban(target_steamid, calling_ply)
     end
     local BanPlayer = ulx.command( "MSync", "msync."..info.ModuleIdentifier..".unBanID", MSync.modules[info.ModuleIdentifier].Chat.unBanID, "!munban" )
@@ -1346,6 +1350,16 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
             local message = ULib.getBanMessage( ban.banned.steamid, banData)
             return false, message
         else
+            if ULib.bans[util.SteamIDFrom64(steamid64)] then
+                userTransactions[steamid64] = true
+                ULib.unban(target_steamid, calling_ply)
+                --[[
+                    Sorry for whitelist users, but to prevent a inocent by ULX banned player from being banned even if he got unbanned on another server
+
+                    EDIT: Actually, I just leave this as comment here in case it is wanted by multible users
+                ]]
+                --return true
+            end
             return
         end
     end)
@@ -1393,6 +1407,11 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
     end)
 
     hook.Add("ULibPlayerUnBanned", "msync.mbsync.ulxunban", function(steamid, admin)
+        if userTransactions[util.SteamIDTo64(steamid)] then
+            userTransactions[util.SteamIDTo64(steamid)] = nil
+            return
+        end
+
         local admin_id = ""
         if not IsValid(admin) then
             admin_id = "STEAM_0:0:0"
