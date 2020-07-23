@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENSE
- * @version    1.2.0
+ * @version    1.3.0
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "1.2.0"
+    Version = "1.3.0"
 }
 
 --[[
@@ -636,14 +636,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         exportActiveBans.onSuccess = function( q, data )
 
-            local function escapeString( str )
-                if not str then
-                    return "NULL"
-                else
-                    return sql.SQLStr(str)
-                end
-            end
-
             print("[MBSync] Exporting Bans to ULX")
             for k,v in pairs(data) do
                 local unban
@@ -653,13 +645,21 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                     unban = v.date_unix + v.length_unix
                 end
 
+                local admin
+                if v["admin.steamid"] == "STEAM_0:0:0" then
+                    admin = v["admin.nickname"]
+                else
+                    admin = v["admin.nickname"].."("..v["admin.steamid"]..")"
+                end
+
                 ULib.bans[ v["steamid"] ] = {
-                    admin = v["admin.nickname"],
+                    admin = admin,
                     time = v.date_unix,
                     unban = unban,
                     reason = v.reason,
                     name = v["banned.nickname"]
                 }
+                userTransactions[v["steamid64"]] = true
                 hook.Call( ULib.HOOK_USER_BANNED, _, v["steamid"], ULib.bans[ v["steamid"] ] )
             end
             ULib.fileWrite( ULib.BANS_FILE, ULib.makeKeyValues( ULib.bans ) )
@@ -683,6 +683,93 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
     end
     concommand.Add("msync."..info.ModuleIdentifier..".export", function( ply, cmd, args )
         MSync.modules[info.ModuleIdentifier].exportBansToULX()
+    end)
+
+    --[[
+        Description: Function to allow the import of all ULX bans to MBSync
+        Returns: nothing
+    ]]
+    MSync.modules[info.ModuleIdentifier].importBansFromULX = function( allservers )
+        local transactions = {}
+        local banTransaction = MSync.DBServer:createTransaction()
+
+        print("[MBSync] Ban import from ULX started ...")
+        for k,v in pairs(ULib.bans) do
+            --[[
+                - Create User
+                - Create ban query
+            ]]
+            transactions[k] = MSync.DBServer:prepare( [[
+                INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
+                VALUES (
+                    (SELECT p_user_id FROM tbl_users WHERE steamid=?), 
+                    (SELECT p_user_id FROM tbl_users WHERE steamid=?), 
+                ?, ?, ?,
+                    (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
+                );
+            ]] )
+            local timestamp = os.time()
+            transactions[k]:setString(1, k)
+
+            if v['modified_admin'] then
+                if v['modified_admin'] == "(Console)" then
+                    transactions[k]:setString(2,"STEAM_0:0:0")
+                else
+                    transactions[k]:setString(2,string.match(v['modified_admin'], "STEAM_%d:%d:%d+"))
+                end
+            else
+                if v['admin'] == "(Console)" then
+                    transactions[k]:setString(2,"STEAM_0:0:0")
+                else
+                    transactions[k]:setString(2,string.match(v['admin'], "STEAM_%d:%d:%d+"))
+                end
+            end
+
+            transactions[k]:setString(3, v['reason'] or "(None given)")
+            transactions[k]:setNumber(4, tonumber(v['time']))
+
+            if tonumber(v['unban']) == 0 then
+                transactions[k]:setNumber(5, tonumber(v['unban']))
+            else
+                transactions[k]:setNumber(5, tonumber(v['unban']) - tonumber(v['time']))
+            end
+
+            if not allserver then
+                transactions[k]:setString(6, MSync.settings.data.serverGroup)
+            else
+                transactions[k]:setString(6, "allservers")
+            end
+
+            banTransaction:addQuery(transactions[k])
+            print("[MBSync] Added ban for SteamID: "..k)
+        end
+
+        banTransaction.onSuccess = function()
+            print("[MBSync] Ban import completed!")
+        end
+
+        banTransaction.onError = function(tr, err)
+            print("------------------------------------")
+            print("[MBSync] SQL Error!")
+            print("------------------------------------")
+            print("Please include this in a Bug report:\n")
+            print(err.."\n")
+            print("------------------------------------")
+            print("Do not include this, this is for debugging only:\n")
+            print(tr.."\n")
+            print("------------------------------------")
+        end
+
+        banTransaction:start()
+    end
+    concommand.Add("msync."..info.ModuleIdentifier..".import", function( ply, cmd, args )
+        local allservers = false
+
+        if args[1] == "true" then
+            allservers = true
+        end
+
+        MSync.modules[info.ModuleIdentifier].importBansFromULX( allservers )
     end)
 
     --[[
@@ -1350,16 +1437,17 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
             local message = ULib.getBanMessage( ban.banned.steamid, banData)
             return false, message
         else
+            --[[
+            This function has been disabled in favor of security and to not cause previously ulx banned players to be unbanned.
+            It has been commented out because of possible usage in the future
+
             if ULib.bans[util.SteamIDFrom64(steamid64)] then
                 userTransactions[steamid64] = true
                 ULib.unban(target_steamid, calling_ply)
-                --[[
-                    Sorry for whitelist users, but to prevent a inocent by ULX banned player from being banned even if he got unbanned on another server
-
-                    EDIT: Actually, I just leave this as comment here in case it is wanted by multible users
-                ]]
+                -- Disabled because it could cause security issues with whitelisted servers
                 --return true
             end
+            ]]
             return
         end
     end)
@@ -1378,6 +1466,11 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
 
     hook.Add("ULibPlayerBanned", "msync.mbsync.ulxban", function(steamid, banData)
         local ban = {}
+
+        if userTransactions[util.SteamIDTo64(steamid)] then
+            userTransactions[util.SteamIDTo64(steamid)] = nil
+            return
+        end
 
         if banData.unban == 0 then
             ban.length = 0
@@ -1418,7 +1511,6 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
         else
             admin_id = admin:SteamID()
         end
-
         MSync.modules[info.ModuleIdentifier].unBanUser(steamid, admin_id)
     end)
 end
