@@ -12,6 +12,8 @@ MSync.ulx       = MSync.ulx or {}
 ]]
 function MSync.func.loadServer()
 
+    MSync.log(MSYNC_DBG_DEBUG, "Loading Server")
+
     include("msync/server/sv_net.lua")
     include("msync/server/sv_mysql.lua")
     include("msync/server/sv_modules.lua")
@@ -22,6 +24,8 @@ function MSync.func.loadServer()
 
     timer.Create("msync.t.checkForULXandULib", 5, 0, function()
         if not ulx or not ULib then return end;
+
+        MSync.log(MSYNC_DBG_DEBUG, "ULX Loaded, continuing startup")
 
         timer.Remove("msync.t.checkForULXandULib")
         MSync.ulx.createPermissions()
@@ -34,11 +38,13 @@ function MSync.func.loadServer()
     local files, _ = file.Find("msync/client_gui/*.lua", "LUA")
     for k, v in pairs(files) do
         AddCSLuaFile("msync/client_gui/"..v)
+        MSync.log(MSYNC_DBG_DEBUG, "Added client Lua file: "..v)
     end
 
     local files, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
     for k, v in pairs(files) do
         AddCSLuaFile("msync/client_gui/modules/"..v)
+        MSync.log(MSYNC_DBG_DEBUG, "Added client module file: "..v)
     end
 end
 
@@ -47,6 +53,7 @@ end
     Returns: true
 ]]
 function MSync.func.loadSettings()
+    MSync.log(MSYNC_DBG_INFO, "Loading Settings")
     if not file.Exists("msync/settings.txt", "DATA") then
         MSync.settings.data = {
             mysql = {
@@ -63,8 +70,10 @@ function MSync.func.loadSettings()
         }
         file.CreateDir("msync")
         file.Write("msync/settings.txt", util.TableToJSON(MSync.settings.data, true))
+        MSync.log(MSYNC_DBG_DEBUG, "Created new configuration")
     else
         MSync.settings.data = util.JSONToTable(file.Read("msync/settings.txt", "DATA"))
+        MSync.log(MSYNC_DBG_DEBUG, "Loaded found configuration")
     end
 
     return true
@@ -76,6 +85,9 @@ end
 ]]
 function MSync.func.saveSettings()
     file.Write("msync/settings.txt", util.TableToJSON(MSync.settings.data, true))
+
+    MSync.log(MSYNC_DBG_INFO, "Saved configuration")
+
     return file.Exists("msync/settings.txt", "DATA")
 end
 
@@ -86,9 +98,12 @@ end
 function MSync.func.getModuleInfos()
     local infoTable = {}
 
+    MSync.log(MSYNC_DBG_DEBUG, "Getting module informations...")
+
     for k,v in pairs(MSync.modules) do
         infoTable[k] = v.info
         infoTable[k].state = MSync.settings.data.enabledModules[v.info.ModuleIdentifier] or false
+        MSync.log(MSYNC_DBG_DEBUG, "[getModuleInfos] Got info for "..k)
     end
 
     return infoTable
@@ -101,6 +116,9 @@ end
 ]]
 function MSync.func.getSafeSettings()
     local settings = table.Copy(MSync.settings.data)
+
+    MSync.log(MSYNC_DBG_DEBUG, "Generating safe settings to be sent to the player")
+
     settings.mysql.password = nil
 
     return settings
