@@ -110,7 +110,7 @@ end
     Returns: nothing
 ]]
 function MSync.mysql.addUser(ply)
-    MSync.log(MSYNC_DBG_DEBUG, "Exec: addUser. Param.: " .. ply)
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: addUser. Param.: " .. tostring(ply))
     if not MSync.DBServer then MSync.log(MSYNC_DBG_DEBUG, "No Database connected yet. Please connect to a Database to be able to create users."); return end;
 
     local addUserQ = MSync.DBServer:prepare( [[

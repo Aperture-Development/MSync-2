@@ -10,7 +10,7 @@ MSync.net = MSync.net or {}
     Returns: nothing
 ]]
 function MSync.net.sendTable(ply, identifier, table)
-    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.sendTable. Param.: " .. ply .. " " .. identifier .. " " .. table)
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.sendTable. Param.: " .. tostring(ply) .. " " .. identifier .. " " .. tostring(table))
     local identifier = identifier or "settings"
 
     net.Start("msync.sendTable")
@@ -29,7 +29,7 @@ util.AddNetworkString("msync.sendTable")
     Returns: nothing
 ]]
 function MSync.net.sendMessage(ply, state, string)
-    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.sendMessage. Param.: " .. ply .. " " .. state .. " " .. string)
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.sendMessage. Param.: " .. tostring(ply) .. " " .. state .. " " .. tostring(string))
     local state = state or "info"
 
     net.Start("msync.sendMessage")
@@ -46,7 +46,7 @@ util.AddNetworkString("msync.sendMessage")
     Returns: nothing
 ]]
 function MSync.net.openAdminGUI(ply)
-    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.openAdminGUI. Param.: " .. ply)
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.openAdminGUI. Param.: " .. tostring(ply))
     net.Start("msync.openAdminGUI")
     net.Send(ply)
 end
@@ -59,7 +59,7 @@ util.AddNetworkString("msync.openAdminGUI")
     Returns: nothing
 ]]
 function MSync.net.dbStatus(ply)
-    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.dbStatus. Param.: " .. ply)
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.dbStatus. Param.: " .. tostring(ply))
     net.Start("msync.dbStatus")
         if MSync.DBServer then
             net.WriteBool(true)
@@ -76,7 +76,7 @@ util.AddNetworkString("msync.dbStatus")
 ]]
 util.AddNetworkString("msync.getTable")
 net.Receive("msync.getTable", function(len, ply)
-    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.getTable. Ply.: " .. ply)
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.getTable. Ply.: " .. ply:Nick())
     if not ply:query("msync.getTable") then return end
 
     local identifier = net.ReadString()
@@ -89,7 +89,7 @@ end )
 ]]
 util.AddNetworkString("msync.sendSettings")
 net.Receive("msync.sendSettings", function(len, ply)
-    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.sendSettings. Ply.: " .. ply)
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.sendSettings. Ply.: " .. ply:Nick())
     if not ply:query("msync.sendSettings") then return end
 
     local password = MSync.settings.data.mysql.password
@@ -112,7 +112,7 @@ end )
 ]]
 util.AddNetworkString("msync.getSettings")
 net.Receive("msync.getSettings", function(len, ply)
-    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.getSettings. Ply.: " .. ply)
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.getSettings. Ply.: " .. ply:Nick())
     if not ply:query("msync.getSettings") then return end
     MSync.net.sendTable(ply, "settings", MSync.func.getSafeSettings())
 end )
@@ -123,7 +123,7 @@ end )
 ]]
 util.AddNetworkString("msync.getModules")
 net.Receive("msync.getModules", function(len, ply)
-    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.getModules. Ply.: " .. ply)
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.getModules. Ply.: " .. ply:Nick())
     if not ply:query("msync.getModules") then return end
 
     MSync.net.sendTable(ply, "modules", MSync.func.getModuleInfos())
@@ -135,7 +135,7 @@ end )
 ]]
 util.AddNetworkString("msync.toggleModule")
 net.Receive("msync.toggleModule", function(len, ply)
-    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.toggleModule. Ply.: " .. ply)
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.toggleModule. Ply.: " .. ply:Nick())
     if not ply:query("msync.toggleModule") then return end
 
 
@@ -156,7 +156,7 @@ end )
 ]]
 util.AddNetworkString("msync.connectDB")
 net.Receive("msync.connectDB", function(len, ply)
-    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.connectDB. Ply.: " .. ply)
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.connectDB. Ply.: " .. ply:Nick())
     if not ply:query("msync.connectDB") then return end
 
     MSync.mysql.initialize()
