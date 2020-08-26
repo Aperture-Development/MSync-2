@@ -70,7 +70,7 @@ function MSync.modules.MRSync.init( transaction )
 
         addUserRankQ.onError = function( q, err, sql )
             if string.match( err, "^Column 'user_id' cannot be null$" ) then
-                MSync.log(MSYNC_DBG_DEBUG, "[MRSync] User does not exist, creating user and repeating");
+                MSync.log(MSYNC_DBG_DEBUG, "[MRSync] User does not exist, creating user \"" .. steamid .. "\" and repeating");
                 MSync.mysql.addUserID(steamid)
                 MSync.modules.MRSync.saveRankByID(steamid, group)
             else
@@ -111,7 +111,7 @@ function MSync.modules.MRSync.init( transaction )
             end
         else
 
-            MSync.log(MSYNC_DBG_INFO, "[MRSync] Syncall group, removing all groups from user that are not \"allservers\"");
+            MSync.log(MSYNC_DBG_INFO, "[MRSync] Syncall group, removing all groups from user \"" .. steamid .. "\" that are not \"allservers\"");
 
             removeOldRanksQ = MSync.DBServer:prepare( [[
                 DELETE FROM `tbl_mrsync` WHERE user_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?) AND server_group<>(SELECT p_group_id FROM tbl_server_grp WHERE group_name='allservers');

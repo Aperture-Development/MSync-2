@@ -30,7 +30,7 @@ end
     Define the admin panel for the settings
 ]]
 function MSync.modules.MRSync.adminPanel(sheet)
-    MSync.log(MSYNC_DBG_INFO, "[MRSync] Initializing AdminGUI panel");
+    MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Initializing AdminGUI panel");
     local pnl = vgui.Create( "DPanel", sheet )
     pnl:Dock(FILL)
 
@@ -51,7 +51,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
     allserver_table:SetMultiSelect( false )
     allserver_table:AddColumn( "Allserver Ranks" )
     allserver_table.OnRowRightClick = function(panel, lineID, line)
-        MSync.log(MSYNC_DBG_INFO, "[MRSync] Right clicked " .. line:GetValue(1));
+        MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Right clicked " .. line:GetValue(1));
         local ident = line:GetValue(1)
         local cursor_x, cursor_y = panel:CursorPos()
         local DMenu = vgui.Create("DMenu", panel)
@@ -75,7 +75,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
     allserver_button:SetSize( 130, 20 )
     allserver_button.DoClick = function()
         if string.len(allserver_textentry:GetValue()) > 0 and not MSync.modules.MRSync.settings.nosync[allserver_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[allserver_textentry:GetValue()] then
-            if string.match(allserver_textentry:GetValue(), "^%s*$") or string.match(allserver_textentry:GetValue(), "^%s") or string.match(allserver_textentry:GetValue(), "%s$") then MSync.log(MSYNC_DBG_INFO, "[MRSync] String contains one or more whitespaces at the end or the beginning, not adding to list"); return end
+            if string.match(allserver_textentry:GetValue(), "^%s*$") or string.match(allserver_textentry:GetValue(), "^%s") or string.match(allserver_textentry:GetValue(), "%s$") then MSync.log(MSYNC_DBG_WARNING, "[MRSync] String contains one or more whitespaces at the end or the beginning, not adding to list"); return end
 
             MSync.log(MSYNC_DBG_INFO, "[MRSync] Adding \"" .. allserver_textentry:GetValue() .. "\" to allservers rank list");
             allserver_table:AddLine(allserver_textentry:GetValue())
@@ -102,7 +102,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
     nosync_table:SetMultiSelect( false )
     nosync_table:AddColumn( "Nosync Ranks" )
     nosync_table.OnRowRightClick = function(panel, lineID, line)
-        MSync.log(MSYNC_DBG_INFO, "[MRSync] Right clicked " .. line:GetValue(1));
+        MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Right clicked " .. line:GetValue(1));
         local ident = line:GetValue(1)
         local cursor_x, cursor_y = panel:CursorPos()
         local DMenu = vgui.Create("DMenu", panel)
@@ -126,7 +126,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
     nosync_button:SetSize( 130, 20 )
     nosync_button.DoClick = function()
         if string.len(nosync_textentry:GetValue()) > 0 and not MSync.modules.MRSync.settings.nosync[nosync_textentry:GetValue()] and not MSync.modules.MRSync.settings.syncall[nosync_textentry:GetValue()] then
-            if string.match(nosync_textentry:GetValue(), "^%s*$") or string.match(nosync_textentry:GetValue(), "^%s") or string.match(nosync_textentry:GetValue(), "%s$") then MSync.log(MSYNC_DBG_INFO, "[MRSync] String contains one or more whitespaces at the end or the beginning, not adding to list"); return end
+            if string.match(nosync_textentry:GetValue(), "^%s*$") or string.match(nosync_textentry:GetValue(), "^%s") or string.match(nosync_textentry:GetValue(), "%s$") then MSync.log(MSYNC_DBG_WARNING, "[MRSync] String contains one or more whitespaces at the end or the beginning, not adding to list"); return end
 
             MSync.log(MSYNC_DBG_INFO, "[MRSync] Adding \"" .. allserver_textentry:GetValue() .. "\" to nosync rank list");
             nosync_table:AddLine(nosync_textentry:GetValue())
@@ -144,7 +144,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
         timer.Create("mrsync.t.checkSettings", 1, 0, function()
             if not MSync.modules.MRSync.settings then return end
 
-            MSync.log(MSYNC_DBG_INFO, "[MRSync] Got settings from server, adding to panel");
+            MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Got settings from server, adding to panel");
             for k,_ in pairs(MSync.modules.MRSync.settings.syncall) do
                 allserver_table:AddLine(k)
             end
@@ -157,7 +157,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
         end)
     else
 
-        MSync.log(MSYNC_DBG_INFO, "[MRSync] Settings found, adding to panel");
+        MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Settings found, adding to panel");
         for k,_ in pairs(MSync.modules.MRSync.settings.syncall) do
             allserver_table:AddLine(k)
         end
@@ -191,7 +191,7 @@ function MSync.modules.MRSync.net()
         Returns: nothing
     ]]
     function MSync.modules.MRSync.sendSettings()
-        MSync.log(MSYNC_DBG_INFO, "[MRSync] Exec: MRSync.sendSettings");
+        MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Exec: MRSync.sendSettings");
         net.Start("msync.mrsync.sendSettings")
             net.WriteTable(MSync.modules.MRSync.settings)
         net.SendToServer()
@@ -204,7 +204,7 @@ function MSync.modules.MRSync.net()
         Returns: nothing
     ]]
     function MSync.modules.MRSync.getSettings()
-        MSync.log(MSYNC_DBG_INFO, "[MRSync] Exec: MRSync.getSettings");
+        MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Exec: MRSync.getSettings");
         net.Start("msync.mrsync.getSettings")
         net.SendToServer()
     end
@@ -214,7 +214,7 @@ function MSync.modules.MRSync.net()
         Returns: nothing
     ]]
     net.Receive("msync.mrsync.sendSettingsPly", function(len, ply)
-        MSync.log(MSYNC_DBG_INFO, "[MRSync] Net: msync.mrsync.sendSettingsPly");
+        MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Net: msync.mrsync.sendSettingsPly");
         MSync.modules.MRSync.settings = net.ReadTable()
     end )
 end
