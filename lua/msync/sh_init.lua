@@ -53,3 +53,26 @@ MSync.log = function(logLevel, logMessage)
         --file.Append( "msync/logs/msync_"..os.date("[]")..".log", os.date("[]") )
     end
 end
+
+--[[
+    Description: MSync string format function, allows easy and fast formating of long strings
+    Arguments:
+        - str [string] - The string containing the variables formated like $<variable>
+        - tbl [table] - The table containing the variable name as key and the value as key value ( e.g. {["variable"] = "My first variable"})
+    Returns:
+        - formatedString [string] - the string with all variables replaced
+]]
+MSync.formatString = function(str, tbl)
+    for k,v in pairs(tbl) do
+        str = string.Replace(str, "$"..k, v)
+    end
+    return str
+end
+
+function testlog()
+    local err = "No Error"
+    local sql = "Test"
+    MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MRSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
+end
+local test = {["1"] = "this",["string"] = "shit"}
+print(MSync.formatString("Test $1 $string", test))
