@@ -68,11 +68,3 @@ MSync.formatString = function(str, tbl)
     end
     return str
 end
-
-function testlog()
-    local err = "No Error"
-    local sql = "Test"
-    MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MRSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
-end
-local test = {["1"] = "this",["string"] = "shit"}
-print(MSync.formatString("Test $1 $string", test))
