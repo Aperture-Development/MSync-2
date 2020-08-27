@@ -73,6 +73,27 @@ function MSync.func.loadSettings()
         MSync.log(MSYNC_DBG_DEBUG, "Created new configuration")
     else
         MSync.settings.data = util.JSONToTable(file.Read("msync/settings.txt", "DATA"))
+
+        if MSync.settings.data.EnabledModules and MSync.settings.data.DisabledModules then
+            MSync.log(MSYNC_DBG_WARNING, "Old settings file found! Updating to new format")
+            file.Delete( "msync/settings.txt" )
+            local oldSettings = table.Copy(MSync.settings.data)
+            MSync.settings.data = {
+                mysql = {
+                    host = oldSettings.mysql.Host,
+                    port = oldSettings.mysql.Port,
+                    username = oldSettings.mysql.Username,
+                    password = oldSettings.mysql.Password,
+                    database = oldSettings.mysql.Database
+                },
+                enabledModules = {
+                    ["mrsync"] = true
+                },
+                serverGroup = "allservers"
+            }
+            file.Write("msync/settings.txt", util.TableToJSON(MSync.settings.data, true))
+            MSync.log(MSYNC_DBG_WARNING, "Settings imported! Module settings cannot be ported and need to be re-done")
+        end
         MSync.log(MSYNC_DBG_DEBUG, "Loaded found configuration")
     end
 
