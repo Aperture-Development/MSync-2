@@ -1389,7 +1389,7 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
             --[[
                 Print to console that a banned user tries to join
             ]]
-            MSync.log(MSYNC_DBG_WARNING, MSync.formatString("---== [MBSync] ==---\nA banned player tried to join the server.\n-- Informations --\nNickname: $nickname\nSteamID: $steamid\nBan Date: $date\nUnban Date: $unbanDate\nBanned by: $admin\n---== [END] ==---", {
+            MSync.log(MSYNC_DBG_WARNING, MSync.formatString("\n---== [MBSync] ==---\nA banned player tried to join the server.\n-- Informations --\nNickname: $nickname\nSteamID: $steamid\nBan Date: $date\nUnban Date: $unbanDate\nBanned by: $admin\n---== [END] ==---", {
                 ["nickname"] = ban.banned.nickname,
                 ["steamid"] = ban.banned.steamid,
                 ["date"] = os.date( "%c", ban.timestamp),
