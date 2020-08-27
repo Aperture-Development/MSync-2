@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENSE
- * @version    1.3.0
+ * @version    1.3.1
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "1.3.0"
+    Version = "1.3.1"
 }
 
 --[[
