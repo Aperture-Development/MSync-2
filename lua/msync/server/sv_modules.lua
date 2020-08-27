@@ -8,9 +8,13 @@ MSync.modules   = MSync.modules or {}
     Returns: nothing
 ]]
 function MSync.loadModules()
+
+    MSync.log(MSYNC_DBG_DEBUG, "Loading modules")
+
     local files, _ = file.Find("msync/server/modules/*.lua", "LUA")
     for k, v in pairs(files) do
         include("msync/server/modules/"..v)
+        MSync.log(MSYNC_DBG_DEBUG, "Found module: "..v)
     end
 end
 
@@ -19,6 +23,9 @@ end
     Returns: nothing
 ]]
 function MSync.initModules()
+
+    MSync.log(MSYNC_DBG_DEBUG, "Initializing modules")
+
     MSync.mysql.dbstatus = false
     if MSync.DBServer then
         local initTransaction = MSync.DBServer:createTransaction()
@@ -29,23 +36,23 @@ function MSync.initModules()
                 v["net"]()
                 v["ulx"]()
                 v["hooks"]()
-                print("["..v["info"]["Name"].."] Module loaded")
+                MSync.log(MSYNC_DBG_INFO, "["..v["info"]["Name"].."] Module loaded")
             end
         end
 
         function initTransaction.onSuccess()
-            print("[MSync] Module querys have been completed successfully")
+            MSync.log(MSYNC_DBG_INFO, "Module querys have been completed successfully")
             MSync.mysql.dbstatus = true
         end
 
         function initTransaction.onError(tr, err)
-            print("[MSync] There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
+            MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
             MSync.mysql.dbstatus = false
         end
 
         initTransaction:start()
     else
-        print("[MSync] No MySQL server connected, aborting module loading.")
+        MSync.log(MSYNC_DBG_ERROR, "No MySQL server connected, aborting module loading.")
     end
 end
 
@@ -63,15 +70,15 @@ function MSync.loadModule(path)
     MSync.modules[info.ModuleIdentifier].ulx()
     MSync.modules[info.ModuleIdentifier].hooks()
 
-    print("["..MSync.modules[info.Name].."] Module loaded")
+    MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[info.Name].."] Module loaded")
 
     function initTransaction.onSuccess()
-        print("[MSync] Module query has been completed successfully")
+        MSync.log(MSYNC_DBG_INFO, "Module query has been completed successfully")
         MSync.mysql[info.ModuleIdentifier].dbstatus = true
     end
 
     function initTransaction.onError(tr, err)
-        print("[MSync] There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
+        MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
         MSync.mysql[info.ModuleIdentifier].dbstatus = false
     end
 

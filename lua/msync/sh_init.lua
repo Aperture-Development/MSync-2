@@ -44,6 +44,9 @@ MSync.log = function(logLevel, logMessage)
     local DebugCvarValue = MSync.DebugCVar:GetInt()
 
     if DebugCvarValue >= logLevel then
+        if type(logMessage) == "function" then
+            logMessage = logMessage()
+        end
         if debugLevels[logLevel] then
             MsgC(debugLevels[logLevel].color, debugLevels[logLevel].prefix.." "..logMessage.."\n")
         else
@@ -51,5 +54,22 @@ MSync.log = function(logLevel, logMessage)
         end
         -- Feature(?): Log files? Client GUI log viewer?
         --file.Append( "msync/logs/msync_"..os.date("[]")..".log", os.date("[]") )
+    end
+end
+
+--[[
+    Description: MSync string format function, allows easy and fast formating of long strings
+    Arguments:
+        - str [string] - The string containing the variables formated like $<variable>
+        - tbl [table] - The table containing the variable name as key and the value as key value ( e.g. {["variable"] = "My first variable"})
+    Returns:
+        - formatedString [string] - the string with all variables replaced
+]]
+MSync.formatString = function(str, tbl)
+    return function()
+        for k,v in pairs(tbl) do
+            str = string.Replace(str, "$"..k, tostring(v))
+        end
+        return str
     end
 end

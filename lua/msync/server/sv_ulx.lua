@@ -6,6 +6,7 @@ MSync.ulx = MSync.ulx or {}
     Returns: nothing
 ]]
 function MSync.ulx.createPermissions()
+    MSync.log(MSYNC_DBG_DEBUG, "Creating ULX permissions")
     ULib.ucl.registerAccess("msync.getTable", "superadmin", "Allows player to get MSync tables", "MSync")
     ULib.ucl.registerAccess("msync.sendSettings", "superadmin", "Allows player to send settings to server", "MSync")
     ULib.ucl.registerAccess("msync.connectDB", "superadmin", "Allows player to connect the server to the database server", "MSync")
@@ -22,6 +23,7 @@ end
     Returns: nothing
 ]]
 function MSync.ulx.createCommands()
+    MSync.log(MSYNC_DBG_DEBUG, "Creating ULX commands")
     function MSync.func.openAdminGUI(calling_ply)
         if not calling_ply:query("msync.openAdminGUI") then return end;
         if not IsValid(calling_ply) then return end;

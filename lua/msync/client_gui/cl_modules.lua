@@ -27,7 +27,7 @@ function MSync.initModules()
             v["net"]()
             v["ulx"]()
             v["hooks"]()
-            print("["..v["info"]["Name"].."] Module loaded")
+            MSync.log(MSYNC_DBG_INFO, "["..v["info"]["Name"].."] Module loaded")
         end
     end
 
@@ -47,6 +47,6 @@ function MSync.loadModule(path)
     MSync.modules[info.ModuleIdentifier].ulx()
     MSync.modules[info.ModuleIdentifier].hooks()
 
-    print("["..MSync.modules[info.Name].."] Module loaded")
+    MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[info.Name].."] Module loaded")
 
 end

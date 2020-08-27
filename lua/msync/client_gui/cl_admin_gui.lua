@@ -7,6 +7,9 @@ MSync.AdminPanel = MSync.AdminPanel or {}
     Returns: panel
 ]]
 function MSync.AdminPanel.InitMySQL( sheet )
+
+    MSync.log(MSYNC_DBG_DEBUG, "Initializing MySQL settings panel")
+
     local pnl = vgui.Create( "DPanel", sheet )
 
     local mysqlip_text = vgui.Create( "DLabel", pnl )
@@ -101,6 +104,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
     save_button:SetPos( 25, 290 )
     save_button:SetSize( 130, 30 )
     save_button.DoClick = function()
+        MSync.log(MSYNC_DBG_DEBUG, "Saving settings")
         MSync.settings.mysql.host = mysqlip:GetValue()
         MSync.settings.mysql.port = mysqlport:GetValue()
         MSync.settings.mysql.database = mysqldb:GetValue()
@@ -115,6 +119,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
     saveconnect_button:SetPos( 155, 290 )
     saveconnect_button:SetSize( 130, 30 )
     saveconnect_button.DoClick = function()
+        MSync.log(MSYNC_DBG_DEBUG, "Saving settings and connecting to the database")
         MSync.settings.mysql.host = mysqlip:GetValue()
         MSync.settings.mysql.port = mysqlport:GetValue()
         MSync.settings.mysql.database = mysqldb:GetValue()
@@ -130,6 +135,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
     connect_button:SetPos( 285, 290 )
     connect_button:SetSize( 130, 30 )
     connect_button.DoClick = function()
+        MSync.log(MSYNC_DBG_DEBUG, "Connecting to the database")
         MSync.net.connectDB()
     end
 
@@ -138,6 +144,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
     reset_button:SetPos( 415, 290 )
     reset_button:SetSize( 130, 30 )
     reset_button.DoClick = function()
+        MSync.log(MSYNC_DBG_DEBUG, "Reset mysql configuration")
         mysqlip:SetText("127.0.0.1")
         mysqlport:SetText("3306")
         mysqldb:SetText("msync")
@@ -163,6 +170,8 @@ function MSync.AdminPanel.InitMySQL( sheet )
         timer.Create("msync.t.checkForSettings", 0.5, 0, function()
             if not MSync.settings or not MSync.settings.mysql then return end;
 
+            MSync.log(MSYNC_DBG_DEBUG, "Got server settings, updating MySQL settings panel")
+
             mysqlip:SetText(MSync.settings.mysql.host)
             mysqlport:SetText(MSync.settings.mysql.port)
             mysqldb:SetText(MSync.settings.mysql.database)
@@ -181,6 +190,9 @@ end
     Returns: panel
 ]]
 function MSync.AdminPanel.InitModules( sheet )
+
+    MSync.log(MSYNC_DBG_DEBUG, "Initializing modulestate panel")
+
     local pnl = vgui.Create( "DPanel", sheet )
 
     local ModuleList = vgui.Create( "DListView", pnl )
@@ -220,6 +232,9 @@ end
     Returns: panel
 ]]
 function MSync.AdminPanel.InitModuleSettings( sheet )
+
+    MSync.log(MSYNC_DBG_DEBUG, "Initializing module settings panel")
+
     local pnl = vgui.Create( "DColumnSheet", sheet )
 
     local files, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
@@ -231,6 +246,7 @@ function MSync.AdminPanel.InitModuleSettings( sheet )
             MSync.modules[info.ModuleIdentifier]["init"]()
             MSync.modules[info.ModuleIdentifier]["net"]()
             pnl:AddSheet( info.Name, MSync.modules[info.ModuleIdentifier].adminPanel(pnl))
+            MSync.log(MSYNC_DBG_DEBUG, "Added settings tab for module: ")
         end
     end
 
@@ -242,6 +258,8 @@ end
     Returns: nothing
 ]]
 function MSync.AdminPanel.InitPanel()
+
+    MSync.log(MSYNC_DBG_DEBUG, "Opening Admin GUI")
 
     --if not LocalPlayer():query("msync.admingui") then return false end;
 
