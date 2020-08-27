@@ -64,7 +64,7 @@ function MSync.func.loadSettings()
                 database = "msync"
             },
             enabledModules = {
-                ["mrsync"] = true
+                ["MRSync"] = true
             },
             serverGroup = "allservers"
         }
@@ -77,6 +77,7 @@ function MSync.func.loadSettings()
         if MSync.settings.data.EnabledModules and MSync.settings.data.DisabledModules then
             MSync.log(MSYNC_DBG_WARNING, "Old settings file found! Updating to new format")
             file.Delete( "msync/settings.txt" )
+
             local oldSettings = table.Copy(MSync.settings.data)
             MSync.settings.data = {
                 mysql = {
@@ -87,10 +88,11 @@ function MSync.func.loadSettings()
                     database = oldSettings.mysql.Database
                 },
                 enabledModules = {
-                    ["mrsync"] = true
+                    ["MRSync"] = true
                 },
                 serverGroup = "allservers"
             }
+
             file.Write("msync/settings.txt", util.TableToJSON(MSync.settings.data, true))
             MSync.log(MSYNC_DBG_WARNING, "Settings imported! Module settings cannot be ported and need to be re-done")
         end
