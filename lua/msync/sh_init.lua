@@ -44,6 +44,9 @@ MSync.log = function(logLevel, logMessage)
     local DebugCvarValue = MSync.DebugCVar:GetInt()
 
     if DebugCvarValue >= logLevel then
+        if type(logMessage) == "function" then
+            logMessage = logMessage()
+        end
         if debugLevels[logLevel] then
             MsgC(debugLevels[logLevel].color, debugLevels[logLevel].prefix.." "..logMessage.."\n")
         else
@@ -63,8 +66,10 @@ end
         - formatedString [string] - the string with all variables replaced
 ]]
 MSync.formatString = function(str, tbl)
-    for k,v in pairs(tbl) do
-        str = string.Replace(str, "$"..k, v)
+    return function()
+        for k,v in pairs(tbl) do
+            str = string.Replace(str, "$"..k, tostring(v))
+        end
+        return str
     end
-    return str
 end
