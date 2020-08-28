@@ -78,26 +78,55 @@ function MSync.AdminPanel.InitMySQL( sheet )
     title_info:SetSize(400, 15)
     title_info:SetText( "--Information--" )
 
-    local info = vgui.Create( "DLabel", pnl )
-    info:SetPos( 200, 30 )
-    info:SetColor( Color( 0, 0, 0 ) )
-    info:SetSize(400, 200)
-    info:SetText( [[
-        Support: https://www.Aperture-Development.de
-        GitHub: https://github.com/Aperture-Development/MSync-2
-        LICENCE: To know what you are allowed to do and what not, 
-            read the LICENCE file in the root directory of the addon.
-            If there is no file, the Licence by-nc-sa 4.0 International applies.
-        
-        Developer: This Addon was created by Aperture Development.
-        Copyright 2018 - Aperture Development
-    ]] )
+    local info = vgui.Create( "RichText", pnl )
+    info:SetPos( 200, 45 )
+    info:SetSize(350, 150)
+    info:InsertColorChange(10, 10, 10, 255)
+    info:AppendText("MSync2 - Now with Steak\n\nSupport: ")
+    info:InsertColorChange(72, 72, 155, 255)
+    info:InsertClickableTextStart("OpenWebsite")
+    info:AppendText("https://www.Aperture-Development.de")
+    info:InsertClickableTextEnd()
+    info:InsertColorChange(10, 10, 10, 255)
+    info:AppendText("\nGitHub: ")
+    info:InsertColorChange(72, 72, 155, 255)
+    info:InsertClickableTextStart("OpenGitHub")
+    info:AppendText("https://github.com/Aperture-Development/MSync-2")
+    info:InsertClickableTextEnd()
+    info:InsertColorChange(10, 10, 10, 255)
+    info:AppendText("\nLicence:\n")
+    info:InsertColorChange(80, 80, 80, 255)
+    info:AppendText("To know what you are allowed to do and what not, read the LICENCE file in the root directory of the addon. If there is no file, the licence by-nc-sa 4.0 International applies.\n\n")
+    info:InsertColorChange(10, 10, 10, 255)
+    info:AppendText("This addon was created by Aperture Development\n")
+    info:InsertColorChange(10, 10, 10, 255)
+    info:AppendText("Copyright 2018 - Aperture Development")
+
+    info.Paint = function( pnl, w, h )
+        draw.RoundedBox( 5, 0, 0, w, h, Color(215, 215, 215) )
+    end
+
+    info.ActionSignal = function( pnl, signalName, signalValue )
+        if signalName == "TextClicked" then
+            if signalValue == "OpenWebsite" then
+                gui.OpenURL( "https://www.Aperture-Development.de" )
+            elseif signalValue == "OpenGitHub" then
+                gui.OpenURL( "https://github.com/Aperture-Development/MSync-2" )
+            end
+        end
+    end
 
     local dbstatus = vgui.Create( "DLabel", pnl )
     dbstatus:SetPos( 200, 210 )
     dbstatus:SetColor( Color( 0, 0, 0 ) )
     dbstatus:SetSize(400, 15)
-    dbstatus:SetText( "DB Connection status: -Not Implemented-" )
+    dbstatus:SetText( "Database Status: " )
+
+    local dbstatus_info = vgui.Create( "DLabel", pnl )
+    dbstatus_info:SetPos( 300, 210 )
+    dbstatus_info:SetColor( Color( 80, 80, 80 ) )
+    dbstatus_info:SetSize(400, 15)
+    dbstatus_info:SetText( "Please wait..." )
 
     local save_button = vgui.Create( "DButton", pnl )
     save_button:SetText( "Save Settings" )
@@ -128,6 +157,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
         MSync.settings.serverGroup = servergroup:GetValue()
         MSync.net.sendSettings(MSync.settings)
         MSync.net.connectDB()
+        getConnectionStatus()
     end
 
     local connect_button = vgui.Create( "DButton", pnl )
@@ -137,6 +167,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
     connect_button.DoClick = function()
         MSync.log(MSYNC_DBG_DEBUG, "Connecting to the database")
         MSync.net.connectDB()
+        getConnectionStatus()
     end
 
     local reset_button = vgui.Create( "DButton", pnl )
@@ -180,6 +211,24 @@ function MSync.AdminPanel.InitMySQL( sheet )
             timer.Remove("msync.t.checkForSettings")
         end)
     end
+
+    local function getConnectionStatus()
+        MSync.net.getDBStatus()
+        timer.Create("msync.dbConnectionStatus", 3, 10, function()
+            if MSync.DBStatus == nil then return end
+
+            if MSync.DBStatus then
+                dbstatus_info:SetColor( Color( 80, 255, 80 ) )
+                dbstatus_info:SetText( "Connected" )
+            else
+                dbstatus_info:SetColor( Color( 255, 80, 80 ) )
+                dbstatus_info:SetText( "Not Connected" )
+            end
+            timer.Remove("msync.dbConnectionStatus")
+        end)
+    end
+
+    getConnectionStatus()
 
     return pnl
 end

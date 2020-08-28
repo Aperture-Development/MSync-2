@@ -62,7 +62,7 @@ function MSync.net.dbStatus(ply)
     MSync.log(MSYNC_DBG_DEBUG, "Exec: net.dbStatus. Param.: " .. tostring(ply))
     net.Start("msync.dbStatus")
         if MSync.DBServer then
-            net.WriteBool(true)
+            net.WriteBool(MSync.DBServer:ping())
         else
             net.WriteBool(false)
         end
@@ -160,4 +160,15 @@ net.Receive("msync.connectDB", function(len, ply)
     if not ply:query("msync.connectDB") then return end
 
     MSync.mysql.initialize()
+end )
+
+--[[
+    Description: Net Receiver - Gets called when the client requests the database status
+    Returns: nothing
+]]
+util.AddNetworkString("msync.connectionStatus")
+net.Receive("msync.connectionStatus", function(len, ply)
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.connectionStatus. Ply.: " .. ply:Nick())
+    if not ply:query("msync.getSettings") then return end
+    MSync.net.dbStatus(ply)
 end )

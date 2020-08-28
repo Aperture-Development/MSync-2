@@ -55,6 +55,16 @@ function MSync.net.connectDB()
 end
 
 --[[
+    Description: function to ask for database connection
+    Returns: nothing
+]]
+function MSync.net.getDBStatus()
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.connectionStatus")
+    net.Start("msync.connectionStatus")
+    net.SendToServer()
+end
+
+--[[
     Description: Net Receiver - Gets called when the server sends a table to the client
     Returns: nothing
 ]]
