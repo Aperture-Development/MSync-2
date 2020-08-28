@@ -50,6 +50,8 @@ function MSync.modules.MRSync.init( transaction )
 
         if MSync.modules.MRSync.settings.nosync[group] then MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Group \"" .. group .. "\" is set to No-Sync. Not sending data to the database"); return end;
 
+        if string.len(group) > 15 then MSync.log(MSYNC_DBG_ERROR, "[MRSync] Groupname \"" .. group .. "\" is too long for MRSync! Please use rank names with max. 15 characters instead."); return end;
+
         local addUserRankQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mrsync` (user_id, rank, server_group)
             VALUES (
