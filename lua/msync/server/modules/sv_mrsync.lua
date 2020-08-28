@@ -232,10 +232,10 @@ function MSync.modules.MRSync.init( transaction )
                 }
             }
             file.Write("msync/mrsync.txt", util.TableToJSON(MSync.modules.MRSync.settings, true))
-            MSync.log(MSYNC_DBG_INFO, "[MRSync] No config file, creating one now");
+            MSync.log(MSYNC_DBG_DEBUG, "[MRSync] No config file, creating one now");
         else
             MSync.modules.MRSync.settings = util.JSONToTable(file.Read("msync/mrsync.txt", "DATA"))
-            MSync.log(MSYNC_DBG_INFO, "[MRSync] Found config file, loading it now");
+            MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Found config file, loading it now");
         end
 
         return true
@@ -348,6 +348,16 @@ function MSync.modules.MRSync.hooks()
         MSync.log(MSYNC_DBG_INFO, "[MRSync] User \"" .. ply:Nick() .. "\" was removed from ULX, removing from MRSync");
         MSync.modules.MRSync.removeRank(sid)
     end)
+end
+
+--[[
+    Define a function to run on the server when the module gets disabled
+]]
+MSync.modules.MRSync.disable = function()
+    hook.Remove("PlayerInitialSpawn", "mrsync.H.loadRank")
+    hook.Remove("PlayerDisconnected", "mrsync.H.saveRank")
+    hook.Remove("ULibUserGroupChange", "mrsync.H.saveRankOnUpdate")
+    hook.Remove("ULibUserRemoved", "mrsync.H.saveRankOnUpdate")
 end
 
 --[[
