@@ -6,7 +6,7 @@ MSync.modules.MRSync = MSync.modules.MRSync or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.2.2
+ * @version    2.2.3
 ]]
 
 --[[
@@ -16,7 +16,7 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.2.2"
+    Version = "2.2.3"
 }
 
 --[[
@@ -230,6 +230,13 @@ end
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
 function MSync.modules.MRSync.hooks()
+
+end
+
+--[[
+    Define a function to run on the clients when the module gets disabled
+]]
+MSync.modules.MRSync.disable = function()
 
 end
 

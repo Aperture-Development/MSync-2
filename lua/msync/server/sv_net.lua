@@ -71,6 +71,34 @@ end
 util.AddNetworkString("msync.dbStatus")
 
 --[[
+    Description: Function to enable a module on all clients
+    Arguments:
+        module [string] - the module to be enabled
+    Returns: nothing
+]]
+function MSync.net.sendModuleEnable( module )
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.enableModule. Param.: " .. module)
+    net.Start("msync.enableModule")
+        net.WriteString(module)
+    net.Broadcast()
+end
+util.AddNetworkString("msync.enableModule")
+
+--[[
+    Description: Function to disable a module on all clients
+    Arguments:
+        module [string] - the module to be disabled
+    Returns: nothing
+]]
+function MSync.net.sendModuleDisable( module )
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.disableModule. Param.: " .. module)
+    net.Start("msync.disableModule")
+        net.WriteString(module)
+    net.Broadcast()
+end
+util.AddNetworkString("msync.disableModule")
+
+--[[
     Description: Net Receiver - Gets called when the client requests a table
     Returns: nothing
 ]]
@@ -142,8 +170,10 @@ net.Receive("msync.toggleModule", function(len, ply)
     local ident = net.ReadString()
     local state = net.ReadString()
     if state == "Enable" then
+        MSync.enableModule( ident )
         MSync.settings.data.enabledModules[ident] = true
     elseif state == "Disable" then
+        MSync.disableModule( ident )
         MSync.settings.data.enabledModules[ident] = nil
     end
     MSync.func.saveSettings()

@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    1.3.1
+ * @version    1.3.2
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "1.3.1"
+    Version = "1.3.2"
 }
 
 --[[
@@ -1486,6 +1486,13 @@ end
 ]]
 MSync.modules[info.ModuleIdentifier].hooks = function()
     --
+end
+
+--[[
+    Define a function to run on the clients when the module gets disabled
+]]
+MSync.modules[info.ModuleIdentifier].disable = function()
+
 end
 
 --[[

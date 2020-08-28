@@ -116,3 +116,23 @@ net.Receive( "msync.dbStatus", function( len, pl )
     MSync.DBStatus = net.ReadBool()
     MSync.log(MSYNC_DBG_DEBUG, "Net: msync.dbStatus Return: " .. tostring(MSync.DBStatus))
 end )
+
+--[[
+    Description:  Net Receiver - Gets called when a module has been enabled
+    Returns: nothing
+]]
+net.Receive( "msync.enableModule", function( len, pl )
+    local module = net.ReadString()
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.enableModule Return: " .. module)
+    MSync.enableModule( module )
+end )
+
+--[[
+    Description:  Net Receiver - Gets called when a module has been disabled
+    Returns: nothing
+]]
+net.Receive( "msync.disableModule", function( len, pl )
+    local module = net.ReadString()
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.disableModule Return: " .. module)
+    MSync.disableModule( module )
+end )

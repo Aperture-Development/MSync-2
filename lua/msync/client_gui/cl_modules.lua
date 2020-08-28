@@ -39,7 +39,6 @@ end
     Returns: nothing
 ]]
 function MSync.loadModule(path)
-    local initTransaction = MSync.DBServer:createTransaction()
     local info = include(path)
 
     MSync.modules[info.ModuleIdentifier].init()
@@ -47,6 +46,41 @@ function MSync.loadModule(path)
     MSync.modules[info.ModuleIdentifier].ulx()
     MSync.modules[info.ModuleIdentifier].hooks()
 
-    MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[info.Name].."] Module loaded")
+    MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[info.ModuleIdentifier]["info"]["Name"].."] Module loaded")
 
+end
+
+--[[
+    Description: Enables a single already loaded clientside module
+    Arguments: Module path
+    Returns: nothing
+]]
+function MSync.enableModule( module )
+    if MSync.modules[module] then
+        MSync.modules[module].init()
+        MSync.modules[module].net()
+        MSync.modules[module].ulx()
+        MSync.modules[module].hooks()
+        MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module loaded")
+    else
+        MSync.log(MSYNC_DBG_WARNING, "Cannot enable non-existant module \"" .. module .. "\"")
+    end
+end
+
+--[[
+    Description: Disabled a single already loaded clientside module
+    Arguments: Module path
+    Returns: nothing
+]]
+function MSync.disableModule( module )
+    if MSync.modules[module] then
+        if MSync.modules[module].disable then
+            MSync.modules[module].disable()
+            MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module disabled")
+        else
+            MSync.log(MSYNC_DBG_WARNING, "Cannot disable outdated module \"" .. module .. "\"")
+        end
+    else
+        MSync.log(MSYNC_DBG_WARNING, "Cannot disable non-existant module \"" .. module .. "\"")
+    end
 end
