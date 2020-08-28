@@ -1489,6 +1489,13 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
 end
 
 --[[
+    Define a function to run on the clients when the module gets disabled
+]]
+MSync.modules[info.ModuleIdentifier].disable = function()
+
+end
+
+--[[
     Return info ( Just for single module loading )
 ]]
 return MSync.modules[info.ModuleIdentifier].info

@@ -1147,6 +1147,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="reason", ULib.cmds.optional, ULib.cmds.takeRestOfLine, completes=ulx.common_kick_reasons }
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
     BanPlayer:help( "Opens the MBSync GUI ( without parameters ) or bans a player" )
+
     --[[
         ban the targeted steamid
 
@@ -1498,6 +1499,17 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
         end
         MSync.modules[info.ModuleIdentifier].unBanUser(steamid, admin_id)
     end)
+end
+
+--[[
+    Define a function to run on the server when the module gets disabled
+]]
+MSync.modules.MRSync.disable = function()
+    hook.Remove("CheckPassword", "msync."..info.ModuleIdentifier..".banCheck")
+    hook.Remove("PlayerDisconnected", "msync."..info.ModuleIdentifier..".saveDisconnects")
+    hook.Remove("ULibPlayerBanned", "msync.mbsync.ulxban")
+    hook.Remove("ULibPlayerUnBanned", "msync.mbsync.ulxunban")
+    timer.Remove("msync."..info.ModuleIdentifier..".getActiveBans")
 end
 
 --[[
