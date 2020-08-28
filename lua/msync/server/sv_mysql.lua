@@ -9,7 +9,7 @@ MSync.func  = MSync.func or {}
     Returns: nothing
 ]]
 function MSync.mysql.initialize()
-    if (file.Exists( "bin/gmsv_mysqloo_linux.dll", "LUA" ) or file.Exists( "bin/gmsv_mysqloo_win32.dll", "LUA" )) and MSync.settings.data.mysql then
+    if (file.Exists( "bin/gmsv_mysqloo_linux.dll", "LUA" ) or file.Exists( "bin/gmsv_mysqloo_win32.dll", "LUA" ) or file.Exists( "bin/gmsv_mysqloo_linux64.dll", "LUA" ) or file.Exists( "bin/gmsv_mysqloo_win64.dll", "LUA" )) and MSync.settings.data.mysql then
         require("mysqloo")
 
         MSync.log(MSYNC_DBG_INFO, "Initializing database")
