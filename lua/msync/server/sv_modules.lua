@@ -94,26 +94,30 @@ end
 function MSync.enableModule( module )
     if MSync.modules[module] then
         MSync.log(MSYNC_DBG_DEBUG, "Module \"" .. module .. "\" enabled?: " .. tostring(MSync.settings.data.enabledModules[module]))
-        if not MSync.settings.data.enabledModules[module] then
-            local initTransaction = MSync.DBServer:createTransaction()
+        if MSync.settings.data.enabledModules[module] then
+            if not MSync.DBServer:ping() then
+                local initTransaction = MSync.DBServer:createTransaction()
 
-            MSync.modules[module].init(initTransaction)
-            MSync.modules[module].net()
-            MSync.modules[module].ulx()
-            MSync.modules[module].hooks()
+                MSync.modules[module].init(initTransaction)
+                MSync.modules[module].net()
+                MSync.modules[module].ulx()
+                MSync.modules[module].hooks()
 
-            function initTransaction.onSuccess()
-                MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module loaded")
-                MSync.net.sendModuleEnable( module )
-                --MSync.mysql[module].dbstatus = true
+                function initTransaction.onSuccess()
+                    MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module loaded")
+                    MSync.net.sendModuleEnable( module )
+                    --MSync.mysql[module].dbstatus = true
+                end
+
+                function initTransaction.onError(tr, err)
+                    MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
+                    --MSync.mysql[module].dbstatus = false
+                end
+
+                initTransaction:start()
+            else
+                MSync.log(MSYNC_DBG_WARNING, "Cannot enable \"" .. module .. "\". Database isn't connected")
             end
-
-            function initTransaction.onError(tr, err)
-                MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
-                --MSync.mysql[module].dbstatus = false
-            end
-
-            initTransaction:start()
         else
             MSync.log(MSYNC_DBG_WARNING, "Module \"" .. module .. "\" is already enabled")
         end
