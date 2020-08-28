@@ -175,20 +175,52 @@ function MSync.AdminPanel.InitMySQL( sheet )
     reset_button:SetPos( 415, 290 )
     reset_button:SetSize( 130, 30 )
     reset_button.DoClick = function()
-        MSync.log(MSYNC_DBG_DEBUG, "Reset mysql configuration")
-        mysqlip:SetText("127.0.0.1")
-        mysqlport:SetText("3306")
-        mysqldb:SetText("msync")
-        mysqluser:SetText("root")
-        mysqlpassword:SetText("****")
-        servergroup:SetText("allserver")
-        MSync.settings.mysql.host = mysqlip:GetValue()
-        MSync.settings.mysql.port = mysqlport:GetValue()
-        MSync.settings.mysql.database = mysqldb:GetValue()
-        MSync.settings.mysql.username = mysqluser:GetValue()
-        MSync.settings.mysql.password = ""
-        MSync.settings.serverGroup = servergroup:GetValue()
-        MSync.net.sendSettings(MSync.settings)
+        MSync.log(MSYNC_DBG_DEBUG, "Reset confirm request");
+
+        local resetConfirm_panel = vgui.Create( "DFrame" )
+        resetConfirm_panel:SetSize( 350, 100 )
+        resetConfirm_panel:SetTitle( "MSync Reset - Confirm" )
+        resetConfirm_panel:Center()
+        resetConfirm_panel:MakePopup()
+
+        local save_text = vgui.Create( "DLabel", resetConfirm_panel )
+        save_text:SetPos( 15, 20 )
+        save_text:SetColor( Color( 255, 255, 255 ) )
+        save_text:SetText( "This action will reset all MySQL settings back to default, causing MSync to be unable to connect to the database when restarting the server. Are you sure you want to do that?" )
+        save_text:SetSize(320, 50)
+        save_text:SetWrap( true )
+
+        local accept_button = vgui.Create( "DButton", resetConfirm_panel )
+        accept_button:SetText( "Yes" )
+        accept_button:SetPos( 15, 70 )
+        accept_button:SetSize( 160, 20 )
+        accept_button.DoClick = function()
+            MSync.log(MSYNC_DBG_DEBUG, "Reset of MySQL configuration confirmed")
+            mysqlip:SetText("127.0.0.1")
+            mysqlport:SetText("3306")
+            mysqldb:SetText("msync")
+            mysqluser:SetText("root")
+            mysqlpassword:SetText("****")
+            servergroup:SetText("allserver")
+            MSync.settings.mysql.host = mysqlip:GetValue()
+            MSync.settings.mysql.port = mysqlport:GetValue()
+            MSync.settings.mysql.database = mysqldb:GetValue()
+            MSync.settings.mysql.username = mysqluser:GetValue()
+            MSync.settings.mysql.password = ""
+            MSync.settings.serverGroup = servergroup:GetValue()
+            MSync.net.sendSettings(MSync.settings)
+
+            resetConfirm_panel:Close()
+        end
+
+        local deny_button = vgui.Create( "DButton", resetConfirm_panel )
+        deny_button:SetText( "No" )
+        deny_button:SetPos( 175, 70 )
+        deny_button:SetSize( 160, 20 )
+        deny_button.DoClick = function()
+            MSync.log(MSYNC_DBG_INFO, "Reset of MySQL configuration cancelled");
+            resetConfirm_panel:Close()
+        end
     end
 
     if not MSync.settings == nil then
