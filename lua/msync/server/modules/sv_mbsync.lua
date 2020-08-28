@@ -1504,7 +1504,7 @@ end
 --[[
     Define a function to run on the server when the module gets disabled
 ]]
-MSync.modules.MRSync.disable = function()
+MSync.modules[info.ModuleIdentifier].disable = function()
     hook.Remove("CheckPassword", "msync."..info.ModuleIdentifier..".banCheck")
     hook.Remove("PlayerDisconnected", "msync."..info.ModuleIdentifier..".saveDisconnects")
     hook.Remove("ULibPlayerBanned", "msync.mbsync.ulxban")
