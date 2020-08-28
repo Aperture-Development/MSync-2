@@ -170,11 +170,11 @@ net.Receive("msync.toggleModule", function(len, ply)
     local ident = net.ReadString()
     local state = net.ReadString()
     if state == "Enable" then
-        MSync.settings.data.enabledModules[ident] = true
         MSync.enableModule( ident )
+        MSync.settings.data.enabledModules[ident] = true
     elseif state == "Disable" then
-        MSync.settings.data.enabledModules[ident] = nil
         MSync.disableModule( ident )
+        MSync.settings.data.enabledModules[ident] = nil
     end
     MSync.func.saveSettings()
     MSync.net.sendMessage(ply, "info", state.."d module "..ident)

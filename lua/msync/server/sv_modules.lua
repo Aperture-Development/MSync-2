@@ -74,12 +74,12 @@ function MSync.loadModule(path)
 
     function initTransaction.onSuccess()
         MSync.log(MSYNC_DBG_INFO, "Module query has been completed successfully")
-        MSync.mysql[info.ModuleIdentifier].dbstatus = true
+        --MSync.mysql[info.ModuleIdentifier].dbstatus = true
     end
 
     function initTransaction.onError(tr, err)
         MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
-        MSync.mysql[info.ModuleIdentifier].dbstatus = false
+        --MSync.mysql[info.ModuleIdentifier].dbstatus = false
     end
 
     initTransaction:start()
@@ -93,25 +93,30 @@ end
 ]]
 function MSync.enableModule( module )
     if MSync.modules[module] then
-        local initTransaction = MSync.DBServer:createTransaction()
+        MSync.log(MSYNC_DBG_DEBUG, "Module \"" .. module .. "\" enabled?: " .. tostring(MSync.settings.data.enabledModules[module]))
+        if not MSync.settings.data.enabledModules[module] then
+            local initTransaction = MSync.DBServer:createTransaction()
 
-        MSync.modules[module].init(initTransaction)
-        MSync.modules[module].net()
-        MSync.modules[module].ulx()
-        MSync.modules[module].hooks()
+            MSync.modules[module].init(initTransaction)
+            MSync.modules[module].net()
+            MSync.modules[module].ulx()
+            MSync.modules[module].hooks()
 
-        function initTransaction.onSuccess()
-            MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module loaded")
-            MSync.net.sendModuleEnable( module )
-            MSync.mysql[info.ModuleIdentifier].dbstatus = true
+            function initTransaction.onSuccess()
+                MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module loaded")
+                MSync.net.sendModuleEnable( module )
+                --MSync.mysql[module].dbstatus = true
+            end
+
+            function initTransaction.onError(tr, err)
+                MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
+                --MSync.mysql[module].dbstatus = false
+            end
+
+            initTransaction:start()
+        else
+            MSync.log(MSYNC_DBG_WARNING, "Module \"" .. module .. "\" is already enabled")
         end
-
-        function initTransaction.onError(tr, err)
-            MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
-            MSync.mysql[info.ModuleIdentifier].dbstatus = false
-        end
-
-        initTransaction:start()
     else
         MSync.log(MSYNC_DBG_WARNING, "Cannot enable non-existant module \"" .. module .. "\"")
     end
@@ -125,12 +130,16 @@ end
 ]]
 function MSync.disableModule( module )
     if MSync.modules[module] then
-        if MSync.modules[module].disable then
-            MSync.modules[module].disable()
-            MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module disabled")
-            MSync.net.sendModuleDisable( module )
+        if MSync.settings.data.enabledModules[module] then
+            if MSync.modules[module].disable then
+                MSync.modules[module].disable()
+                MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module disabled")
+                MSync.net.sendModuleDisable( module )
+            else
+                MSync.log(MSYNC_DBG_WARNING, "Cannot disable outdated module \"" .. module .. "\"")
+            end
         else
-            MSync.log(MSYNC_DBG_WARNING, "Cannot disable outdated module \"" .. module .. "\"")
+            MSync.log(MSYNC_DBG_WARNING, "Module \"" .. module .. "\" is already disabled")
         end
     else
         MSync.log(MSYNC_DBG_WARNING, "Cannot disable non-existant module \"" .. module .. "\"")
