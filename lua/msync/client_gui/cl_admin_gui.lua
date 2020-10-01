@@ -128,6 +128,26 @@ function MSync.AdminPanel.InitMySQL( sheet )
     dbstatus_info:SetSize(400, 15)
     dbstatus_info:SetText( "Please wait..." )
 
+    local function getConnectionStatus()
+        dbstatus_info:SetColor( Color( 80, 80, 80 ) )
+        dbstatus_info:SetText( "Please wait..." )
+        timer.Simple(3, function()
+            MSync.net.getDBStatus()
+            timer.Create("msync.dbConnectionStatus", 3, 10, function()
+                if MSync.DBStatus == nil then return end
+
+                if MSync.DBStatus then
+                    dbstatus_info:SetColor( Color( 80, 255, 80 ) )
+                    dbstatus_info:SetText( "Connected" )
+                else
+                    dbstatus_info:SetColor( Color( 255, 80, 80 ) )
+                    dbstatus_info:SetText( "Not Connected" )
+                end
+                timer.Remove("msync.dbConnectionStatus")
+            end)
+        end)
+    end
+
     local save_button = vgui.Create( "DButton", pnl )
     save_button:SetText( "Save Settings" )
     save_button:SetPos( 25, 290 )
@@ -241,22 +261,6 @@ function MSync.AdminPanel.InitMySQL( sheet )
             mysqluser:SetText(MSync.settings.mysql.username)
             servergroup:SetText(MSync.settings.serverGroup)
             timer.Remove("msync.t.checkForSettings")
-        end)
-    end
-
-    local function getConnectionStatus()
-        MSync.net.getDBStatus()
-        timer.Create("msync.dbConnectionStatus", 3, 10, function()
-            if MSync.DBStatus == nil then return end
-
-            if MSync.DBStatus then
-                dbstatus_info:SetColor( Color( 80, 255, 80 ) )
-                dbstatus_info:SetText( "Connected" )
-            else
-                dbstatus_info:SetColor( Color( 255, 80, 80 ) )
-                dbstatus_info:SetText( "Not Connected" )
-            end
-            timer.Remove("msync.dbConnectionStatus")
         end)
     end
 
