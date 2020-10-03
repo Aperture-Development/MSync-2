@@ -1,10 +1,11 @@
-MSync           = MSync     or {}
-MSync.net       = MSync.net or {}
-MSync.mysql     = MSync.mysql or {}
-MSync.modules   = MSync.modules or {}
-MSync.settings  = MSync.settings or {}
-MSync.func      = MSync.func or {}
-MSync.ulx       = MSync.ulx or {}
+MSync               = MSync     or {}
+MSync.net           = MSync.net or {}
+MSync.mysql         = MSync.mysql or {}
+MSync.modules       = MSync.modules or {}
+MSync.settings      = MSync.settings or {}
+MSync.func          = MSync.func or {}
+MSync.ulx           = MSync.ulx or {}
+MSync.loadedModules = MSync.loadedModules or {}
 
 --[[
     Description: Function to load the server side files

@@ -125,6 +125,7 @@ net.Receive( "msync.enableModule", function( len, pl )
     local module = net.ReadString()
     MSync.log(MSYNC_DBG_DEBUG, "Net: msync.enableModule Return: " .. module)
     MSync.enableModule( module )
+    MSync.moduleState[module] = true
 end )
 
 --[[
@@ -135,4 +136,5 @@ net.Receive( "msync.disableModule", function( len, pl )
     local module = net.ReadString()
     MSync.log(MSYNC_DBG_DEBUG, "Net: msync.disableModule Return: " .. module)
     MSync.disableModule( module )
+    MSync.moduleState[module] = nil
 end )

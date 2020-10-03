@@ -1,7 +1,8 @@
-MSync           = MSync     or {}
-MSync.mysql     = MSync.mysql or {}
-MSync.settings  = MSync.settings or {}
-MSync.modules   = MSync.modules or {}
+MSync               = MSync     or {}
+MSync.mysql         = MSync.mysql or {}
+MSync.settings      = MSync.settings or {}
+MSync.modules       = MSync.modules or {}
+MSync.loadedModules = MSync.loadedModules or {}
 
 --[[
     Description: Loads all server side modules
@@ -36,6 +37,8 @@ function MSync.initModules()
                 v["net"]()
                 v["ulx"]()
                 v["hooks"]()
+                MSync.loadedModules[v["info"].ModuleIdentifier] = true
+                MSync.net.sendModuleEnable( v["info"].ModuleIdentifier )
                 MSync.log(MSYNC_DBG_INFO, "["..v["info"]["Name"].."] Module loaded")
             end
         end
