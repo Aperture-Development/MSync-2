@@ -189,7 +189,16 @@ net.Receive("msync.connectDB", function(len, ply)
     MSync.log(MSYNC_DBG_DEBUG, "Net: msync.connectDB. Ply.: " .. ply:Nick())
     if not ply:query("msync.connectDB") then return end
 
-    MSync.mysql.initialize()
+    if MSync.DBServer then
+        if not MSync.DBServer:ping() then
+            MSync.mysql.initialize()
+        else
+            MSync.net.sendMessage(ply, "error", "The database is already connected!")
+            MSync.log(MSYNC_DBG_DEBUG, "Aborted database connect because connection is already established")
+        end
+    else
+        MSync.mysql.initialize()
+    end
 end )
 
 --[[

@@ -98,7 +98,7 @@ function MSync.enableModule( module )
     if MSync.modules[module] then
         MSync.log(MSYNC_DBG_DEBUG, "Module \"" .. module .. "\" enabled?: " .. tostring(MSync.settings.data.enabledModules[module]))
         if MSync.settings.data.enabledModules[module] then
-            if not MSync.DBServer:ping() then
+            if MSync.DBServer:ping() then
                 local initTransaction = MSync.DBServer:createTransaction()
 
                 MSync.modules[module].init(initTransaction)
