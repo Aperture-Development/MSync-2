@@ -300,12 +300,17 @@ function MSync.AdminPanel.InitModules( sheet )
         local cursor_x, cursor_y = ModuleList:CursorPos()
         local DMenu = vgui.Create("DMenu", ModuleList)
         DMenu:SetPos(cursor_x, cursor_y)
-        DMenu:AddOption(MSync.serverModules[ident].Description)
+        DMenu:AddOption(MSync.serverModules[ident].Description):SetDisabled(true)
         DMenu:AddSpacer()
         DMenu:AddOption("Enable")
         DMenu:AddOption("Disable")
         DMenu.OptionSelected = function(menu,optPnl,optStr)
             MSync.net.toggleModule(ident, optStr)
+            if optStr == "Enable" then
+                line:SetColumnText( 3, "true" )
+            elseif optStr == "Disable" then
+                line:SetColumnText( 3, "false" )
+            end
         end
     end
     return pnl
