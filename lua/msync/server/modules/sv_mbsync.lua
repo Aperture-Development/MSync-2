@@ -639,6 +639,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         exportActiveBans:start()
     end
     concommand.Add("msync."..info.ModuleIdentifier..".export", function( ply, cmd, args )
+        if ply:IsValid() then return end
         MSync.modules[info.ModuleIdentifier].exportBansToULX()
     end)
 
@@ -715,6 +716,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         banTransaction:start()
     end
     concommand.Add("msync."..info.ModuleIdentifier..".import", function( ply, cmd, args )
+        if ply:IsValid() then return end
         local allservers = false
 
         if args[1] == "true" then
