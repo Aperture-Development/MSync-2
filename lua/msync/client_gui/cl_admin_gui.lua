@@ -7,6 +7,9 @@ MSync.AdminPanel = MSync.AdminPanel or {}
     Returns: panel
 ]]
 function MSync.AdminPanel.InitMySQL( sheet )
+
+    MSync.log(MSYNC_DBG_DEBUG, "Initializing MySQL settings panel")
+
     local pnl = vgui.Create( "DPanel", sheet )
 
     local mysqlip_text = vgui.Create( "DLabel", pnl )
@@ -75,32 +78,82 @@ function MSync.AdminPanel.InitMySQL( sheet )
     title_info:SetSize(400, 15)
     title_info:SetText( "--Information--" )
 
-    local info = vgui.Create( "DLabel", pnl )
-    info:SetPos( 200, 30 )
-    info:SetColor( Color( 0, 0, 0 ) )
-    info:SetSize(400, 200)
-    info:SetText( [[
-        Support: https://www.Aperture-Development.de
-        GitHub: https://github.com/Aperture-Development/MSync-2
-        LICENCE: To know what you are allowed to do and what not, 
-            read the LICENCE file in the root directory of the addon.
-            If there is no file, the Licence by-nc-sa 4.0 International applies.
-        
-        Developer: This Addon was created by Aperture Development.
-        Copyright 2018 - Aperture Development
-    ]] )
+    local info = vgui.Create( "RichText", pnl )
+    info:SetPos( 200, 45 )
+    info:SetSize(350, 150)
+    info:InsertColorChange(10, 10, 10, 255)
+    info:AppendText("MSync2 - Now with Steak\n\nSupport: ")
+    info:InsertColorChange(72, 72, 155, 255)
+    info:InsertClickableTextStart("OpenWebsite")
+    info:AppendText("https://www.Aperture-Development.de")
+    info:InsertClickableTextEnd()
+    info:InsertColorChange(10, 10, 10, 255)
+    info:AppendText("\nGitHub: ")
+    info:InsertColorChange(72, 72, 155, 255)
+    info:InsertClickableTextStart("OpenGitHub")
+    info:AppendText("https://github.com/Aperture-Development/MSync-2")
+    info:InsertClickableTextEnd()
+    info:InsertColorChange(10, 10, 10, 255)
+    info:AppendText("\nLicence:\n")
+    info:InsertColorChange(80, 80, 80, 255)
+    info:AppendText("To know what you are allowed to do and what not, read the LICENCE file in the root directory of the addon. If there is no file, the licence by-nc-sa 4.0 International applies.\n\n")
+    info:InsertColorChange(10, 10, 10, 255)
+    info:AppendText("This addon was created by Aperture Development\n")
+    info:InsertColorChange(10, 10, 10, 255)
+    info:AppendText("Copyright 2018 - Aperture Development")
+
+    info.Paint = function( pnl, w, h )
+        draw.RoundedBox( 5, 0, 0, w, h, Color(215, 215, 215) )
+    end
+
+    info.ActionSignal = function( pnl, signalName, signalValue )
+        if signalName == "TextClicked" then
+            if signalValue == "OpenWebsite" then
+                gui.OpenURL( "https://www.Aperture-Development.de" )
+            elseif signalValue == "OpenGitHub" then
+                gui.OpenURL( "https://github.com/Aperture-Development/MSync-2" )
+            end
+        end
+    end
 
     local dbstatus = vgui.Create( "DLabel", pnl )
     dbstatus:SetPos( 200, 210 )
     dbstatus:SetColor( Color( 0, 0, 0 ) )
     dbstatus:SetSize(400, 15)
-    dbstatus:SetText( "DB Connection status: -Not Implemented-" )
+    dbstatus:SetText( "Database Status: " )
+
+    local dbstatus_info = vgui.Create( "DLabel", pnl )
+    dbstatus_info:SetPos( 300, 210 )
+    dbstatus_info:SetColor( Color( 80, 80, 80 ) )
+    dbstatus_info:SetSize(400, 15)
+    dbstatus_info:SetText( "Please wait..." )
+
+    local function getConnectionStatus()
+        dbstatus_info:SetColor( Color( 80, 80, 80 ) )
+        dbstatus_info:SetText( "Please wait..." )
+        timer.Simple(3, function()
+            MSync.net.getDBStatus()
+            timer.Create("msync.dbConnectionStatus", 3, 10, function()
+                if MSync.DBStatus == nil then return end
+
+                if MSync.DBStatus then
+                    dbstatus_info:SetColor( Color( 80, 255, 80 ) )
+                    dbstatus_info:SetText( "Connected" )
+                else
+                    dbstatus_info:SetColor( Color( 255, 80, 80 ) )
+                    dbstatus_info:SetText( "Not Connected" )
+                end
+                timer.Remove("msync.dbConnectionStatus")
+            end)
+        end)
+    end
 
     local save_button = vgui.Create( "DButton", pnl )
     save_button:SetText( "Save Settings" )
     save_button:SetPos( 25, 290 )
     save_button:SetSize( 130, 30 )
     save_button.DoClick = function()
+        MSync.log(MSYNC_DBG_DEBUG, "Saving settings")
         MSync.settings.mysql.host = mysqlip:GetValue()
         MSync.settings.mysql.port = mysqlport:GetValue()
         MSync.settings.mysql.database = mysqldb:GetValue()
@@ -115,6 +168,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
     saveconnect_button:SetPos( 155, 290 )
     saveconnect_button:SetSize( 130, 30 )
     saveconnect_button.DoClick = function()
+        MSync.log(MSYNC_DBG_DEBUG, "Saving settings and connecting to the database")
         MSync.settings.mysql.host = mysqlip:GetValue()
         MSync.settings.mysql.port = mysqlport:GetValue()
         MSync.settings.mysql.database = mysqldb:GetValue()
@@ -123,6 +177,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
         MSync.settings.serverGroup = servergroup:GetValue()
         MSync.net.sendSettings(MSync.settings)
         MSync.net.connectDB()
+        getConnectionStatus()
     end
 
     local connect_button = vgui.Create( "DButton", pnl )
@@ -130,7 +185,9 @@ function MSync.AdminPanel.InitMySQL( sheet )
     connect_button:SetPos( 285, 290 )
     connect_button:SetSize( 130, 30 )
     connect_button.DoClick = function()
+        MSync.log(MSYNC_DBG_DEBUG, "Connecting to the database")
         MSync.net.connectDB()
+        getConnectionStatus()
     end
 
     local reset_button = vgui.Create( "DButton", pnl )
@@ -138,19 +195,52 @@ function MSync.AdminPanel.InitMySQL( sheet )
     reset_button:SetPos( 415, 290 )
     reset_button:SetSize( 130, 30 )
     reset_button.DoClick = function()
-        mysqlip:SetText("127.0.0.1")
-        mysqlport:SetText("3306")
-        mysqldb:SetText("msync")
-        mysqluser:SetText("root")
-        mysqlpassword:SetText("****")
-        servergroup:SetText("allserver")
-        MSync.settings.mysql.host = mysqlip:GetValue()
-        MSync.settings.mysql.port = mysqlport:GetValue()
-        MSync.settings.mysql.database = mysqldb:GetValue()
-        MSync.settings.mysql.username = mysqluser:GetValue()
-        MSync.settings.mysql.password = ""
-        MSync.settings.serverGroup = servergroup:GetValue()
-        MSync.net.sendSettings(MSync.settings)
+        MSync.log(MSYNC_DBG_DEBUG, "Reset confirm request");
+
+        local resetConfirm_panel = vgui.Create( "DFrame" )
+        resetConfirm_panel:SetSize( 350, 100 )
+        resetConfirm_panel:SetTitle( "MSync Reset - Confirm" )
+        resetConfirm_panel:Center()
+        resetConfirm_panel:MakePopup()
+
+        local save_text = vgui.Create( "DLabel", resetConfirm_panel )
+        save_text:SetPos( 15, 20 )
+        save_text:SetColor( Color( 255, 255, 255 ) )
+        save_text:SetText( "This action will reset all MySQL settings back to default, causing MSync to be unable to connect to the database when restarting the server. Are you sure you want to do that?" )
+        save_text:SetSize(320, 50)
+        save_text:SetWrap( true )
+
+        local accept_button = vgui.Create( "DButton", resetConfirm_panel )
+        accept_button:SetText( "Yes" )
+        accept_button:SetPos( 15, 70 )
+        accept_button:SetSize( 160, 20 )
+        accept_button.DoClick = function()
+            MSync.log(MSYNC_DBG_DEBUG, "Reset of MySQL configuration confirmed")
+            mysqlip:SetText("127.0.0.1")
+            mysqlport:SetText("3306")
+            mysqldb:SetText("msync")
+            mysqluser:SetText("root")
+            mysqlpassword:SetText("****")
+            servergroup:SetText("allserver")
+            MSync.settings.mysql.host = mysqlip:GetValue()
+            MSync.settings.mysql.port = mysqlport:GetValue()
+            MSync.settings.mysql.database = mysqldb:GetValue()
+            MSync.settings.mysql.username = mysqluser:GetValue()
+            MSync.settings.mysql.password = ""
+            MSync.settings.serverGroup = servergroup:GetValue()
+            MSync.net.sendSettings(MSync.settings)
+
+            resetConfirm_panel:Close()
+        end
+
+        local deny_button = vgui.Create( "DButton", resetConfirm_panel )
+        deny_button:SetText( "No" )
+        deny_button:SetPos( 175, 70 )
+        deny_button:SetSize( 160, 20 )
+        deny_button.DoClick = function()
+            MSync.log(MSYNC_DBG_INFO, "Reset of MySQL configuration cancelled");
+            resetConfirm_panel:Close()
+        end
     end
 
     if not MSync.settings == nil then
@@ -163,6 +253,8 @@ function MSync.AdminPanel.InitMySQL( sheet )
         timer.Create("msync.t.checkForSettings", 0.5, 0, function()
             if not MSync.settings or not MSync.settings.mysql then return end;
 
+            MSync.log(MSYNC_DBG_DEBUG, "Got server settings, updating MySQL settings panel")
+
             mysqlip:SetText(MSync.settings.mysql.host)
             mysqlport:SetText(MSync.settings.mysql.port)
             mysqldb:SetText(MSync.settings.mysql.database)
@@ -171,6 +263,8 @@ function MSync.AdminPanel.InitMySQL( sheet )
             timer.Remove("msync.t.checkForSettings")
         end)
     end
+
+    getConnectionStatus()
 
     return pnl
 end
@@ -181,6 +275,9 @@ end
     Returns: panel
 ]]
 function MSync.AdminPanel.InitModules( sheet )
+
+    MSync.log(MSYNC_DBG_DEBUG, "Initializing modulestate panel")
+
     local pnl = vgui.Create( "DPanel", sheet )
 
     local ModuleList = vgui.Create( "DListView", pnl )
@@ -203,12 +300,17 @@ function MSync.AdminPanel.InitModules( sheet )
         local cursor_x, cursor_y = ModuleList:CursorPos()
         local DMenu = vgui.Create("DMenu", ModuleList)
         DMenu:SetPos(cursor_x, cursor_y)
-        DMenu:AddOption(MSync.serverModules[ident].Description)
+        DMenu:AddOption(MSync.serverModules[ident].Description):SetDisabled(true)
         DMenu:AddSpacer()
         DMenu:AddOption("Enable")
         DMenu:AddOption("Disable")
         DMenu.OptionSelected = function(menu,optPnl,optStr)
             MSync.net.toggleModule(ident, optStr)
+            if optStr == "Enable" then
+                line:SetColumnText( 3, "true" )
+            elseif optStr == "Disable" then
+                line:SetColumnText( 3, "false" )
+            end
         end
     end
     return pnl
@@ -220,6 +322,9 @@ end
     Returns: panel
 ]]
 function MSync.AdminPanel.InitModuleSettings( sheet )
+
+    MSync.log(MSYNC_DBG_DEBUG, "Initializing module settings panel")
+
     local pnl = vgui.Create( "DColumnSheet", sheet )
 
     local files, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
@@ -231,6 +336,7 @@ function MSync.AdminPanel.InitModuleSettings( sheet )
             MSync.modules[info.ModuleIdentifier]["init"]()
             MSync.modules[info.ModuleIdentifier]["net"]()
             pnl:AddSheet( info.Name, MSync.modules[info.ModuleIdentifier].adminPanel(pnl))
+            MSync.log(MSYNC_DBG_DEBUG, "Added settings tab for module: ")
         end
     end
 
@@ -242,6 +348,8 @@ end
     Returns: nothing
 ]]
 function MSync.AdminPanel.InitPanel()
+
+    MSync.log(MSYNC_DBG_DEBUG, "Opening Admin GUI")
 
     --if not LocalPlayer():query("msync.admingui") then return false end;
 

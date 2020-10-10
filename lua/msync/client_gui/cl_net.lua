@@ -6,6 +6,7 @@ MSync.net = MSync.net or {}
     Returns: nothing
 ]]
 function MSync.net.getSettings()
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.getSettings")
     net.Start("msync.getSettings")
     net.SendToServer()
 end
@@ -15,6 +16,7 @@ end
     Returns: nothing
 ]]
 function MSync.net.getModules()
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.getModules")
     net.Start("msync.getModules")
     net.SendToServer()
 end
@@ -24,6 +26,7 @@ end
     Returns: nothing
 ]]
 function MSync.net.toggleModule(ident, state)
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.toggleModule Param.: " .. ident .. " " .. state)
     net.Start("msync.toggleModule")
         net.WriteString(ident)
         net.WriteString(state)
@@ -35,6 +38,7 @@ end
     Returns: nothing
 ]]
 function MSync.net.sendSettings(table)
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.sendSettings Param.: " .. tostring(table))
     net.Start("msync.sendSettings")
         net.WriteTable(table)
     net.SendToServer()
@@ -45,7 +49,18 @@ end
     Returns: nothing
 ]]
 function MSync.net.connectDB()
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.connectDB")
     net.Start("msync.connectDB")
+    net.SendToServer()
+end
+
+--[[
+    Description: function to ask for database connection
+    Returns: nothing
+]]
+function MSync.net.getDBStatus()
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: net.connectionStatus")
+    net.Start("msync.connectionStatus")
     net.SendToServer()
 end
 
@@ -54,14 +69,16 @@ end
     Returns: nothing
 ]]
 net.Receive( "msync.sendTable", function( len, pl )
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.sendTable")
     local type = net.ReadString()
     local table = net.ReadTable()
 
-    if type == "settings" then MSync.settings = table; print("Got Settings!")
-    elseif type == "modules" then MSync.serverModules = table
+    if type == "settings" then MSync.settings = table; MSync.log(MSYNC_DBG_INFO, "Got settings from server")
+    elseif type == "modules" then MSync.serverModules = table; MSync.log(MSYNC_DBG_INFO, "Got modules from server")
     elseif type == "modulestate" then
         MSync.moduleState = table
         MSync.loadModules()
+        MSync.log(MSYNC_DBG_INFO, "Got module states from server")
     end
 end )
 
@@ -70,6 +87,7 @@ end )
     Returns: nothing
 ]]
 net.Receive( "msync.sendMessage", function( len, pl )
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.sendMessage")
     local state = net.ReadString()
 
     if state == "error" then
@@ -86,6 +104,7 @@ end )
     Returns: nothing
 ]]
 net.Receive( "msync.openAdminGUI", function( len, pl )
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.openAdminGUI")
     MSync.AdminPanel.InitPanel()
 end )
 
@@ -95,4 +114,27 @@ end )
 ]]
 net.Receive( "msync.dbStatus", function( len, pl )
     MSync.DBStatus = net.ReadBool()
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.dbStatus Return: " .. tostring(MSync.DBStatus))
+end )
+
+--[[
+    Description:  Net Receiver - Gets called when a module has been enabled
+    Returns: nothing
+]]
+net.Receive( "msync.enableModule", function( len, pl )
+    local module = net.ReadString()
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.enableModule Return: " .. module)
+    MSync.enableModule( module )
+    MSync.moduleState[module] = true
+end )
+
+--[[
+    Description:  Net Receiver - Gets called when a module has been disabled
+    Returns: nothing
+]]
+net.Receive( "msync.disableModule", function( len, pl )
+    local module = net.ReadString()
+    MSync.log(MSYNC_DBG_DEBUG, "Net: msync.disableModule Return: " .. module)
+    MSync.disableModule( module )
+    MSync.moduleState[module] = nil
 end )

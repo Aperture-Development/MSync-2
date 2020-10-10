@@ -1,3 +1,7 @@
+MSync               = MSync     or {}
+MSync.mysql         = MSync.mysql or {}
+MSync.net           = MSync.net or {}
+MSync.loadedModules = MSync.loadedModules or {}
 --[[
     Description: hook to initialize MSync 2
     Returns: nothing
@@ -27,7 +31,7 @@ end)
     ]]
 hook.Add("PlayerInitialSpawn", "msync.createUser", function( ply )
     MSync.mysql.addUser(ply)
-    MSync.net.sendTable(ply, "modulestate", MSync.settings.data.enabledModules)
+    MSync.net.sendTable(ply, "modulestate", MSync.loadedModules)
 
     if ply:query("msync.openAdminGUI") then
         MSync.net.dbStatus(ply)

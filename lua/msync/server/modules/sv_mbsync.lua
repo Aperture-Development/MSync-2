@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENSE
- * @version    1.1.1
+ * @version    1.3.2
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "1.1.1"
+    Version = "1.3.2"
 }
 
 --[[
@@ -24,11 +24,13 @@ local info = {
 MSync.modules[info.ModuleIdentifier] = MSync.modules[info.ModuleIdentifier] or {}
 MSync.modules[info.ModuleIdentifier].info = info
 MSync.modules[info.ModuleIdentifier].recentDisconnects = MSync.modules[info.ModuleIdentifier].recentDisconnects or {}
+local userTransactions = userTransactions or {}
 
 --[[
     Define mysql table and additional functions that are later used
 ]]
 MSync.modules[info.ModuleIdentifier].init = function( transaction )
+    MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.init")
     transaction:addQuery( MSync.DBServer:query([[
         CREATE TABLE IF NOT EXISTS `tbl_mbsync` (
             `p_id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -49,6 +51,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Description: Function to update the database to the newest version, in case it isn't up to date
     ]]
     MSync.modules[info.ModuleIdentifier].updateDB = function()
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.updateDB")
+
         local selectDbVersion = MSync.DBServer:prepare( [[
             SELECT version FROM `tbl_msyncdb_version` WHERE module_id=?;
         ]] )
@@ -56,8 +60,10 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         selectDbVersion.onSuccess = function( q, data )
             -- Do nothing for now
+            MSync.log(MSYNC_DBG_INFO, "[MBSync] Checking database version")
             if data[1] then
                 if data[1].version < 1 then
+                    MSync.log(MSYNC_DBG_INFO, "[MBSync] Database version of MBSync is too old, updating it to Version 1")
                     local updates = MSync.DBServer:createTransaction()
                     updates:addQuery( MSync.DBServer:query([[
                         ALTER TABLE tbl_mbsync
@@ -69,8 +75,11 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                         ON DUPLICATE KEY UPDATE version=VALUES(version);
                     ]]))
                     updates:start()
+                else
+                    MSync.log(MSYNC_DBG_INFO, "[MBSync] Database version is up-to-date. No update necessary")
                 end
             else
+                MSync.log(MSYNC_DBG_INFO, "[MBSync] No data was returned, updating MBSync table to current version")
                 local updates = MSync.DBServer:createTransaction()
                 updates:addQuery( MSync.DBServer:query([[
                     ALTER TABLE tbl_mbsync
@@ -87,15 +96,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
 
         selectDbVersion.onError = function( q, err, sql )
-            print("------------------------------------")
-            print("[MBSync] SQL Error!")
-            print("------------------------------------")
-            print("Please include this in a Bug report:\n")
-            print(err.."\n")
-            print("------------------------------------")
-            print("Do not include this, this is for debugging only:\n")
-            print(sql.."\n")
-            print("------------------------------------")
+            MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MBSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
         end
 
         selectDbVersion:start()
@@ -108,7 +109,17 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].banUser = function(ply, calling_ply, length, reason, allserver)
-        if MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()] then MSync.modules[info.ModuleIdentifier].msg(calling_ply, "User "..ply:Nick().." is already banned from this server."); return end
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.banUser Param.: $ply $calling_ply $length \"$reason\" $allserver", {["ply"] = ply:Nick(),["calling_ply"] = tostring(calling_ply),["length"] = length,["reason"] = reason,["allserver"] = allserver}))
+
+        if MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()] then
+            MSync.log(MSYNC_DBG_INFO, "[MBSync] User \"" .. ply:SteamID64() .. "\" is already banned, editing old ban instead")
+            if not length == 0 then
+                length = ((os.time() - MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)].timestamp)+(length*60))/60
+            end
+            MSync.modules[info.ModuleIdentifier].editBan( MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()]['banId'], reason, length, calling_ply, allserver)
+            return
+        end
+
         local banUserQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
             VALUES (
@@ -154,7 +165,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 banData["unban"] = length
                 msgLength = "Permanent"
             else
-                msgLength = ULib.secondsToStringTime(length)
+                msgLength = ULib.secondsToStringTime(length*60)
             end
 
             if reason == "" then
@@ -167,15 +178,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
 
         banUserQ.onError = function( q, err, sql )
-            print("------------------------------------")
-            print("[MBSync] SQL Error!")
-            print("------------------------------------")
-            print("Please include this in a Bug report:\n")
-            print(err.."\n")
-            print("------------------------------------")
-            print("Do not include this, this is for debugging only:\n")
-            print(sql.."\n")
-            print("------------------------------------")
+            MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MBSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
         end
 
         banUserQ:start()
@@ -186,7 +189,17 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].banUserID = function(userid, calling_ply, length, reason, allserver)
-        if MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)] then MSync.modules[info.ModuleIdentifier].msg(calling_ply, "User "..userid.." is already banned from this server."); return end
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.banUserID Param.: $userid $calling_ply $length \"$reason\" $allserver", {["userid"] = userid,["calling_ply"] = tostring(calling_ply),["length"] = length,["reason"] = reason,["allserver"] = allserver}))
+
+        if MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)] then
+            MSync.log(MSYNC_DBG_INFO, "[MBSync] User \"" .. userid .. "\" is already banned, editing old ban instead")
+            if not (length == 0) then
+                length = ((os.time() - MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)].timestamp)+(length*60))/60
+            end
+            MSync.modules[info.ModuleIdentifier].editBan( MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)]['banId'], reason, length, calling_ply, allserver)
+            return
+        end
+
         local banUserIdQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
             VALUES (
@@ -229,7 +242,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 banData["unban"] = length
                 msgLength = "Permanent"
             else
-                msgLength = ULib.secondsToStringTime(length)
+                msgLength = ULib.secondsToStringTime(length*60)
             end
 
             if reason == "" then
@@ -248,18 +261,11 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         banUserIdQ.onError = function( q, err, sql )
             if string.match( err, "^Column 'user_id' cannot be null$" ) then
+                MSync.log(MSYNC_DBG_INFO, "[MBSync] User does not exist! Creating user before retrying")
                 MSync.mysql.addUserID(userid)
                 MSync.modules[info.ModuleIdentifier].banUserID(userid, calling_ply, length, reason, allserver)
             else
-                print("------------------------------------")
-                print("[MBSync] SQL Error!")
-                print("------------------------------------")
-                print("Please include this in a Bug report:\n")
-                print(err.."\n")
-                print("------------------------------------")
-                print("Do not include this, this is for debugging only:\n")
-                print(sql.."\n")
-                print("------------------------------------")
+                MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MBSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
             end
         end
 
@@ -271,6 +277,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].editBan = function(banId, reason, length, calling_ply, allserver)
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.editBan Param.: $banid \"$reason\" $length $calling_ply $allserver", {["banid"] = banId,["reason"] = reason,["length"] = length,["calling_ply"] = tostring(calling_ply),["allserver"] = allserver}))
+
         local editBanQ = MSync.DBServer:prepare( [[
             UPDATE `tbl_mbsync`
             SET 
@@ -289,7 +297,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         else
             editBanQ:setString(5, "allservers")
         end
-        editBanQ:setString(6, banId)
+        editBanQ:setString(6, tostring(banId))
 
         editBanQ.onSuccess = function( q, data )
             MSync.modules[info.ModuleIdentifier].getActiveBans()
@@ -297,15 +305,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
 
         editBanQ.onError = function( q, err, sql )
-            print("------------------------------------")
-            print("[MBSync] SQL Error!")
-            print("------------------------------------")
-            print("Please include this in a Bug report:\n")
-            print(err.."\n")
-            print("------------------------------------")
-            print("Do not include this, this is for debugging only:\n")
-            print(sql.."\n")
-            print("------------------------------------")
+            MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MBSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
         end
 
         editBanQ:start()
@@ -316,6 +316,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].unBanUserID = function(calling_ply, banId)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.unBanUserID Param: " .. tostring(calling_ply) .. " " .. banId)
         local unBanUserIdQ = MSync.DBServer:prepare( [[
             UPDATE `tbl_mbsync`
             SET ban_lifted=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?)
@@ -327,19 +328,12 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         unBanUserIdQ.onSuccess = function( q, data )
             MSync.modules[info.ModuleIdentifier].getActiveBans()
+
             MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Removed ban with id "..banId)
         end
 
         unBanUserIdQ.onError = function( q, err, sql )
-            print("------------------------------------")
-            print("[MBSync] SQL Error!")
-            print("------------------------------------")
-            print("Please include this in a Bug report:\n")
-            print(err.."\n")
-            print("------------------------------------")
-            print("Do not include this, this is for debugging only:\n")
-            print(sql.."\n")
-            print("------------------------------------")
+            MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MBSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
         end
 
         unBanUserIdQ:start()
@@ -350,6 +344,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].unBanUser = function(ply_steamid, calling_ply)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.unBanUser Param.: " .. ply_steamid .. " " .. tostring(calling_ply))
         local unBanUserQ = MSync.DBServer:prepare( [[
             UPDATE `tbl_mbsync`
             SET 
@@ -369,19 +364,12 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         unBanUserQ.onSuccess = function( q, data )
             MSync.modules[info.ModuleIdentifier].getActiveBans()
+
             MSync.modules[info.ModuleIdentifier].msg(calling_ply, "Unbanned "..ply_steamid)
         end
 
         unBanUserQ.onError = function( q, err, sql )
-            print("------------------------------------")
-            print("[MBSync] SQL Error!")
-            print("------------------------------------")
-            print("Please include this in a Bug report:\n")
-            print(err.."\n")
-            print("------------------------------------")
-            print("Do not include this, this is for debugging only:\n")
-            print(sql.."\n")
-            print("------------------------------------")
+            MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MBSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
         end
 
         unBanUserQ:start()
@@ -392,6 +380,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].getBans = function(ply, fullTable)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.getBans Param.: " .. ply:Nick() .. " " .. tostring(fullTable))
         local getBansQ = MSync.DBServer:prepare( [[
             SELECT 
                 tbl_mbsync.p_id, 
@@ -424,8 +413,9 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
             local banTable = {}
 
-            print("[MBSync] Recieved all ban data")
+            MSync.log(MSYNC_DBG_INFO, "[MBSync] Recieved ban data from Database")
             if fullTable then
+                MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Generating full ban table to send to \"" .. ply:Nick() .. "\"")
                 for k,v in pairs(data) do
 
                     banTable[v.p_id] = {
@@ -453,6 +443,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
                 end
             else
+                MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Generating short ban table to send to \"" .. ply:Nick() .. "\"")
                 for k,v in pairs(data) do
                     if not v['unban_admin.steamid'] and ((not((v.date_unix+v.length_unix) < os.time())) or (v.length_unix==0)) then
                         banTable[v["banned.steamid64"]] = {
@@ -484,15 +475,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
 
         getBansQ.onError = function( q, err, sql )
-            print("------------------------------------")
-            print("[MBSync] SQL Error!")
-            print("------------------------------------")
-            print("Please include this in a Bug report:\n")
-            print(err.."\n")
-            print("------------------------------------")
-            print("Do not include this, this is for debugging only:\n")
-            print(sql.."\n")
-            print("------------------------------------")
+            MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MBSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
         end
 
         getBansQ:start()
@@ -503,6 +486,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].getActiveBans = function()
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.getActiveBans")
         local getActiveBansQ = MSync.DBServer:prepare( [[
             SELECT 
                 tbl_mbsync.*,
@@ -532,7 +516,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         getActiveBansQ.onSuccess = function( q, data )
 
             local banTable = {}
-            print("[MBSync] Recieved ban data")
             for k,v in pairs(data) do
                 banTable[v["steamid64"]] = {
                     banId = v.p_id,
@@ -546,6 +529,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                     adminNickname = v["admin.nickname"]
                 }
             end
+            MSync.log(MSYNC_DBG_INFO, "[MBSync] Local ban table updated with new data")
 
             MSync.modules[info.ModuleIdentifier].banTable = banTable
 
@@ -567,6 +551,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
                     local message = ULib.getBanMessage( ban.banned.steamid, banData)
 
+                    MSync.log(MSYNC_DBG_WARNING, "[MBSync] User \"" .. ply:Nick() "\" was banned while data resynchronized, kicking from server")
                     v:Kick(message)
                 else
                     -- Do nothing
@@ -575,15 +560,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
 
         getActiveBansQ.onError = function( q, err, sql )
-            print("------------------------------------")
-            print("[MBSync] SQL Error!")
-            print("------------------------------------")
-            print("Please include this in a Bug report:\n")
-            print(err.."\n")
-            print("------------------------------------")
-            print("Do not include this, this is for debugging only:\n")
-            print(sql.."\n")
-            print("------------------------------------")
+            MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MBSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
         end
 
         getActiveBansQ:start()
@@ -594,6 +571,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: nothing
     ]]
     MSync.modules[info.ModuleIdentifier].exportBansToULX = function()
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.exportBansToULX")
         local exportActiveBans = MSync.DBServer:prepare( [[
             SELECT 
                 tbl_mbsync.*,
@@ -623,15 +601,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         exportActiveBans.onSuccess = function( q, data )
 
-            local function escapeString( str )
-                if not str then
-                    return "NULL"
-                else
-                    return sql.SQLStr(str)
-                end
-            end
-
-            print("[MBSync] Exporting Bans to ULX")
+            print("[MBSync] Exporting all MBSync bans to ULX. Please wait...")
             for k,v in pairs(data) do
                 local unban
                 if v.length_unix == 0 then
@@ -640,13 +610,21 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                     unban = v.date_unix + v.length_unix
                 end
 
+                local admin
+                if v["admin.steamid"] == "STEAM_0:0:0" then
+                    admin = v["admin.nickname"]
+                else
+                    admin = v["admin.nickname"].."("..v["admin.steamid"]..")"
+                end
+
                 ULib.bans[ v["steamid"] ] = {
-                    admin = v["admin.nickname"],
+                    admin = admin,
                     time = v.date_unix,
                     unban = unban,
                     reason = v.reason,
                     name = v["banned.nickname"]
                 }
+                userTransactions[v["steamid64"]] = true
                 hook.Call( ULib.HOOK_USER_BANNED, _, v["steamid"], ULib.bans[ v["steamid"] ] )
             end
             ULib.fileWrite( ULib.BANS_FILE, ULib.makeKeyValues( ULib.bans ) )
@@ -655,21 +633,97 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
 
         exportActiveBans.onError = function( q, err, sql )
-            print("------------------------------------")
-            print("[MBSync] SQL Error!")
-            print("------------------------------------")
-            print("Please include this in a Bug report:\n")
-            print(err.."\n")
-            print("------------------------------------")
-            print("Do not include this, this is for debugging only:\n")
-            print(sql.."\n")
-            print("------------------------------------")
+            MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MBSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
         end
 
         exportActiveBans:start()
     end
     concommand.Add("msync."..info.ModuleIdentifier..".export", function( ply, cmd, args )
+        if ply:IsValid() then return end
         MSync.modules[info.ModuleIdentifier].exportBansToULX()
+    end)
+
+    --[[
+        Description: Function to allow the import of all ULX bans to MBSync
+        Arguments:
+            - allservers [boolean] - Should all bans be imported as local bans or as allserver bans? ( true = allservers, false = server group)
+        Returns: nothing
+    ]]
+    MSync.modules[info.ModuleIdentifier].importBansFromULX = function( allservers )
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.importBansFromULX Param.: " .. tostring(allservers))
+        local transactions = {}
+        local banTransaction = MSync.DBServer:createTransaction()
+
+        print("[MBSync] Importing bans from ULX into MBSync, please wait...")
+        for k,v in pairs(ULib.bans) do
+            --[[
+                - Create User
+                - Create ban query
+            ]]
+            transactions[k] = MSync.DBServer:prepare( [[
+                INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
+                VALUES (
+                    (SELECT p_user_id FROM tbl_users WHERE steamid=?), 
+                    (SELECT p_user_id FROM tbl_users WHERE steamid=?), 
+                ?, ?, ?,
+                    (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
+                );
+            ]] )
+            local timestamp = os.time()
+            transactions[k]:setString(1, k)
+
+            if v['modified_admin'] then
+                if v['modified_admin'] == "(Console)" then
+                    transactions[k]:setString(2,"STEAM_0:0:0")
+                else
+                    transactions[k]:setString(2,string.match(v['modified_admin'], "STEAM_%d:%d:%d+"))
+                end
+            else
+                if v['admin'] == "(Console)" then
+                    transactions[k]:setString(2,"STEAM_0:0:0")
+                else
+                    transactions[k]:setString(2,string.match(v['admin'], "STEAM_%d:%d:%d+"))
+                end
+            end
+
+            transactions[k]:setString(3, v['reason'] or "(None given)")
+            transactions[k]:setNumber(4, tonumber(v['time']))
+
+            if tonumber(v['unban']) == 0 then
+                transactions[k]:setNumber(5, tonumber(v['unban']))
+            else
+                transactions[k]:setNumber(5, tonumber(v['unban']) - tonumber(v['time']))
+            end
+
+            if not allserver then
+                transactions[k]:setString(6, MSync.settings.data.serverGroup)
+            else
+                transactions[k]:setString(6, "allservers")
+            end
+
+            banTransaction:addQuery(transactions[k])
+            MSync.log(MSYNC_DBG_INFO, "[MBSync] Imported ban for SteamID: " .. k)
+        end
+
+        banTransaction.onSuccess = function()
+            print("[MBSync] Ban import from ULX finished successfully")
+        end
+
+        banTransaction.onError = function(tr, err)
+            MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MBSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
+        end
+
+        banTransaction:start()
+    end
+    concommand.Add("msync."..info.ModuleIdentifier..".import", function( ply, cmd, args )
+        if ply:IsValid() then return end
+        local allservers = false
+
+        if args[1] == "true" then
+            allservers = true
+        end
+
+        MSync.modules[info.ModuleIdentifier].importBansFromULX( allservers )
     end)
 
     --[[
@@ -677,13 +731,16 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: true
     ]]
     MSync.modules[info.ModuleIdentifier].loadSettings = function()
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec.: MBSync.loadSettings")
         if not file.Exists("msync/"..info.ModuleIdentifier..".txt", "DATA") then
             MSync.modules[info.ModuleIdentifier].settings = {
                 syncDelay = 300
             }
             file.Write("msync/"..info.ModuleIdentifier..".txt", util.TableToJSON(MSync.modules[info.ModuleIdentifier].settings, true))
+            MSync.log(MSYNC_DBG_DEBUG, "[MBSync] No configuration found, generated default one")
         else
             MSync.modules[info.ModuleIdentifier].settings = util.JSONToTable(file.Read("msync/mbsync.txt", "DATA"))
+            MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Configuration found, loaded into MBSync")
         end
 
         return true
@@ -694,6 +751,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: true if the settings file exists
     ]]
     MSync.modules[info.ModuleIdentifier].saveSettings = function()
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.saveSettings")
         file.Write("msync/"..info.ModuleIdentifier..".txt", util.TableToJSON(MSync.modules[info.ModuleIdentifier].settings, true))
         return file.Exists("msync/"..info.ModuleIdentifier..".txt", "DATA")
     end
@@ -703,6 +761,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         Returns: table split in 10er part counts
     ]]
     MSync.modules[info.ModuleIdentifier].splitTable = function(tbl)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.splitTable Param.: " .. tostring(tbl))
+
         local i = 0
         local dataSet = 0
         local splitTableData = {}
@@ -727,6 +787,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
     MSync.modules[info.ModuleIdentifier].loadSettings()
 
     if not MSync.modules[info.ModuleIdentifier].banTable then
+        MSync.log(MSYNC_DBG_WARNING, "[MBSync] Ban table not found yet, requesting now")
         MSync.modules[info.ModuleIdentifier].getActiveBans()
     end
 end
@@ -745,6 +806,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".sendMessage")
     MSync.modules[info.ModuleIdentifier].msg = function(ply, content, msgType)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.msg Param.: $ply \"$content\" $msgType")
         if type(ply) == "string" and not (ply == "STEAM_0:0:0") then
             ply = player.GetBySteamID( ply )
         end
@@ -753,6 +815,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
             if not IsValid(ply) then
                 print("[MBSync] "..content)
             else
+                MSync.log(MSYNC_DBG_INFO, "[MBSync] "..content)
                 if not msgType then msgType = 0 end
                 -- Basic message
                 if msgType == 0 then
@@ -776,6 +839,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".sendBanTable")
     MSync.modules[info.ModuleIdentifier].sendSettings = function(ply, banTable)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.sendSettings Param.: " .. tostring(ply) .. " " .. tostring(banTable))
         net.Start("msync."..info.ModuleIdentifier..".sendBanTable")
             net.WriteTable(banTable)
         net.Send(ply)
@@ -789,6 +853,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".openBanTable")
     MSync.modules[info.ModuleIdentifier].openBanTable = function(ply)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.openBanTable Param.: " .. tostring(ply))
         net.Start("msync."..info.ModuleIdentifier..".openBanTable")
         net.Send(ply)
     end
@@ -799,7 +864,8 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".banid")
     net.Receive("msync."..info.ModuleIdentifier..".banid", function(len, ply)
-        if not ply:query("msync."..info.ModuleIdentifier..".banPlayer") then return end
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.banid Player: " .. tostring(ply))
+        if not ply:query("msync."..info.ModuleIdentifier..".banPlayer") then MSync.log(MSYNC_DBG_WARNING, "[MBSync] User \"" .. ply:Nick() .. "\" tried to ban a user without permission");return end
 
         local ban = net.ReadTable()
 
@@ -834,7 +900,8 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".editBan")
     net.Receive("msync."..info.ModuleIdentifier..".editBan", function(len, ply)
-        if not ply:query("msync."..info.ModuleIdentifier..".banPlayer") then return end
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.editBan Player: " .. tostring(ply))
+        if not ply:query("msync."..info.ModuleIdentifier..".banPlayer") then MSync.log(MSYNC_DBG_WARNING, "[MBSync] User \"" .. ply:Nick() .. "\" tried to ban a user without permission");return end
 
         local editedBan = net.ReadTable()
 
@@ -869,7 +936,8 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".unban")
     net.Receive("msync."..info.ModuleIdentifier..".unban", function(len, ply)
-        if not ply:query("msync."..info.ModuleIdentifier..".unBanID") then return end
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.unban Player: " .. tostring(ply))
+        if not ply:query("msync."..info.ModuleIdentifier..".unBanID") then MSync.log(MSYNC_DBG_WARNING, "[MBSync] User \"" .. ply:Nick() .. "\" tried to unban a user without permission");return end
 
         local banid = net.ReadFloat()
 
@@ -880,9 +948,27 @@ MSync.modules[info.ModuleIdentifier].net = function()
         if not banid then return end;
 
         --[[
-            Run edit function to edit ban data
+            When unbanning someone using the banid, we need to still unban the user in ULX, so this is the best solution.
+
+            We loop trough the active ban table, search for the banid ( it has to be there, otherwise the user can't know it ) and then unban the steamid
+        ]]
+        local steamid = ""
+        for k,v in pairs(MSync.modules[info.ModuleIdentifier].banTable) do
+            if v.banid == banid then
+                steamid = v.banned['steamid']
+            end
+        end
+
+        --[[
+            Run unban function that takes the banid
         ]]
         MSync.modules[info.ModuleIdentifier].unBanUserID(ply, banid)
+
+        --[[
+            For ulx's sake, we unban the user in ulx for the case that a user has been banned using ulx ban and now gets unbanned using mbsync unbanid
+        ]]
+        userTransactions[util.SteamIDTo64(target_steamid)] = true
+        ULib.unban(target_steamid, calling_ply)
     end )
 
     --[[
@@ -893,6 +979,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".sendSettingsPly")
     MSync.modules[info.ModuleIdentifier].sendSettings = function(ply)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.sendSettings Param.: " .. tostring(ply))
         net.Start("msync."..info.ModuleIdentifier..".sendSettingsPly")
             net.WriteTable(MSync.modules[info.ModuleIdentifier].settings)
         net.Send(ply)
@@ -904,7 +991,8 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".getSettings")
     net.Receive("msync."..info.ModuleIdentifier..".getSettings", function(len, ply)
-        if not ply:query("msync.getSettings") then return end
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.getSettings Player: " .. tostring(ply))
+        if not ply:query("msync.getSettings") then MSync.log(MSYNC_DBG_WARNING, "[MBSync] User \"" .. ply:Nick() .. "\" tried to get the settings without permission");return end
 
         MSync.modules[info.ModuleIdentifier].sendSettings(ply)
     end )
@@ -915,7 +1003,8 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".sendSettings")
     net.Receive("msync."..info.ModuleIdentifier..".sendSettings", function(len, ply)
-        if not ply:query("msync.sendSettings") then return end
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.sendSettings Player: " .. tostring(ply))
+        if not ply:query("msync.sendSettings") then MSync.log(MSYNC_DBG_WARNING, "[MBSync] User \"" .. ply:Nick() .. "\" tried to send settings to the server without permission");return end
 
         MSync.modules[info.ModuleIdentifier].settings = net.ReadTable()
         MSync.modules[info.ModuleIdentifier].saveSettings()
@@ -929,6 +1018,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".openBanGUI")
     MSync.modules[info.ModuleIdentifier].openBanGUI = function(ply)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.openBanGUI Param.: " .. tostring(ply))
         local tableLength = table.Count(MSync.modules[info.ModuleIdentifier].recentDisconnects)
         local disconnectTable = {}
 
@@ -957,7 +1047,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".recieveDataCount")
     MSync.modules[info.ModuleIdentifier].sendCount = function(ply, number)
-        print(number)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.sendCount Param.: " .. tostring(ply) .. " " .. number)
         net.Start("msync."..info.ModuleIdentifier..".recieveDataCount")
             net.WriteFloat(number)
         net.Send(ply)
@@ -972,6 +1062,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".recieveData")
     MSync.modules[info.ModuleIdentifier].sendPart = function(ply, part)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.sendPart Param.: " .. tostring(ply) .. " " .. tostring(part))
         net.Start("msync."..info.ModuleIdentifier..".recieveData")
             net.WriteTable(part)
         net.Send(ply)
@@ -983,12 +1074,13 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".getBanTable")
     net.Receive("msync."..info.ModuleIdentifier..".getBanTable", function(len, ply)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.getBanTable Player: " .. tostring(ply))
         local fullTable = net.ReadBool()
         if fullTable then
-            if not ply:query("msync.openAdminGUI") then return end
+            if not ply:query("msync.openAdminGUI") then MSync.log(MSYNC_DBG_WARNING, "[MBSync] User \"" .. ply:Nick() .. "\" tried to get the full ban table without permission");return end
             MSync.modules[info.ModuleIdentifier].getBans(ply, fullTable)
         else
-            if not ply:query("msync."..info.ModuleIdentifier..".openBanTable") then return end
+            if not ply:query("msync."..info.ModuleIdentifier..".openBanTable") then MSync.log(MSYNC_DBG_WARNING, "[MBSync] User \"" .. ply:Nick() .. "\" tried to get the short ban table without permission");return end
             MSync.modules[info.ModuleIdentifier].getBans(ply, false)
         end
     end )
@@ -1012,6 +1104,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             reason [string] - the ban reason - OPTIONAL - Default: "banned by staff"
     ]]
     MSync.modules[info.ModuleIdentifier].Chat.banPlayer = function(calling_ply, target_ply, length, allserver, reason)
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.Chat.banPlayer Param.: $calling_ply $target_player $length $allserver \"$reason\"", {["calling_ply"] = calling_ply,["target_player"] = target_ply,["length"] = length,["allserver"] = allserver,["reason"] = reason}))
         local calling_steamid = ""
 
         if not IsValid(calling_ply) then
@@ -1056,6 +1149,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="reason", ULib.cmds.optional, ULib.cmds.takeRestOfLine, completes=ulx.common_kick_reasons }
     BanPlayer:defaultAccess( ULib.ACCESS_SUPERADMIN )
     BanPlayer:help( "Opens the MBSync GUI ( without parameters ) or bans a player" )
+
     --[[
         ban the targeted steamid
 
@@ -1066,6 +1160,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             reason [string] - the ban reason - OPTIONAL - Default: "banned by staff"
     ]]
     MSync.modules[info.ModuleIdentifier].Chat.banSteamID = function(calling_ply, target_steamid, length, allserver, reason)
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.Chat.banSteamID Param.: $calling_ply $target_steamid $length $allserver \"$reason\"", {["calling_ply"] = calling_ply,["target_steamid"] = target_steamid,["length"] = length,["allserver"] = allserver,["reason"] = reason}))
         local calling_steamid = ""
 
         if not IsValid(calling_ply) then
@@ -1119,6 +1214,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             target_steamid [string] - the target steamid
     ]]
     MSync.modules[info.ModuleIdentifier].Chat.unBanID = function(calling_ply, target_steamid)
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.Chat.unBanID Param.: $calling_ply $target_steamid", {["calling_ply"] = calling_ply,["target_steamid"] = target_steamid}))
         local calling_steamid = ""
 
         if not IsValid(calling_ply) then
@@ -1137,6 +1233,12 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             Unban user with given steamid
         ]]
         MSync.modules[info.ModuleIdentifier].unBanUser(target_steamid, calling_steamid)
+
+        --[[
+            For ulx's sake, we unban the user in ulx for the case that a user has been banned using ulx ban and now gets unbanned using mbsync unbanid
+        ]]
+        userTransactions[util.SteamIDTo64(target_steamid)] = true
+        ULib.unban(target_steamid, calling_ply)
     end
     local BanPlayer = ulx.command( "MSync", "msync."..info.ModuleIdentifier..".unBanID", MSync.modules[info.ModuleIdentifier].Chat.unBanID, "!munban" )
     BanPlayer:addParam{ type=ULib.cmds.StringArg, hint="steamid"}
@@ -1150,6 +1252,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             target_steamid [string] - the target steamid
     ]]
     MSync.modules[info.ModuleIdentifier].Chat.checkBan = function(calling_ply, target_steamid)
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.Chat.checkBan Param.: $calling_ply $target_player", {["calling_ply"] = calling_ply,["target_steamid"] = target_steamid}))
         if not IsValid(calling_ply) then
             -- Do nothing
         else
@@ -1202,7 +1305,8 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             none
     ]]
     MSync.modules[info.ModuleIdentifier].Chat.openBanTable = function(calling_ply)
-        if not IsValid(calling_ply) then print("[MBSync] This command can only be executed in-game"); return; end
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.Chat.openBanTable Param.: $calling_ply", {["calling_ply"] = calling_ply}))
+        if not IsValid(calling_ply) then MSync.log(MSYNC_DBG_ERROR, "[MBSync] This command can only be executed in-game"); return; end
         if not calling_ply:query("msync."..info.ModuleIdentifier..".openBanTable") then return end;
         -- Open Ban Table
         MSync.modules[info.ModuleIdentifier].openBanTable(calling_ply)
@@ -1221,6 +1325,7 @@ MSync.modules[info.ModuleIdentifier].ulx = function()
             reason [string] - the ban reason - OPTIONAL - Default: "banned by staff"
     ]]
     MSync.modules[info.ModuleIdentifier].Chat.editBan = function(calling_ply, ban_id, length, allserver, reason)
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.Chat.banPlayer Param.: $calling_ply $ban_id $length $allserver \"$reason\"", {["calling_ply"] = calling_ply,["ban_id"] = ban_id,["length"] = length,["allserver"] = allserver,["reason"] = reason}))
         local calling_steamid = ""
 
         if not IsValid(calling_ply) then
@@ -1275,6 +1380,7 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
     MSync.modules[info.ModuleIdentifier].getActiveBans()
 
     hook.Add("CheckPassword", "msync."..info.ModuleIdentifier..".banCheck", function( steamid64 )
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Checking ban status for \"" .. steamid64 .. "\"")
         if MSync.modules[info.ModuleIdentifier].banTable[steamid64] then
             local ban = MSync.modules[info.ModuleIdentifier].banTable[steamid64]
             local unbanDate
@@ -1286,15 +1392,13 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
             --[[
                 Print to console that a banned user tries to join
             ]]
-            print("---== [MBSync] ==---")
-            print("A banned player tried to join the server.")
-            print("-- Informations --")
-            print("Nickname: "..ban.banned.nickname)
-            print("SteamID: "..ban.banned.steamid)
-            print("Ban Date: "..os.date( "%c", ban.timestamp))
-            print("Unban Date: "..unbanDate)
-            print("Banned by: "..ban.adminNickname)
-            print("---== [END] ==---")
+            MSync.log(MSYNC_DBG_WARNING, MSync.formatString("\n---== [MBSync] ==---\nA banned player tried to join the server.\n-- Informations --\nNickname: $nickname\nSteamID: $steamid\nBan Date: $date\nUnban Date: $unbanDate\nBanned by: $admin\n---== [END] ==---", {
+                ["nickname"] = ban.banned.nickname,
+                ["steamid"] = ban.banned.steamid,
+                ["date"] = os.date( "%c", ban.timestamp),
+                ["unbanDate"] = unbanDate,
+                ["admin"] = ban.adminNickname
+            }))
 
             --[[
                 Translate ban data for ULib
@@ -1313,11 +1417,24 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
             local message = ULib.getBanMessage( ban.banned.steamid, banData)
             return false, message
         else
+            --[[
+            This function has been disabled in favor of security and to not cause previously ulx banned players to be unbanned.
+            It has been commented out because of possible usage in the future
+
+            if ULib.bans[util.SteamIDFrom64(steamid64)] then
+                userTransactions[steamid64] = true
+                ULib.unban(target_steamid, calling_ply)
+                -- Disabled because it could cause security issues with whitelisted servers
+                --return true
+            end
+            ]]
+            MSync.log(MSYNC_DBG_DEBUG, "[MBSync] User with steamid \"" .. steamid64 .. "\" has passed the ban check")
             return
         end
     end)
 
     hook.Add("PlayerDisconnected", "msync."..info.ModuleIdentifier..".saveDisconnects", function( ply )
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Disconnect: Adding player \"" .. tostring(ply) .. "\" to list of recent disconnects")
         if ply:IsBot() then return end
         local tableLength = table.Count(MSync.modules[info.ModuleIdentifier].recentDisconnects)
         local data = {
@@ -1328,6 +1445,73 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
 
         MSync.modules[info.ModuleIdentifier].recentDisconnects[tableLength] = data
     end)
+
+    hook.Add("ULibPlayerBanned", "msync.mbsync.ulxban", function(steamid, banData)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] ULX ban detected for user \"" .. steamid .. "\"")
+
+        local ban = {}
+
+        if userTransactions[util.SteamIDTo64(steamid)] then
+            userTransactions[util.SteamIDTo64(steamid)] = nil
+            MSync.log(MSYNC_DBG_DEBUG, "[MBSync] User has already been banned in MBSync, aborting ban")
+            return
+        end
+
+        if banData.unban == 0 then
+            ban.length = 0
+        else
+            ban.length = (banData.unban-os.time())/60
+        end
+
+        if not banData.reason then
+            banData.reason = "(None given)"
+        end
+
+        if banData.modified_admin then
+            if banData.modified_admin == "(Console)" then
+                ban.admin = "STEAM_0:0:0"
+            else
+                ban.admin = string.match(banData.modified_admin, "STEAM_%d:%d:%d+")
+            end
+        else
+            if banData.admin == "(Console)" then
+                ban.admin = "STEAM_0:0:0"
+            else
+                ban.admin = string.match(banData.admin, "STEAM_%d:%d:%d+")
+            end
+        end
+
+        MSync.modules[info.ModuleIdentifier].banUserID(steamid, ban.admin, ban.length, banData.reason, false)
+    end)
+
+    hook.Add("ULibPlayerUnBanned", "msync.mbsync.ulxunban", function(steamid, admin)
+        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] ULX Unban detected for user \"" .. steamid .. "\"")
+
+        if userTransactions[util.SteamIDTo64(steamid)] then
+            userTransactions[util.SteamIDTo64(steamid)] = nil
+            MSync.log(MSYNC_DBG_DEBUG, "[MBSync] User already has been unbanned from MBSync, aborting unban")
+            return
+        end
+
+        local admin_id = ""
+        if not IsValid(admin) then
+            admin_id = "STEAM_0:0:0"
+        else
+            admin_id = admin:SteamID()
+        end
+        MSync.modules[info.ModuleIdentifier].unBanUser(steamid, admin_id)
+    end)
+end
+
+--[[
+    Define a function to run on the server when the module gets disabled
+]]
+MSync.modules[info.ModuleIdentifier].disable = function()
+    hook.Remove("CheckPassword", "msync."..info.ModuleIdentifier..".banCheck")
+    hook.Remove("PlayerDisconnected", "msync."..info.ModuleIdentifier..".saveDisconnects")
+    hook.Remove("ULibPlayerBanned", "msync.mbsync.ulxban")
+    hook.Remove("ULibPlayerUnBanned", "msync.mbsync.ulxunban")
+    timer.Remove("msync."..info.ModuleIdentifier..".getActiveBans")
 end
 
 --[[
