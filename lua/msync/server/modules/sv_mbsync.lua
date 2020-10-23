@@ -660,6 +660,29 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 - Create User
                 - Create ban query
             ]]
+            --[[
+                Add user transaction
+            ]]
+            transactions[k..'_user'] = MSync.DBServer:prepare( [[
+                INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE steamid=steamid;
+            ]] )
+            transactions[k..'_user']:setString(1, k)
+            transactions[k..'_user']:setString(2, util.SteamIDTo64( k ))
+            if ULib.ucl.users[k] then
+                transactions[k..'_user']:setString(3, ULib.ucl.users[k].name or 'None Given')
+            else
+                transactions[k..'_user']:setString(3, 'None Given')
+            end
+            transactions[k..'_user']:setString(4, os.date("%Y-%m-%d %H:%M:%S", os.time()))
+
+            banTransaction:addQuery(transactions[k..'_user'])
+            MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Import Bans: added create user transaction for: " .. k)
+
+            --[[
+                Add ban transaction
+            ]]
             transactions[k] = MSync.DBServer:prepare( [[
                 INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
                 VALUES (
@@ -703,6 +726,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
             banTransaction:addQuery(transactions[k])
             MSync.log(MSYNC_DBG_INFO, "[MBSync] Imported ban for SteamID: " .. k)
+            MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Import Bans: added create ban transaction for: " .. k)
         end
 
         banTransaction.onSuccess = function()
