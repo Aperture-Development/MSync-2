@@ -830,7 +830,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".sendMessage")
     MSync.modules[info.ModuleIdentifier].msg = function(ply, content, msgType)
-        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.msg Param.: $ply \"$content\" $msgType")
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.msg Param.: $ply \"$content\" $msgType",{['ply'] = ply, ['content'] = content, ['msgType'] = msgType}))
         if type(ply) == "string" and not (ply == "STEAM_0:0:0") then
             ply = player.GetBySteamID( ply )
         end
