@@ -810,10 +810,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
     ]]
     MSync.modules[info.ModuleIdentifier].loadSettings()
 
-    if not MSync.modules[info.ModuleIdentifier].banTable then
-        MSync.log(MSYNC_DBG_WARNING, "[MBSync] Ban table not found yet, requesting now")
-        MSync.modules[info.ModuleIdentifier].getActiveBans()
-    end
 end
 
 --[[
@@ -1395,13 +1391,6 @@ end
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
 MSync.modules[info.ModuleIdentifier].hooks = function()
-    --[[
-        This hook starts the timers for the asynchronous ban data loading and the check if one of the online players has been banned
-    ]]
-    timer.Create("msync."..info.ModuleIdentifier..".getActiveBans", MSync.modules[info.ModuleIdentifier].settings.syncDelay, 0, function()
-        MSync.modules[info.ModuleIdentifier].getActiveBans()
-    end)
-    MSync.modules[info.ModuleIdentifier].getActiveBans()
 
     hook.Add("CheckPassword", "msync."..info.ModuleIdentifier..".banCheck", function( steamid64 )
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Checking ban status for \"" .. steamid64 .. "\"")
@@ -1524,6 +1513,22 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
             admin_id = admin:SteamID()
         end
         MSync.modules[info.ModuleIdentifier].unBanUser(steamid, admin_id)
+    end)
+
+    hook.Add("MSyncModuleLoaded", "msync.mbsync.loadData", function( msync_module )
+        if (not msync_module or msync_module == info.ModuleIdentifier) and not MSync.modules[info.ModuleIdentifier].banTable then
+            if not MSync.modules[info.ModuleIdentifier].banTable then
+                MSync.log(MSYNC_DBG_WARNING, "[MBSync] Ban table not found yet, requesting now")
+                MSync.modules[info.ModuleIdentifier].getActiveBans()
+            end
+
+            --[[
+                Start timer to asynchroniously resync data
+            ]]
+            timer.Create("msync."..info.ModuleIdentifier..".getActiveBans", MSync.modules[info.ModuleIdentifier].settings.syncDelay, 0, function()
+                MSync.modules[info.ModuleIdentifier].getActiveBans()
+            end)
+        end
     end)
 end
 
