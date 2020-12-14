@@ -45,6 +45,7 @@ function MSync.initModules()
 
         function initTransaction.onSuccess()
             MSync.log(MSYNC_DBG_INFO, "Module querys have been completed successfully")
+            hook.Call("MSyncModuleLoaded", nil, nil)
             MSync.mysql.dbstatus = true
         end
 
@@ -77,6 +78,7 @@ function MSync.loadModule(path)
 
     function initTransaction.onSuccess()
         MSync.log(MSYNC_DBG_INFO, "Module query has been completed successfully")
+        hook.Call("MSyncModuleLoaded", nil, info.ModuleIdentifier)
         --MSync.mysql[info.ModuleIdentifier].dbstatus = true
     end
 
@@ -109,6 +111,7 @@ function MSync.enableModule( module )
                 function initTransaction.onSuccess()
                     MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module loaded")
                     MSync.net.sendModuleEnable( module )
+                    hook.Call("MSyncModuleLoaded", nil, module)
                     --MSync.mysql[module].dbstatus = true
                 end
 

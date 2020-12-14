@@ -660,6 +660,29 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 - Create User
                 - Create ban query
             ]]
+            --[[
+                Add user transaction
+            ]]
+            transactions[k..'_user'] = MSync.DBServer:prepare( [[
+                INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE steamid=steamid;
+            ]] )
+            transactions[k..'_user']:setString(1, k)
+            transactions[k..'_user']:setString(2, util.SteamIDTo64( k ))
+            if ULib.ucl.users[k] then
+                transactions[k..'_user']:setString(3, ULib.ucl.users[k].name or 'None Given')
+            else
+                transactions[k..'_user']:setString(3, 'None Given')
+            end
+            transactions[k..'_user']:setString(4, os.date("%Y-%m-%d %H:%M:%S", os.time()))
+
+            banTransaction:addQuery(transactions[k..'_user'])
+            MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Import Bans: added create user transaction for: " .. k)
+
+            --[[
+                Add ban transaction
+            ]]
             transactions[k] = MSync.DBServer:prepare( [[
                 INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
                 VALUES (
@@ -703,6 +726,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
             banTransaction:addQuery(transactions[k])
             MSync.log(MSYNC_DBG_INFO, "[MBSync] Imported ban for SteamID: " .. k)
+            MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Import Bans: added create ban transaction for: " .. k)
         end
 
         banTransaction.onSuccess = function()
@@ -786,10 +810,6 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
     ]]
     MSync.modules[info.ModuleIdentifier].loadSettings()
 
-    if not MSync.modules[info.ModuleIdentifier].banTable then
-        MSync.log(MSYNC_DBG_WARNING, "[MBSync] Ban table not found yet, requesting now")
-        MSync.modules[info.ModuleIdentifier].getActiveBans()
-    end
 end
 
 --[[
@@ -806,7 +826,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     ]]
     util.AddNetworkString("msync."..info.ModuleIdentifier..".sendMessage")
     MSync.modules[info.ModuleIdentifier].msg = function(ply, content, msgType)
-        MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.msg Param.: $ply \"$content\" $msgType")
+        MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.msg Param.: $ply \"$content\" $msgType",{['ply'] = ply, ['content'] = content, ['msgType'] = msgType}))
         if type(ply) == "string" and not (ply == "STEAM_0:0:0") then
             ply = player.GetBySteamID( ply )
         end
@@ -1371,13 +1391,6 @@ end
     Define hooks your module is listening on e.g. PlayerDisconnect
 ]]
 MSync.modules[info.ModuleIdentifier].hooks = function()
-    --[[
-        This hook starts the timers for the asynchronous ban data loading and the check if one of the online players has been banned
-    ]]
-    timer.Create("msync."..info.ModuleIdentifier..".getActiveBans", MSync.modules[info.ModuleIdentifier].settings.syncDelay, 0, function()
-        MSync.modules[info.ModuleIdentifier].getActiveBans()
-    end)
-    MSync.modules[info.ModuleIdentifier].getActiveBans()
 
     hook.Add("CheckPassword", "msync."..info.ModuleIdentifier..".banCheck", function( steamid64 )
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Checking ban status for \"" .. steamid64 .. "\"")
@@ -1500,6 +1513,22 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
             admin_id = admin:SteamID()
         end
         MSync.modules[info.ModuleIdentifier].unBanUser(steamid, admin_id)
+    end)
+
+    hook.Add("MSyncModuleLoaded", "msync.mbsync.loadData", function( msync_module )
+        if (not msync_module or msync_module == info.ModuleIdentifier) and not MSync.modules[info.ModuleIdentifier].banTable then
+            if not MSync.modules[info.ModuleIdentifier].banTable then
+                MSync.log(MSYNC_DBG_WARNING, "[MBSync] Ban table not found yet, requesting now")
+                MSync.modules[info.ModuleIdentifier].getActiveBans()
+            end
+
+            --[[
+                Start timer to asynchroniously resync data
+            ]]
+            timer.Create("msync."..info.ModuleIdentifier..".getActiveBans", MSync.modules[info.ModuleIdentifier].settings.syncDelay, 0, function()
+                MSync.modules[info.ModuleIdentifier].getActiveBans()
+            end)
+        end
     end)
 end
 

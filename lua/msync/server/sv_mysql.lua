@@ -148,7 +148,7 @@ end
     Returns: nothing
 ]]
 function MSync.mysql.addUserID(steamid, nickname)
-    MSync.log(MSYNC_DBG_DEBUG, "Exec: addUserID. Param.: " .. steamid .. " " .. nickname)
+    MSync.log(MSYNC_DBG_DEBUG, "Exec: addUserID. Param.: " .. steamid .. " " .. (nickname or ""))
     if not MSync.DBServer then MSync.log(MSYNC_DBG_DEBUG, "No Database connected yet. Please connect to a Database to be able to create users."); return end;
     if not string.match( steamid, "^STEAM_[0-1]:[0-1]:[0-9]+$" ) then return end;
 
