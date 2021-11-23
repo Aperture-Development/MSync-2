@@ -4,7 +4,7 @@
 [![Issues](https://img.shields.io/github/issues-raw/Aperture-Development/MSync-2.svg)](https://github.com/Aperture-Development/MSync-2/issues)
 [![Chat](https://img.shields.io/discord/272563407209889792.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/JpDPa6w)
 ![Size](https://img.shields.io/github/repo-size/Aperture-Development/MSync-2.svg)
-[![Licence](https://img.shields.io/badge/license-by--nc--sa--4.0-green.svg)](https://github.com/Aperture-Development/MSync-2/blob/master/LICENSE)
+[![Licence](https://img.shields.io/github/license/Aperture-Development/MSync-2)](https://github.com/Aperture-Development/MSync-2/blob/master/LICENSE)
 [![Release](https://img.shields.io/github/release/Aperture-Development/MSync-2.svg)](https://github.com/Aperture-Development/MSync-2/releases)
 
 What is MSync-2 ?
@@ -47,7 +47,7 @@ Because it's a joke, as you maybe know, Debian distributions are named after the
 
 # A note to modules
 
-If you plan on extending the features of MSync 2, please copy and use the samplemodule files. You can distribute the Module under every licence you like. We always use the root_dir/LICENCE which is basicly the Licence you get the addon with. If you download it from GitHub or Steam it will most likely be under the by-nc-sa 4.0 licence, while when you download it over our website, you will get the Aperture Development Commercial licence.
+If you plan on extending the features of MSync 2, please copy and use the samplemodule files. You can distribute the Module under every licence you like. We always use the root_dir/LICENCE which is basicly the Licence you get the addon with. MSync 2 is licensed under GPL 3.0, please read the LICENSE file for more informations.
 
 # Installation
 
@@ -144,7 +144,6 @@ The server_group option allows you to do just that. Just sub-categorise your ser
 
 # Other info
 
-MSync 2 - GitHub is distributed under the by-nc-sa 4.0 Int licence. Please read the LICENCE file in the root directory of MSync 2.
+MSync 2 is distributed under the GNU General Public Licence 3.0 licence. Please read the LICENCE file in the root directory of MSync 2 to find out more.
 
-Support is provided over our ticketsystem:
-[https://www.Aperture-Development.de/ticketsystem](https://www.Aperture-Development.de/ticketsystem)
+![GPL 3.0](https://www.gnu.org/graphics/gplv3-127x51.png)
