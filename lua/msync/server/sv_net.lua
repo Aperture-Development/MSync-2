@@ -62,7 +62,7 @@ function MSync.net.dbStatus(ply)
     MSync.log(MSYNC_DBG_DEBUG, "Exec: net.dbStatus. Param.: " .. tostring(ply))
     net.Start("msync.dbStatus")
         if MSync.DBServer then
-            net.WriteBool(MSync.DBServer:ping())
+            net.WriteBool(MSync.DBServer:status() == mysqloo.DATABASE_CONNECTED and true or false)
         else
             net.WriteBool(false)
         end
@@ -190,7 +190,7 @@ net.Receive("msync.connectDB", function(len, ply)
     if not ply:query("msync.connectDB") then return end
 
     if MSync.DBServer then
-        if not MSync.DBServer:ping() then
+        if not (MSync.DBServer:status() == mysqloo.DATABASE_CONNECTED) then
             MSync.mysql.initialize()
         else
             MSync.net.sendMessage(ply, "error", "The database is already connected!")
