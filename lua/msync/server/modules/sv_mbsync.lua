@@ -71,8 +71,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                         MODIFY `length_unix` INT UNSIGNED NOT NULL;
                     ]]))
                     updates:addQuery( MSync.DBServer:query([[
-                        INSERT INTO tbl_msyncdb_version (version, module_id) VALUES (1, 'MBSync')
-                        ON DUPLICATE KEY UPDATE version=VALUES(version);
+                        INSERT INTO tbl_msyncdb_version (version, module_id) VALUES (1, 'MBSync') AS newVersion
+                        ON DUPLICATE KEY UPDATE version=newVersion.version;
                     ]]))
                     updates:start()
                 else
@@ -88,8 +88,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 ]]))
 
                 updates:addQuery( MSync.DBServer:query([[
-                    INSERT INTO tbl_msyncdb_version (version, module_id) VALUES (1, 'MBSync')
-                    ON DUPLICATE KEY UPDATE version=VALUES(version);
+                    INSERT INTO tbl_msyncdb_version (version, module_id) VALUES (1, 'MBSync') AS newVersion
+                    ON DUPLICATE KEY UPDATE version=newVersion.version;
                 ]]))
                 updates:start()
             end
@@ -122,21 +122,29 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         local banUserQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
-            VALUES (
-                (SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?), 
-                (SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?), 
-            ?, ?, ?,
-                (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
-            );
+            SELECT UserTbl.p_user_id, AdminTbl.p_user_id, ?, ?, ?, tbl_server_grp.p_group_id
+            FROM tbl_users AS UserTbl, tbl_users AS AdminTbl, tbl_server_grp
+            WHERE
+                (
+                    UserTbl.steamid=? AND
+                    UserTbl.steamid64=?
+                )
+            AND
+                (
+                    AdminTbl.steamid=? AND
+                    AdminTbl.steamid64=?
+                )
+            AND
+                tbl_server_grp.group_name=?;
         ]] )
         local timestamp = os.time()
-        banUserQ:setString(1, ply:SteamID())
-        banUserQ:setString(2, ply:SteamID64())
-        banUserQ:setString(3, calling_ply)
-        banUserQ:setString(4, util.SteamIDTo64(calling_ply))
-        banUserQ:setString(5, reason)
-        banUserQ:setNumber(6, timestamp)
-        banUserQ:setNumber(7, length*60)
+        banUserQ:setString(1, reason)
+        banUserQ:setNumber(2, timestamp)
+        banUserQ:setNumber(3, length*60)
+        banUserQ:setString(4, ply:SteamID())
+        banUserQ:setString(5, ply:SteamID64())
+        banUserQ:setString(6, calling_ply)
+        banUserQ:setString(7, util.SteamIDTo64(calling_ply))
         if not allserver then
             banUserQ:setString(8, MSync.settings.data.serverGroup)
         else
@@ -202,21 +210,29 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         local banUserIdQ = MSync.DBServer:prepare( [[
             INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
-            VALUES (
-                (SELECT p_user_id FROM tbl_users WHERE steamid=? OR steamid64=?), 
-                (SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?), 
-            ?, ?, ?,
-                (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
-            );
+            SELECT UserTbl.p_user_id, AdminTbl.p_user_id, ?, ?, ?, tbl_server_grp.p_group_id
+            FROM tbl_users AS UserTbl, tbl_users AS AdminTbl, tbl_server_grp
+            WHERE
+                (
+                    UserTbl.steamid=? OR
+                    UserTbl.steamid64=?
+                )
+            AND
+                (
+                    AdminTbl.steamid=? AND
+                    AdminTbl.steamid64=?
+                )
+            AND
+                tbl_server_grp.group_name=?
         ]] )
         local timestamp = os.time()
-        banUserIdQ:setString(1, userid)
-        banUserIdQ:setString(2, userid)
-        banUserIdQ:setString(3, calling_ply)
-        banUserIdQ:setString(4, util.SteamIDTo64(calling_ply))
-        banUserIdQ:setString(5, reason)
-        banUserIdQ:setNumber(6, timestamp)
-        banUserIdQ:setNumber(7, length*60)
+        banUserIdQ:setString(1, reason)
+        banUserIdQ:setNumber(2, timestamp)
+        banUserIdQ:setNumber(3, length*60)
+        banUserIdQ:setString(4, userid)
+        banUserIdQ:setString(5, userid)
+        banUserIdQ:setString(6, calling_ply)
+        banUserIdQ:setString(7, util.SteamIDTo64(calling_ply))
         if not allserver then
             banUserIdQ:setString(8, MSync.settings.data.serverGroup)
         else
@@ -224,6 +240,14 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
 
         banUserIdQ.onSuccess = function( q, data )
+            -- Due to the new SQL syntax, mysql does not throw an error anymore if the user does nit exist. We are checking which rows have been affected to work around this issue
+            if q:affectedRows() == 0 then
+                MSync.log(MSYNC_DBG_INFO, "[MBSync] User does not exist! Creating user before retrying")
+                MSync.mysql.addUserID(userid)
+                MSync.modules[info.ModuleIdentifier].banUserID(userid, calling_ply, length, reason, allserver)
+                return
+            end
+
             -- Notify the user about the ban and add it to ULib to prevent data loss on Addon Remove
             -- Also, kick the user from the server
             if calling_ply == "STEAM_0:0:0" then
@@ -260,6 +284,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
         end
 
         banUserIdQ.onError = function( q, err, sql )
+            -- Deprecated check, remove in next minor release
             if string.match( err, "^Column 'user_id' cannot be null$" ) then
                 MSync.log(MSYNC_DBG_INFO, "[MBSync] User does not exist! Creating user before retrying")
                 MSync.mysql.addUserID(userid)
@@ -665,8 +690,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             ]]
             transactions[k..'_user'] = MSync.DBServer:prepare( [[
                 INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
-                VALUES (?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE steamid=steamid;
+                VALUES (?, ?, ?, ?) AS newUser
+                ON DUPLICATE KEY UPDATE steamid=newUser.steamid;
             ]] )
             transactions[k..'_user']:setString(1, k)
             transactions[k..'_user']:setString(2, util.SteamIDTo64( k ))
@@ -685,37 +710,39 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             ]]
             transactions[k] = MSync.DBServer:prepare( [[
                 INSERT INTO `tbl_mbsync` (user_id, admin_id, reason, date_unix, length_unix, server_group)
-                VALUES (
-                    (SELECT p_user_id FROM tbl_users WHERE steamid=?), 
-                    (SELECT p_user_id FROM tbl_users WHERE steamid=?), 
-                ?, ?, ?,
-                    (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
-                );
+                SELECT UserTbl.p_user_id, AdminTbl.p_user_id, ?, ?, ?, tbl_server_grp.p_group_id
+                FROM tbl_users AS UserTbl, tbl_users AS AdminTbl, tbl_server_grp
+                WHERE
+                    UserTbl.steamid=?
+                AND
+                    AdminTbl.steamid=?
+                AND
+                    tbl_server_grp.group_name=?;
             ]] )
             local timestamp = os.time()
-            transactions[k]:setString(1, k)
+            transactions[k]:setString(4, k)
 
             if v['modified_admin'] then
                 if v['modified_admin'] == "(Console)" then
-                    transactions[k]:setString(2,"STEAM_0:0:0")
+                    transactions[k]:setString(5,"STEAM_0:0:0")
                 else
-                    transactions[k]:setString(2,string.match(v['modified_admin'], "STEAM_%d:%d:%d+"))
+                    transactions[k]:setString(5,string.match(v['modified_admin'], "STEAM_%d:%d:%d+"))
                 end
             else
                 if v['admin'] == "(Console)" then
-                    transactions[k]:setString(2,"STEAM_0:0:0")
+                    transactions[k]:setString(5,"STEAM_0:0:0")
                 else
-                    transactions[k]:setString(2,string.match(v['admin'], "STEAM_%d:%d:%d+"))
+                    transactions[k]:setString(5,string.match(v['admin'], "STEAM_%d:%d:%d+"))
                 end
             end
 
-            transactions[k]:setString(3, v['reason'] or "(None given)")
-            transactions[k]:setNumber(4, tonumber(v['time']))
+            transactions[k]:setString(1, v['reason'] or "(None given)")
+            transactions[k]:setNumber(2, tonumber(v['time']))
 
             if tonumber(v['unban']) == 0 then
-                transactions[k]:setNumber(5, tonumber(v['unban']))
+                transactions[k]:setNumber(3, tonumber(v['unban']))
             else
-                transactions[k]:setNumber(5, tonumber(v['unban']) - tonumber(v['time']))
+                transactions[k]:setNumber(3, tonumber(v['unban']) - tonumber(v['time']))
             end
 
             if not allserver then
