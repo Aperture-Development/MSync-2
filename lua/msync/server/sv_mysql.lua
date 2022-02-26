@@ -44,8 +44,8 @@ function MSync.mysql.initialize()
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
-                INSERT INTO `tbl_server_grp` (group_name) VALUES ('allservers')
-                ON DUPLICATE KEY UPDATE group_name=VALUES(group_name);
+                INSERT INTO `tbl_server_grp` (group_name) VALUES ('allservers') AS newGroup
+                ON DUPLICATE KEY UPDATE group_name=newGroup.group_name;
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
@@ -74,8 +74,8 @@ function MSync.mysql.initialize()
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
-                INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined) VALUES ('STEAM_0:0:0', '76561197960265728', '(CONSOLE)', '2004-12-24 12:00:00')
-                ON DUPLICATE KEY UPDATE nickname=VALUES(nickname);
+                INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined) VALUES ('STEAM_0:0:0', '76561197960265728', '(CONSOLE)', '2004-12-24 12:00:00') AS newUser
+                ON DUPLICATE KEY UPDATE nickname=newUser.nickname;
             ]] ))
 
             function initDatabase.onSuccess()
@@ -115,8 +115,8 @@ function MSync.mysql.addUser(ply)
 
     local addUserQ = MSync.DBServer:prepare( [[
         INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE nickname=VALUES(nickname);
+        VALUES (?, ?, ?, ?) AS newUser
+        ON DUPLICATE KEY UPDATE nickname=newUser.nickname;
     ]] )
 
     local nickname = ply:Nick()
@@ -156,8 +156,8 @@ function MSync.mysql.addUserID(steamid, nickname)
 
     local addUserQ = MSync.DBServer:prepare( [[
         INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE nickname=VALUES(nickname);
+        VALUES (?, ?, ?, ?) AS newUser
+        ON DUPLICATE KEY UPDATE nickname=newUser.nickname;
     ]] )
 
     if string.len(nickname) > 30 then
@@ -198,18 +198,21 @@ end
 function MSync.mysql.saveServer()
 
     local addServerGroup = MSync.DBServer:prepare( [[
-        INSERT INTO `tbl_server_grp` (group_name) VALUES (?)
-        ON DUPLICATE KEY UPDATE group_name=VALUES(group_name);
+        INSERT INTO `tbl_server_grp` (group_name) VALUES (?) AS newGroup
+        ON DUPLICATE KEY UPDATE group_name=newGroup.group_name;
     ]] )
     addServerGroup:setString(1, MSync.settings.data.serverGroup)
 
     function addServerGroup.onSuccess()
         local addServer = MSync.DBServer:prepare( [[
-            INSERT INTO `tbl_msync_servers` (server_name, ip, port, server_group) 
-            VALUES (?,?,?,
-                (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
-            )
-            ON DUPLICATE KEY UPDATE server_name=VALUES(server_name), server_group=VALUES(server_group);
+            INSERT INTO `tbl_msync_servers` (server_name, ip, `port`, server_group)
+            SELECT * FROM (
+                SELECT ? AS newServerName, ? AS ip, ? AS `port`, tbl_server_grp.p_group_id AS newGroup
+                FROM tbl_server_grp
+                WHERE
+                    tbl_server_grp.group_name=?
+            ) AS dataQuery
+            ON DUPLICATE KEY UPDATE server_name=newServerName, server_group=newGroup;
         ]] )
 
         local hostname = GetHostName()
