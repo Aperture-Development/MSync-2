@@ -102,11 +102,11 @@ function MSync.AdminPanel.InitMySQL( sheet )
     info:InsertColorChange(10, 10, 10, 255)
     info:AppendText("Copyright 2018 - Aperture Development")
 
-    info.Paint = function( pnl, w, h )
+    info.Paint = function( parentPanel, w, h )
         draw.RoundedBox( 5, 0, 0, w, h, Color(215, 215, 215) )
     end
 
-    info.ActionSignal = function( pnl, signalName, signalValue )
+    info.ActionSignal = function( parentPanel, signalName, signalValue )
         if signalName == "TextClicked" then
             if signalValue == "OpenWebsite" then
                 gui.OpenURL( "https://www.Aperture-Development.de" )
@@ -243,7 +243,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
         end
     end
 
-    if not MSync.settings == nil then
+    if MSync.settings and MSync.settings.mysql then
         mysqlip:SetText(MSync.settings.mysql.host)
         mysqlport:SetText(MSync.settings.mysql.port)
         mysqldb:SetText(MSync.settings.mysql.database)
@@ -330,7 +330,7 @@ function MSync.AdminPanel.InitModuleSettings( sheet )
     local files, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
 
     for k, v in pairs(files) do
-        local info = include("msync/client_gui/modules/"..v)
+        local info = include("msync/client_gui/modules/" .. v)
 
         if MSync.moduleState[info["ModuleIdentifier"]] then
             MSync.modules[info.ModuleIdentifier]["init"]()

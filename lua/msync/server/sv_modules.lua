@@ -14,8 +14,8 @@ function MSync.loadModules()
 
     local files, _ = file.Find("msync/server/modules/*.lua", "LUA")
     for k, v in pairs(files) do
-        include("msync/server/modules/"..v)
-        MSync.log(MSYNC_DBG_DEBUG, "Found module: "..v)
+        include("msync/server/modules/" .. v)
+        MSync.log(MSYNC_DBG_DEBUG, "Found module: " .. v)
     end
 end
 
@@ -39,7 +39,7 @@ function MSync.initModules()
                 v["hooks"]()
                 MSync.loadedModules[v["info"].ModuleIdentifier] = true
                 MSync.net.sendModuleEnable( v["info"].ModuleIdentifier )
-                MSync.log(MSYNC_DBG_INFO, "["..v["info"]["Name"].."] Module loaded")
+                MSync.log(MSYNC_DBG_INFO, "[" .. v["info"]["Name"] .. "] Module loaded")
             end
         end
 
@@ -50,7 +50,7 @@ function MSync.initModules()
         end
 
         function initTransaction.onError(tr, err)
-            MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
+            MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n" .. err)
             MSync.mysql.dbstatus = false
         end
 
@@ -74,7 +74,7 @@ function MSync.loadModule(path)
     MSync.modules[info.ModuleIdentifier].ulx()
     MSync.modules[info.ModuleIdentifier].hooks()
 
-    MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[info.Name].."] Module loaded")
+    MSync.log(MSYNC_DBG_INFO, "[" .. MSync.modules[info.Name] .. "] Module loaded")
 
     function initTransaction.onSuccess()
         MSync.log(MSYNC_DBG_INFO, "Module query has been completed successfully")
@@ -83,7 +83,7 @@ function MSync.loadModule(path)
     end
 
     function initTransaction.onError(tr, err)
-        MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
+        MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n" .. err)
         --MSync.mysql[info.ModuleIdentifier].dbstatus = false
     end
 
@@ -109,14 +109,14 @@ function MSync.enableModule( module )
                 MSync.modules[module].hooks()
 
                 function initTransaction.onSuccess()
-                    MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module loaded")
+                    MSync.log(MSYNC_DBG_INFO, "[" .. MSync.modules[module]["info"]["Name"] .. "] Module loaded")
                     MSync.net.sendModuleEnable( module )
                     hook.Call("MSyncModuleLoaded", nil, module)
                     --MSync.mysql[module].dbstatus = true
                 end
 
                 function initTransaction.onError(tr, err)
-                    MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
+                    MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n" .. err)
                     --MSync.mysql[module].dbstatus = false
                 end
 
@@ -143,7 +143,7 @@ function MSync.disableModule( module )
         if MSync.settings.data.enabledModules[module] then
             if MSync.modules[module].disable then
                 MSync.modules[module].disable()
-                MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module disabled")
+                MSync.log(MSYNC_DBG_INFO, "[" .. MSync.modules[module]["info"]["Name"] .. "] Module disabled")
                 MSync.net.sendModuleDisable( module )
             else
                 MSync.log(MSYNC_DBG_WARNING, "Cannot disable outdated module \"" .. module .. "\"")
