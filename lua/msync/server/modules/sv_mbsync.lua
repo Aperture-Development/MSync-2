@@ -113,9 +113,10 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         if MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()] then
             MSync.log(MSYNC_DBG_INFO, "[MBSync] User \"" .. ply:SteamID64() .. "\" is already banned, editing old ban instead")
-            if length ~= 0 then
-                length = ((os.time() - MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()].timestamp) + (length * 60)) / 60
-            end
+            -- Editing bans now always adds the time to the current ban length. Meaning if I edit a ban 30 minutes after it was created with 1 hour of ban time, the ban length will be 1 hour 30 minutes, so that the user gets unbanned 1 hour after the edit happened
+            --if length ~= 0 then
+            --    length = ((os.time() - MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()].timestamp) + (length * 60)) / 60
+            --end
             MSync.modules[info.ModuleIdentifier].editBan( MSync.modules[info.ModuleIdentifier].banTable[ply:SteamID64()]["banId"], reason, length, calling_ply, allserver)
             return
         end
@@ -201,9 +202,10 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
 
         if MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)] then
             MSync.log(MSYNC_DBG_INFO, "[MBSync] User \"" .. userid .. "\" is already banned, editing old ban instead")
-            if (length ~= 0) then
-                length = ((os.time() - MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)].timestamp) + (length * 60)) / 60
-            end
+            -- Editing bans now always adds the time to the current ban length. Meaning if I edit a ban 30 minutes after it was created with 1 hour of ban time, the ban length will be 1 hour 30 minutes, so that the user gets unbanned 1 hour after the edit happened
+            --if (length ~= 0) then
+            --    length = ((os.time() - MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)].timestamp) + (length * 60)) / 60
+            --end
             MSync.modules[info.ModuleIdentifier].editBan( MSync.modules[info.ModuleIdentifier].banTable[util.SteamIDTo64(userid)]["banId"], reason, length, calling_ply, allserver)
             return
         end
@@ -308,7 +310,7 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             UPDATE `tbl_mbsync`
             SET 
                 reason=?,
-                length_unix=?,
+                length_unix=(UNIX_TIMESTAMP() - date_unix) + ?,
                 admin_id=(SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?),
                 server_group=(SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
             WHERE p_ID=?
@@ -1495,7 +1497,11 @@ MSync.modules[info.ModuleIdentifier].hooks = function()
         if banData.unban == 0 then
             ban.length = 0
         else
-            ban.length = (banData.unban-os.time()) / 60
+            if banData.modified_time then
+                ban.length = (banData.unban-banData.modified_time) / 60
+            else
+                ban.length = (banData.unban-banData.time) / 60
+            end
         end
 
         if not banData.reason then

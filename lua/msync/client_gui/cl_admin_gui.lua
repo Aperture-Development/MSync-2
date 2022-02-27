@@ -243,7 +243,7 @@ function MSync.AdminPanel.InitMySQL( sheet )
         end
     end
 
-    if MSync.settings ~= nil then
+    if MSync.settings and MSync.settings.mysql then
         mysqlip:SetText(MSync.settings.mysql.host)
         mysqlport:SetText(MSync.settings.mysql.port)
         mysqldb:SetText(MSync.settings.mysql.database)

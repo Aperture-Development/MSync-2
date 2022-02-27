@@ -878,6 +878,7 @@ MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
     reload_button.DoClick = function()
         MSync.log(MSYNC_DBG_INFO, "[MBSync] Reloading data");
         MSync.modules[info.ModuleIdentifier].getBanTable(true)
+        ban_table:Clear()
 
         timer.Create("msync.mbsync.waitForBanTable", 1, 0, function()
             if MSync.modules[info.ModuleIdentifier].temporary["unfinished"] then return end
