@@ -87,7 +87,7 @@ function MSync.mysql.initialize()
             end
 
             function initDatabase.onError(tr, err)
-                MSync.log(MSYNC_DBG_ERROR, "There has been a error while initializing the database.\nPlease inform the Developer and send him this:\n"..err)
+                MSync.log(MSYNC_DBG_ERROR, "There has been a error while initializing the database.\nPlease inform the Developer and send him this:\n" .. err)
             end
 
             initDatabase:start()
@@ -95,7 +95,7 @@ function MSync.mysql.initialize()
         end
 
         function  MSync.DBServer.onConnectionFailed( db, err )
-            MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
+            MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n" .. err)
         end
 
         MSync.DBServer:connect()
@@ -132,11 +132,11 @@ function MSync.mysql.addUser(ply)
     addUserQ:setString(4, os.date("%Y-%m-%d %H:%M:%S", os.time()))
 
     function addUserQ.onSuccess()
-        MSync.log(MSYNC_DBG_INFO, "User "..ply:Nick().." successfully created")
+        MSync.log(MSYNC_DBG_INFO, "User " .. ply:Nick() .. " successfully created")
     end
 
     function addUserQ.onError(q, err, sql)
-        MSync.log(MSYNC_DBG_ERROR, "Failed to create user "..ply:Nick().." !\nPlease report this to the developer: "..err)
+        MSync.log(MSYNC_DBG_ERROR, "Failed to create user " .. ply:Nick() .. " !\nPlease report this to the developer: " .. err)
     end
 
     addUserQ:start()
@@ -172,11 +172,11 @@ function MSync.mysql.addUserID(steamid, nickname)
     addUserQ:setString(4, os.date("%Y-%m-%d %H:%M:%S", os.time()))
 
     function addUserQ.onSuccess()
-        MSync.log(MSYNC_DBG_INFO, "User "..steamid.." successfully created")
+        MSync.log(MSYNC_DBG_INFO, "User " .. steamid .. " successfully created")
     end
 
     function addUserQ.onError(q, err, sql)
-        MSync.log(MSYNC_DBG_ERROR, "Failed to create user "..steamid.." !\nPlease report this to the developer: "..err)
+        MSync.log(MSYNC_DBG_ERROR, "Failed to create user " .. steamid .. " !\nPlease report this to the developer: " .. err)
     end
 
     addUserQ:start()
@@ -188,9 +188,9 @@ end
 ]]
 function MSync.mysql.getInfo()
     print("--Database Server Information--")
-    print("Version: "..MSync.DBServer:serverVersion())
-    print("Fancy Version: "..MSync.DBServer:serverInfo())
-    print("Host Info: "..MSync.DBServer:hostInfo())
+    print("Version: " .. MSync.DBServer:serverVersion())
+    print("Fancy Version: " .. MSync.DBServer:serverInfo())
+    print("Host Info: " .. MSync.DBServer:hostInfo())
 end
 
 --[[
@@ -235,14 +235,14 @@ function MSync.mysql.saveServer()
         end
 
         function addServer.onError(q, err, sql)
-            MSync.log(MSYNC_DBG_ERROR, "Failed to create server !\nPlease report this to the developer: "..err)
+            MSync.log(MSYNC_DBG_ERROR, "Failed to create server !\nPlease report this to the developer: " .. err)
         end
 
         addServer:start()
     end
 
     function addServerGroup.onError(q, err, sql)
-        MSync.log(MSYNC_DBG_ERROR, "Failed to create server !\nPlease report this to the developer: "..err)
+        MSync.log(MSYNC_DBG_ERROR, "Failed to create server !\nPlease report this to the developer: " .. err)
     end
 
     addServerGroup:start()

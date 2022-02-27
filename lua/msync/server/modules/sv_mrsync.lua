@@ -81,7 +81,7 @@ function MSync.modules.MRSync.init( transaction )
                 MSync.mysql.addUserID(steamid)
                 MSync.modules.MRSync.saveRankByID(steamid, group)
             else
-                MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MRSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
+                MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MRSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {["err"] = err, ["sql"] = sql}))
             end
         end
 
@@ -138,7 +138,7 @@ function MSync.modules.MRSync.init( transaction )
                 MSync.mysql.addUserID(steamid)
                 MSync.modules.MRSync.saveRankByID(steamid, group)
             else
-                MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MRSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
+                MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MRSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {["err"] = err, ["sql"] = sql}))
             end
         end
 
@@ -171,7 +171,7 @@ function MSync.modules.MRSync.init( transaction )
         function loadUserQ.onData( q, data )
             MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Got data for user \"" .. ply:Nick() .. "\". Rank: " .. data.rank);
             if not ULib.ucl.groups[data.rank] then
-                MSync.log(MSYNC_DBG_ERROR, "[MRSync] Could not load rank "..data.rank.." for "..ply:Nick()..". Rank does not exist on this server")
+                MSync.log(MSYNC_DBG_ERROR, "[MRSync] Could not load rank " .. data.rank .. " for " .. ply:Nick() .. ". Rank does not exist on this server")
                 return
             end
 

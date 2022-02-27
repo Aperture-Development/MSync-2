@@ -28,7 +28,7 @@ local debugLevels = {
 --[[
     MSync debug level convar
 ]]
-MSync.DebugCVar = CreateConVar( "msync_debug", 0, FCVAR_REPLICATED+FCVAR_ARCHIVE, "Set the MSync debug level. 0 = Error, 1 = Warning, 2 = Info, 3 = Debug", 0, 3 )
+MSync.DebugCVar = CreateConVar( "msync_debug", 0, FCVAR_REPLICATED + FCVAR_ARCHIVE, "Set the MSync debug level. 0 = Error, 1 = Warning, 2 = Info, 3 = Debug", 0, 3 )
 
 --[[
     Description: MSync logging function, allowing log levels and formated console logs
@@ -39,7 +39,7 @@ MSync.DebugCVar = CreateConVar( "msync_debug", 0, FCVAR_REPLICATED+FCVAR_ARCHIVE
         - Nothing
 ]]
 MSync.log = function(logLevel, logMessage)
-    if not type(logLevel) == "number" then return end
+    if type(logLevel) ~= "number" then return end
 
     local DebugCvarValue = MSync.DebugCVar:GetInt()
 
@@ -48,9 +48,9 @@ MSync.log = function(logLevel, logMessage)
             logMessage = logMessage()
         end
         if debugLevels[logLevel] then
-            MsgC(debugLevels[logLevel].color, debugLevels[logLevel].prefix.." "..logMessage.."\n")
+            MsgC(debugLevels[logLevel].color, debugLevels[logLevel].prefix .. " " .. logMessage .. "\n")
         else
-            MsgC(Color(255, 255, 255), "[MSync_LOG] "..logMessage.."\n")
+            MsgC(Color(255, 255, 255), "[MSync_LOG] " .. logMessage .. "\n")
         end
         -- Feature(?): Log files? Client GUI log viewer?
         --file.Append( "msync/logs/msync_"..os.date("[]")..".log", os.date("[]") )
@@ -68,7 +68,7 @@ end
 MSync.formatString = function(str, tbl)
     return function()
         for k,v in pairs(tbl) do
-            str = string.Replace(str, "$"..k, tostring(v))
+            str = string.Replace(str, "$" .. k, tostring(v))
         end
         return str
     end
