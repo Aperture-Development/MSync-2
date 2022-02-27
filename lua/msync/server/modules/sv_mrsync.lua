@@ -352,7 +352,7 @@ function MSync.modules.MRSync.hooks()
             return
         end
 
-        MSync.log(MSYNC_DBG_INFO, "[MRSync] User \"" .. ply:Nick() .. "\" was removed from ULX, removing from MRSync");
+        MSync.log(MSYNC_DBG_INFO, "[MRSync] User with ID \"" .. sid .. "\" was removed from ULX, removing from MRSync");
         MSync.modules.MRSync.removeRank(sid)
     end)
 end
