@@ -44,8 +44,9 @@ function MSync.mysql.initialize()
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
-                INSERT INTO `tbl_server_grp` (group_name) VALUES ('allservers') AS newGroup
-                ON DUPLICATE KEY UPDATE group_name=newGroup.group_name;
+                INSERT INTO `tbl_server_grp` (group_name)
+                SELECT * FROM (SELECT 'allservers' AS newGroup) AS dataQuery
+                ON DUPLICATE KEY UPDATE group_name=newGroup;
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
@@ -74,8 +75,9 @@ function MSync.mysql.initialize()
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
-                INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined) VALUES ('STEAM_0:0:0', '76561197960265728', '(CONSOLE)', '2004-12-24 12:00:00') AS newUser
-                ON DUPLICATE KEY UPDATE nickname=newUser.nickname;
+                INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
+                SELECT * FROM (SELECT 'STEAM_0:0:0', '76561197960265728', '(CONSOLE)' AS newUser, '2004-12-24 12:00:00') AS dataQuery
+                ON DUPLICATE KEY UPDATE nickname=newUser;
             ]] ))
 
             function initDatabase.onSuccess()
@@ -115,8 +117,8 @@ function MSync.mysql.addUser(ply)
 
     local addUserQ = MSync.DBServer:prepare( [[
         INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
-        VALUES (?, ?, ?, ?) AS newUser
-        ON DUPLICATE KEY UPDATE nickname=newUser.nickname;
+        SELECT * FROM (SELECT ? AS steamid, ? AS steamid64, ? AS newNick, ? AS joined) AS dataQuery
+        ON DUPLICATE KEY UPDATE nickname=newNick;
     ]] )
 
     local nickname = ply:Nick()
@@ -156,8 +158,8 @@ function MSync.mysql.addUserID(steamid, nickname)
 
     local addUserQ = MSync.DBServer:prepare( [[
         INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
-        VALUES (?, ?, ?, ?) AS newUser
-        ON DUPLICATE KEY UPDATE nickname=newUser.nickname;
+        SELECT * FROM (SELECT ? AS steamid, ? AS steamid64, ? AS newNick, ? AS joined) AS dataQuery
+        ON DUPLICATE KEY UPDATE nickname=newNick;
     ]] )
 
     if string.len(nickname) > 30 then
@@ -198,8 +200,9 @@ end
 function MSync.mysql.saveServer()
 
     local addServerGroup = MSync.DBServer:prepare( [[
-        INSERT INTO `tbl_server_grp` (group_name) VALUES (?) AS newGroup
-        ON DUPLICATE KEY UPDATE group_name=newGroup.group_name;
+        INSERT INTO `tbl_server_grp` (group_name) 
+        SELECT * FROM (SELECT ? AS newGroup) AS dataQuery
+        ON DUPLICATE KEY UPDATE group_name=newGroup;
     ]] )
     addServerGroup:setString(1, MSync.settings.data.serverGroup)
 
