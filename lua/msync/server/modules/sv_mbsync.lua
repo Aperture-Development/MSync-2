@@ -71,8 +71,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                         MODIFY `length_unix` INT UNSIGNED NOT NULL;
                     ]]))
                     updates:addQuery( MSync.DBServer:query([[
-                        INSERT INTO tbl_msyncdb_version (version, module_id) VALUES (1, 'MBSync') AS newVersion
-                        ON DUPLICATE KEY UPDATE version=newVersion.version;
+                        INSERT INTO tbl_msyncdb_version (version, module_id) VALUES (1, 'MBSync')
+                        ON DUPLICATE KEY UPDATE version=1;
                     ]]))
                     updates:start()
                 else
@@ -88,8 +88,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
                 ]]))
 
                 updates:addQuery( MSync.DBServer:query([[
-                    INSERT INTO tbl_msyncdb_version (version, module_id) VALUES (1, 'MBSync') AS newVersion
-                    ON DUPLICATE KEY UPDATE version=newVersion.version;
+                    INSERT INTO tbl_msyncdb_version (version, module_id) VALUES (1, 'MBSync')
+                    ON DUPLICATE KEY UPDATE version=1;
                 ]]))
                 updates:start()
             end
@@ -690,8 +690,8 @@ MSync.modules[info.ModuleIdentifier].init = function( transaction )
             ]]
             transactions[k..'_user'] = MSync.DBServer:prepare( [[
                 INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
-                VALUES (?, ?, ?, ?) AS newUser
-                ON DUPLICATE KEY UPDATE steamid=newUser.steamid;
+                SELECT * FROM (SELECT ? AS steamid, ? AS steamid64, ? AS newNick, ? AS joined) AS dataQuery
+                ON DUPLICATE KEY UPDATE steamid=newNick;
             ]] )
             transactions[k..'_user']:setString(1, k)
             transactions[k..'_user']:setString(2, util.SteamIDTo64( k ))
