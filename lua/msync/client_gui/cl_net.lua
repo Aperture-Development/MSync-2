@@ -91,11 +91,11 @@ net.Receive( "msync.sendMessage", function( len, pl )
     local state = net.ReadString()
 
     if state == "error" then
-        chat.AddText(Color(255,0,0),"[MSync_ERROR] "..net.ReadString())
+        chat.AddText(Color(255,0,0),"[MSync_ERROR] " .. net.ReadString())
     elseif state == "advert" then
         chat.AddText(Color(255,255,255), "[MSync] ", Color(0,0,255), net.ReadString())
     else
-        chat.AddText(Color(255,255,255), "[MSync] "..net.ReadString())
+        chat.AddText(Color(255,255,255), "[MSync] " .. net.ReadString())
     end
 end )
 

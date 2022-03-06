@@ -10,7 +10,7 @@ MSync.modules   = MSync.modules or {}
 function MSync.loadModules()
     local files, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
     for k, v in pairs(files) do
-        include("msync/client_gui/modules/"..v)
+        include("msync/client_gui/modules/" .. v)
     end
     MSync.initModules()
 end
@@ -27,7 +27,7 @@ function MSync.initModules()
             v["net"]()
             v["ulx"]()
             v["hooks"]()
-            MSync.log(MSYNC_DBG_INFO, "["..v["info"]["Name"].."] Module loaded")
+            MSync.log(MSYNC_DBG_INFO, "[" .. v["info"]["Name"] .. "] Module loaded")
         end
     end
 
@@ -46,7 +46,7 @@ function MSync.loadModule(path)
     MSync.modules[info.ModuleIdentifier].ulx()
     MSync.modules[info.ModuleIdentifier].hooks()
 
-    MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[info.ModuleIdentifier]["info"]["Name"].."] Module loaded")
+    MSync.log(MSYNC_DBG_INFO, "[" .. MSync.modules[info.ModuleIdentifier]["info"]["Name"] .. "] Module loaded")
 
 end
 
@@ -61,7 +61,7 @@ function MSync.enableModule( module )
         MSync.modules[module].net()
         MSync.modules[module].ulx()
         MSync.modules[module].hooks()
-        MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module loaded")
+        MSync.log(MSYNC_DBG_INFO, "[" .. MSync.modules[module]["info"]["Name"] .. "] Module loaded")
     else
         MSync.log(MSYNC_DBG_WARNING, "Cannot enable non-existant module \"" .. module .. "\"")
     end
@@ -76,7 +76,7 @@ function MSync.disableModule( module )
     if MSync.modules[module] then
         if MSync.modules[module].disable then
             MSync.modules[module].disable()
-            MSync.log(MSYNC_DBG_INFO, "["..MSync.modules[module]["info"]["Name"].."] Module disabled")
+            MSync.log(MSYNC_DBG_INFO, "[" .. MSync.modules[module]["info"]["Name"] .. "] Module disabled")
         else
             MSync.log(MSYNC_DBG_WARNING, "Cannot disable outdated module \"" .. module .. "\"")
         end

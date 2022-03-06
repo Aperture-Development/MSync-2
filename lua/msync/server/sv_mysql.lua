@@ -44,8 +44,9 @@ function MSync.mysql.initialize()
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
-                INSERT INTO `tbl_server_grp` (group_name) VALUES ('allservers')
-                ON DUPLICATE KEY UPDATE group_name=VALUES(group_name);
+                INSERT INTO `tbl_server_grp` (group_name)
+                SELECT * FROM (SELECT 'allservers' AS newGroup) AS dataQuery
+                ON DUPLICATE KEY UPDATE group_name=newGroup;
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
@@ -74,8 +75,9 @@ function MSync.mysql.initialize()
             ]] ))
 
             initDatabase:addQuery(MSync.DBServer:query( [[
-                INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined) VALUES ('STEAM_0:0:0', '76561197960265728', '(CONSOLE)', '2004-12-24 12:00:00')
-                ON DUPLICATE KEY UPDATE nickname=VALUES(nickname);
+                INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
+                SELECT * FROM (SELECT 'STEAM_0:0:0', '76561197960265728', '(CONSOLE)' AS newUser, '2004-12-24 12:00:00') AS dataQuery
+                ON DUPLICATE KEY UPDATE nickname=newUser;
             ]] ))
 
             function initDatabase.onSuccess()
@@ -85,7 +87,7 @@ function MSync.mysql.initialize()
             end
 
             function initDatabase.onError(tr, err)
-                MSync.log(MSYNC_DBG_ERROR, "There has been a error while initializing the database.\nPlease inform the Developer and send him this:\n"..err)
+                MSync.log(MSYNC_DBG_ERROR, "There has been a error while initializing the database.\nPlease inform the Developer and send him this:\n" .. err)
             end
 
             initDatabase:start()
@@ -93,7 +95,7 @@ function MSync.mysql.initialize()
         end
 
         function  MSync.DBServer.onConnectionFailed( db, err )
-            MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n"..err)
+            MSync.log(MSYNC_DBG_ERROR, "There has been a error while loading the module querys.\nPlease inform the Developer and send him this:\n" .. err)
         end
 
         MSync.DBServer:connect()
@@ -115,8 +117,8 @@ function MSync.mysql.addUser(ply)
 
     local addUserQ = MSync.DBServer:prepare( [[
         INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE nickname=VALUES(nickname);
+        SELECT * FROM (SELECT ? AS steamid, ? AS steamid64, ? AS newNick, ? AS joined) AS dataQuery
+        ON DUPLICATE KEY UPDATE nickname=newNick;
     ]] )
 
     local nickname = ply:Nick()
@@ -130,11 +132,11 @@ function MSync.mysql.addUser(ply)
     addUserQ:setString(4, os.date("%Y-%m-%d %H:%M:%S", os.time()))
 
     function addUserQ.onSuccess()
-        MSync.log(MSYNC_DBG_INFO, "User "..ply:Nick().." successfully created")
+        MSync.log(MSYNC_DBG_INFO, "User " .. ply:Nick() .. " successfully created")
     end
 
     function addUserQ.onError(q, err, sql)
-        MSync.log(MSYNC_DBG_ERROR, "Failed to create user "..ply:Nick().." !\nPlease report this to the developer: "..err)
+        MSync.log(MSYNC_DBG_ERROR, "Failed to create user " .. ply:Nick() .. " !\nPlease report this to the developer: " .. err)
     end
 
     addUserQ:start()
@@ -156,8 +158,8 @@ function MSync.mysql.addUserID(steamid, nickname)
 
     local addUserQ = MSync.DBServer:prepare( [[
         INSERT INTO `tbl_users` (steamid, steamid64, nickname, joined)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE nickname=VALUES(nickname);
+        SELECT * FROM (SELECT ? AS steamid, ? AS steamid64, ? AS newNick, ? AS joined) AS dataQuery
+        ON DUPLICATE KEY UPDATE nickname=newNick;
     ]] )
 
     if string.len(nickname) > 30 then
@@ -170,11 +172,11 @@ function MSync.mysql.addUserID(steamid, nickname)
     addUserQ:setString(4, os.date("%Y-%m-%d %H:%M:%S", os.time()))
 
     function addUserQ.onSuccess()
-        MSync.log(MSYNC_DBG_INFO, "User "..steamid.." successfully created")
+        MSync.log(MSYNC_DBG_INFO, "User " .. steamid .. " successfully created")
     end
 
     function addUserQ.onError(q, err, sql)
-        MSync.log(MSYNC_DBG_ERROR, "Failed to create user "..steamid.." !\nPlease report this to the developer: "..err)
+        MSync.log(MSYNC_DBG_ERROR, "Failed to create user " .. steamid .. " !\nPlease report this to the developer: " .. err)
     end
 
     addUserQ:start()
@@ -186,9 +188,9 @@ end
 ]]
 function MSync.mysql.getInfo()
     print("--Database Server Information--")
-    print("Version: "..MSync.DBServer:serverVersion())
-    print("Fancy Version: "..MSync.DBServer:serverInfo())
-    print("Host Info: "..MSync.DBServer:hostInfo())
+    print("Version: " .. MSync.DBServer:serverVersion())
+    print("Fancy Version: " .. MSync.DBServer:serverInfo())
+    print("Host Info: " .. MSync.DBServer:hostInfo())
 end
 
 --[[
@@ -198,18 +200,22 @@ end
 function MSync.mysql.saveServer()
 
     local addServerGroup = MSync.DBServer:prepare( [[
-        INSERT INTO `tbl_server_grp` (group_name) VALUES (?)
-        ON DUPLICATE KEY UPDATE group_name=VALUES(group_name);
+        INSERT INTO `tbl_server_grp` (group_name) 
+        SELECT * FROM (SELECT ? AS newGroup) AS dataQuery
+        ON DUPLICATE KEY UPDATE group_name=newGroup;
     ]] )
     addServerGroup:setString(1, MSync.settings.data.serverGroup)
 
     function addServerGroup.onSuccess()
         local addServer = MSync.DBServer:prepare( [[
-            INSERT INTO `tbl_msync_servers` (server_name, ip, port, server_group) 
-            VALUES (?,?,?,
-                (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
-            )
-            ON DUPLICATE KEY UPDATE server_name=VALUES(server_name), server_group=VALUES(server_group);
+            INSERT INTO `tbl_msync_servers` (server_name, ip, `port`, server_group)
+            SELECT * FROM (
+                SELECT ? AS newServerName, ? AS ip, ? AS `port`, tbl_server_grp.p_group_id AS newGroup
+                FROM tbl_server_grp
+                WHERE
+                    tbl_server_grp.group_name=?
+            ) AS dataQuery
+            ON DUPLICATE KEY UPDATE server_name=newServerName, server_group=newGroup;
         ]] )
 
         local hostname = GetHostName()
@@ -229,14 +235,14 @@ function MSync.mysql.saveServer()
         end
 
         function addServer.onError(q, err, sql)
-            MSync.log(MSYNC_DBG_ERROR, "Failed to create server !\nPlease report this to the developer: "..err)
+            MSync.log(MSYNC_DBG_ERROR, "Failed to create server !\nPlease report this to the developer: " .. err)
         end
 
         addServer:start()
     end
 
     function addServerGroup.onError(q, err, sql)
-        MSync.log(MSYNC_DBG_ERROR, "Failed to create server !\nPlease report this to the developer: "..err)
+        MSync.log(MSYNC_DBG_ERROR, "Failed to create server !\nPlease report this to the developer: " .. err)
     end
 
     addServerGroup:start()

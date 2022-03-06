@@ -36,16 +36,16 @@ function MSync.func.loadServer()
 
     MSync.loadModules()
 
-    local files, _ = file.Find("msync/client_gui/*.lua", "LUA")
-    for k, v in pairs(files) do
-        AddCSLuaFile("msync/client_gui/"..v)
-        MSync.log(MSYNC_DBG_DEBUG, "Added client Lua file: "..v)
+    local clientfiles, _ = file.Find("msync/client_gui/*.lua", "LUA")
+    for k, v in pairs(clientfiles) do
+        AddCSLuaFile("msync/client_gui/" .. v)
+        MSync.log(MSYNC_DBG_DEBUG, "Added client Lua file: " .. v)
     end
 
-    local files, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
-    for k, v in pairs(files) do
-        AddCSLuaFile("msync/client_gui/modules/"..v)
-        MSync.log(MSYNC_DBG_DEBUG, "Added client module file: "..v)
+    local clientmodules, _ = file.Find("msync/client_gui/modules/*.lua", "LUA")
+    for k, v in pairs(clientmodules) do
+        AddCSLuaFile("msync/client_gui/modules/" .. v)
+        MSync.log(MSYNC_DBG_DEBUG, "Added client module file: " .. v)
     end
 end
 
@@ -127,7 +127,7 @@ function MSync.func.getModuleInfos()
     for k,v in pairs(MSync.modules) do
         infoTable[k] = v.info
         infoTable[k].state = MSync.settings.data.enabledModules[v.info.ModuleIdentifier] or false
-        MSync.log(MSYNC_DBG_DEBUG, "[getModuleInfos] Got info for "..k)
+        MSync.log(MSYNC_DBG_DEBUG, "[getModuleInfos] Got info for " .. k)
     end
 
     return infoTable

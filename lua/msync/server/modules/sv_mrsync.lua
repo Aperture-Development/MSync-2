@@ -7,7 +7,7 @@ local userTransaction = userTransaction or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.2.3
+ * @version    2.3.0
 ]]
 
 --[[
@@ -17,7 +17,7 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.2.3"
+    Version = "2.3.0"
 }
 
 --[[
@@ -53,17 +53,22 @@ function MSync.modules.MRSync.init( transaction )
         if string.len(group) > 15 then MSync.log(MSYNC_DBG_ERROR, "[MRSync] Groupname \"" .. group .. "\" is too long for MRSync! Please use rank names with max. 15 characters instead."); return end;
 
         local addUserRankQ = MSync.DBServer:prepare( [[
-            INSERT INTO `tbl_mrsync` (user_id, rank, server_group)
-            VALUES (
-                (SELECT p_user_id FROM tbl_users WHERE steamid=? AND steamid64=?), 
-            ?, 
-                (SELECT p_group_id FROM tbl_server_grp WHERE group_name=?)
-            )
-            ON DUPLICATE KEY UPDATE rank=VALUES(rank);
+            INSERT INTO `tbl_mrsync` (user_id, `rank`, server_group) 
+            SELECT * FROM (
+                SELECT tbl_users.p_user_id, ? AS newRank, tbl_server_grp.p_group_id
+                FROM tbl_users, tbl_server_grp
+                WHERE
+                    (
+                        tbl_users.steamid=? AND tbl_users.steamid64=?
+                    )
+                AND
+                    tbl_server_grp.group_name=?
+            ) AS dataQuery
+            ON DUPLICATE KEY UPDATE `rank`=newRank;
         ]] )
-        addUserRankQ:setString(1, steamid)
-        addUserRankQ:setString(2, util.SteamIDTo64( steamid ))
-        addUserRankQ:setString(3, group)
+        addUserRankQ:setString(1, group)
+        addUserRankQ:setString(2, steamid)
+        addUserRankQ:setString(3, util.SteamIDTo64( steamid ))
         if not MSync.modules.MRSync.settings.syncall[group] then
             addUserRankQ:setString(4, MSync.settings.data.serverGroup)
         else
@@ -76,7 +81,7 @@ function MSync.modules.MRSync.init( transaction )
                 MSync.mysql.addUserID(steamid)
                 MSync.modules.MRSync.saveRankByID(steamid, group)
             else
-                MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MRSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
+                MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MRSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {["err"] = err, ["sql"] = sql}))
             end
         end
 
@@ -133,7 +138,7 @@ function MSync.modules.MRSync.init( transaction )
                 MSync.mysql.addUserID(steamid)
                 MSync.modules.MRSync.saveRankByID(steamid, group)
             else
-                MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MRSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {['err'] = err, ['sql'] = sql}))
+                MSync.log(MSYNC_DBG_ERROR, MSync.formatString("\n------------------------------------\n[MRSync] SQL Error!\n------------------------------------\nPlease include this in a Bug report:\n\n$err\n\n------------------------------------\nDo not include this, this is for debugging only:\n\n$sql\n\n------------------------------------", {["err"] = err, ["sql"] = sql}))
             end
         end
 
@@ -166,7 +171,7 @@ function MSync.modules.MRSync.init( transaction )
         function loadUserQ.onData( q, data )
             MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Got data for user \"" .. ply:Nick() .. "\". Rank: " .. data.rank);
             if not ULib.ucl.groups[data.rank] then
-                MSync.log(MSYNC_DBG_ERROR, "[MRSync] Could not load rank "..data.rank.." for "..ply:Nick()..". Rank does not exist on this server")
+                MSync.log(MSYNC_DBG_ERROR, "[MRSync] Could not load rank " .. data.rank .. " for " .. ply:Nick() .. ". Rank does not exist on this server")
                 return
             end
 
@@ -347,7 +352,7 @@ function MSync.modules.MRSync.hooks()
             return
         end
 
-        MSync.log(MSYNC_DBG_INFO, "[MRSync] User \"" .. ply:Nick() .. "\" was removed from ULX, removing from MRSync");
+        MSync.log(MSYNC_DBG_INFO, "[MRSync] User with ID \"" .. sid .. "\" was removed from ULX, removing from MRSync");
         MSync.modules.MRSync.removeRank(sid)
     end)
 end

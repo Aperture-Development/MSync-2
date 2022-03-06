@@ -6,7 +6,7 @@ MSync.modules.MRSync = MSync.modules.MRSync or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.2.3
+ * @version    2.3.0
 ]]
 
 --[[
@@ -16,7 +16,7 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.2.3"
+    Version = "2.3.0"
 }
 
 --[[
@@ -52,7 +52,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
     allserver_table:AddColumn( "Allserver Ranks" )
     allserver_table.OnRowRightClick = function(panel, lineID, line)
         MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Right clicked " .. line:GetValue(1));
-        local ident = line:GetValue(1)
+        --local ident = line:GetValue(1)
         local cursor_x, cursor_y = panel:CursorPos()
         local DMenu = vgui.Create("DMenu", panel)
         DMenu:SetPos(cursor_x, cursor_y)
@@ -103,7 +103,7 @@ function MSync.modules.MRSync.adminPanel(sheet)
     nosync_table:AddColumn( "Nosync Ranks" )
     nosync_table.OnRowRightClick = function(panel, lineID, line)
         MSync.log(MSYNC_DBG_DEBUG, "[MRSync] Right clicked " .. line:GetValue(1));
-        local ident = line:GetValue(1)
+        --local ident = line:GetValue(1)
         local cursor_x, cursor_y = panel:CursorPos()
         local DMenu = vgui.Create("DMenu", panel)
         DMenu:SetPos(cursor_x, cursor_y)

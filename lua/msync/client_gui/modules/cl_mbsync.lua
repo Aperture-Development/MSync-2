@@ -5,7 +5,7 @@ MSync.modules = MSync.modules or {}
  * @package    MySQL Ban Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    1.3.2
+ * @version    1.4.0
 ]]
 
 --[[
@@ -15,7 +15,7 @@ local info = {
     Name = "MySQL Ban Sync",
     ModuleIdentifier = "MBSync",
     Description = "Synchronise bans across your servers",
-    Version = "1.3.2"
+    Version = "1.4.0"
 }
 
 --[[
@@ -37,8 +37,8 @@ MSync.modules[info.ModuleIdentifier].init = function()
         MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.getTablePage Param.: $tbl $maxResults $page",{["tbl"] = tbl,["maxResults"] = maxResults,["page"] = page}));
         local tempTbl = {}
         local i = 0
-        local startPos = 0 + (maxResults*page)
-        local endPos = 19 + (maxResults*page)
+        local startPos = 0 + (maxResults * page)
+        local endPos = 19 + (maxResults * page)
 
         for k,v in pairs(tbl) do
             if i >= startPos and i <= endPos then
@@ -56,7 +56,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
         local table = MSync.modules[info.ModuleIdentifier].getTablePage(tbl, maxResults, page)
         local length = 0
         for k,v in pairs(table) do
-            if v['length'] == 0 then
+            if v["length"] == 0 then
                 length = "Permanent"
             else
                 length = ULib.secondsToStringTime(v["length"])
@@ -87,29 +87,29 @@ MSync.modules[info.ModuleIdentifier].init = function()
             sorting = false
             for k,v in pairs(keys) do
                 local a, b
-                if not keys[k+1] then break end
+                if not keys[k + 1] then break end
 
                 if type( tempTable[v][key] ) == "string" then
                     a = tempTable[v][key]:lower()
-                    b = tempTable[keys[k+1]][key]:lower()
+                    b = tempTable[keys[k + 1]][key]:lower()
                 else
                     a = tempTable[v][key]
-                    b = tempTable[keys[k+1]][key]
+                    b = tempTable[keys[k + 1]][key]
                 end
 
                 if asc then
                     if a > b then
                         sorting = true
                         local temp = tempTable[v]
-                        tempTable[v] = tempTable[keys[k+1]]
-                        tempTable[keys[k+1]] = temp
+                        tempTable[v] = tempTable[keys[k + 1]]
+                        tempTable[keys[k + 1]] = temp
                         break
                     end
                 else
                     if a < b then
                         sorting = true
-                        local temp = tempTable[keys[k+1]]
-                        tempTable[keys[k+1]] = tempTable[v]
+                        local temp = tempTable[keys[k + 1]]
+                        tempTable[keys[k + 1]] = tempTable[v]
                         tempTable[v] = temp
                         break
                     end
@@ -123,7 +123,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
         MSync.log(MSYNC_DBG_DEBUG, MSync.formatString("[MBSync] Exec: MBSync.searchTable Param.: $tbl $term", {["tbl"] = tbl,["term"] = term}));
         local searchTerm = ""
 
-        if type(term) == 'string' then
+        if type(term) == "string" then
             searchTerm = term:lower()
         else
             searchTerm = tostring(term):lower()
@@ -135,12 +135,12 @@ MSync.modules[info.ModuleIdentifier].init = function()
         for k, v in pairs(tbl) do
             matches = false
             for k2, v2 in pairs(v) do
-                if type(v2) == 'string' then
-                    if string.match(v2:lower(), ".*"..searchTerm..".*") then
+                if type(v2) == "string" then
+                    if string.match(v2:lower(), ".*" .. searchTerm .. ".*") then
                         matches = true
                     end
                 else
-                    if string.match(tostring( v2 ):lower(), ".*"..searchTerm..".*") then
+                    if string.match(tostring( v2 ):lower(), ".*" .. searchTerm .. ".*") then
                         matches = true
                     end
                 end
@@ -220,7 +220,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
         reason_textentry:SetMultiline(true)
         reason_textentry:SetUpdateOnType(true)
         reason_textentry.OnValueChange = function( pnl, value )
-            reasonMaxLen_text:SetText(string.len( value ).."/100")
+            reasonMaxLen_text:SetText(string.len( value ) .. "/100")
 
             if string.len( value ) > 100 then
                 reasonMaxLen_text:SetColor( Color( 255, 120, 120 ) )
@@ -229,11 +229,11 @@ MSync.modules[info.ModuleIdentifier].init = function()
             end
         end
 
-        local reasonMaxLen_text = vgui.Create( "DLabel", panel )
-        reasonMaxLen_text:SetPos( 15, 205 )
-        reasonMaxLen_text:SetColor( Color( 255, 255, 255 ) )
-        reasonMaxLen_text:SetText( "Recently Disconnected Players" )
-        reasonMaxLen_text:SetSize(380, 15)
+        local disconnectedPly_text = vgui.Create( "DLabel", panel )
+        disconnectedPly_text:SetPos( 15, 205 )
+        disconnectedPly_text:SetColor( Color( 255, 255, 255 ) )
+        disconnectedPly_text:SetText( "Recently Disconnected Players" )
+        disconnectedPly_text:SetSize(380, 15)
 
         local ban_table = vgui.Create( "DListView", panel )
         ban_table:SetPos( 15, 220 )
@@ -516,7 +516,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
             ############
         ]]
 
-        if not (tbl == nil) then
+        if (tbl ~= nil) then
             MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Filling in ban data");
 
             nickname_textentry:SetText( tbl["nickname"] )
@@ -524,10 +524,10 @@ MSync.modules[info.ModuleIdentifier].init = function()
             steamid64_textentry:SetText( tbl["steamid64"] )
             adminnickname_textentry:SetText( tbl["adminNickname"] )
             bandate_textentry:SetText( os.date( "%H:%M:%S - %d/%m/%Y" ,tbl["timestamp"]) )
-            if not (tbl["length"] == 0) then
+            if (tbl["length"] ~= 0) then
                 banlength_textentry:SetText( ULib.secondsToStringTime(tbl["length"]) )
                 unbandate_textentry:SetText( os.date( "%H:%M:%S - %d/%m/%Y" ,tbl["timestamp"] + tbl["length"]) )
-                remainingtime_textentry:SetText( ULib.secondsToStringTime((tbl["timestamp"] + tbl["length"])-os.time()) )
+                remainingtime_textentry:SetText( ULib.secondsToStringTime((tbl["timestamp"] + tbl["length"]) - os.time()) )
             else
                 banlength_textentry:SetText( "Permanent" )
                 unbandate_textentry:SetText( "Never" )
@@ -723,7 +723,7 @@ MSync.modules[info.ModuleIdentifier].init = function()
             ###########
         ]]
 
-        if not (tbl == nil) then
+        if (tbl ~= nil) then
             MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Filling in ban data");
             nickname_textentry:SetText( tbl["nickname"] )
             steamid_textentry:SetText( tbl["steamid"] )
@@ -745,6 +745,7 @@ end
 ]]
 MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
     local pnl = vgui.Create( "DPanel", sheet )
+    local tempTable = {};
     pnl:Dock(FILL)
 
     MSync.modules[info.ModuleIdentifier].getSettings()
@@ -877,6 +878,7 @@ MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
     reload_button.DoClick = function()
         MSync.log(MSYNC_DBG_INFO, "[MBSync] Reloading data");
         MSync.modules[info.ModuleIdentifier].getBanTable(true)
+        ban_table:Clear()
 
         timer.Create("msync.mbsync.waitForBanTable", 1, 0, function()
             if MSync.modules[info.ModuleIdentifier].temporary["unfinished"] then return end
@@ -906,7 +908,7 @@ MSync.modules[info.ModuleIdentifier].adminPanel = function(sheet)
     ban_table.OnRowRightClick = function(panel, lineID, line)
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Row " .. lineID .. " right clicked");
 
-        local ident = line:GetValue(1)
+        --local ident = line:GetValue(1)
         local cursor_x, cursor_y = panel:CursorPos()
         local DMenu = vgui.Create("DMenu", panel)
 
@@ -1090,7 +1092,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
     local pageof_text = vgui.Create( "DLabel", panel )
     pageof_text:SetPos( 385, 421 )
     pageof_text:SetColor( Color( 255, 255, 255 ) )
-    pageof_text:SetText( "1/"..pages )
+    pageof_text:SetText( "1/" .. pages )
     pageof_text:SetSize(30, 20)
     pageof_text:SetContentAlignment( 5 )
 
@@ -1121,7 +1123,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
 
     local function checkPage()
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: checkPage");
-        if ( (tablePage+1) >= pages ) then
+        if ( (tablePage + 1) >= pages ) then
             lastpage_button:SetDisabled(true)
             nextpage_button:SetDisabled(true)
         else
@@ -1129,7 +1131,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             nextpage_button:SetDisabled(false)
         end
 
-        if(tablePage>=1)then
+        if (tablePage >= 1) then
             firstpage_button:SetDisabled(false)
             previouspage_button:SetDisabled(false)
         else
@@ -1138,9 +1140,9 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         end
     end
 
-    ban_table.OnRowRightClick = function(panel, lineID, line)
+    ban_table.OnRowRightClick = function(parentPanel, lineID, line)
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Row \"" .. lineID .. "\" right clicked");
-        local ident = line:GetValue(1)
+        --local ident = line:GetValue(1)
         local cursor_x, cursor_y = panel:CursorPos()
         local DMenu = vgui.Create("DMenu", panel)
         DMenu:SetPos(cursor_x, cursor_y)
@@ -1229,7 +1231,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
             pages = MSync.modules[info.ModuleIdentifier].getTablePages(tempTable, 20)
             tablePage = 0
 
-            pageof_text:SetText( (tablePage+1).."/"..pages )
+            pageof_text:SetText( (tablePage + 1) .. "/" .. pages )
 
             if pages > 1 then
                 nextpage_button:SetDisabled(false)
@@ -1245,7 +1247,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Go to first page");
 
         tablePage = 0
-        pageof_text:SetText( (tablePage+1).."/"..pages )
+        pageof_text:SetText( (tablePage + 1) .. "/" .. pages )
         MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, tablePage)
         checkPage()
     end
@@ -1254,7 +1256,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Go to previous page");
 
         tablePage = tablePage - 1
-        pageof_text:SetText( (tablePage+1).."/"..pages )
+        pageof_text:SetText( (tablePage + 1) .. "/" .. pages )
         MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, tablePage)
         checkPage()
     end
@@ -1263,7 +1265,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Go to next page");
 
         tablePage = tablePage + 1
-        pageof_text:SetText( (tablePage+1).."/"..pages )
+        pageof_text:SetText( (tablePage + 1) .. "/" .. pages )
         MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, tablePage)
         checkPage()
     end
@@ -1272,7 +1274,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Go to last page");
 
         tablePage = pages-1
-        pageof_text:SetText( (tablePage+1).."/"..pages )
+        pageof_text:SetText( (tablePage + 1) .. "/" .. pages )
         MSync.modules[info.ModuleIdentifier].displayTable(ban_table, tempTable, 20, tablePage)
         checkPage()
     end
@@ -1291,7 +1293,7 @@ MSync.modules[info.ModuleIdentifier].clientPanel = function()
         pages = MSync.modules[info.ModuleIdentifier].getTablePages(tempTable, 20)
         tablePage = 0
 
-        pageof_text:SetText( (tablePage+1).."/"..pages )
+        pageof_text:SetText( (tablePage + 1) .. "/" .. pages )
 
         if pages > 1 then
             nextpage_button:SetDisabled(false)
@@ -1330,11 +1332,11 @@ MSync.modules[info.ModuleIdentifier].net = function()
     MSync.modules[info.ModuleIdentifier].unban = function(userid)
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.unban Param.:" .. userid);
 
-        if not type(userid) == "number" then
+        if type(userid) ~= "number" then
             userid = tonumber(userid)
         end
 
-        net.Start("msync."..info.ModuleIdentifier..".unban")
+        net.Start("msync." .. info.ModuleIdentifier .. ".unban")
             net.WriteFloat(userid)
         net.SendToServer()
     end
@@ -1342,11 +1344,11 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the server wants to print something to the user chat
         Returns: nothing
     ]]
-    net.Receive( "msync."..info.ModuleIdentifier..".sendMessage", function( len, ply )
+    net.Receive( "msync." .. info.ModuleIdentifier .. ".sendMessage", function( len, ply )
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.sendMessage");
 
-        local type = net.ReadFloat()
-        if type == 0 then
+        local msgType = net.ReadFloat()
+        if msgType == 0 then
             chat.AddText( Color( 237, 135, 26 ), "[MBSync] ", Color( 255, 255, 255), net.ReadString())
         end
     end )
@@ -1355,7 +1357,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the client entered '!mban'
         Returns: nothing
     ]]
-    net.Receive( "msync."..info.ModuleIdentifier..".openBanGUI", function( len, ply )
+    net.Receive( "msync." .. info.ModuleIdentifier .. ".openBanGUI", function( len, ply )
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.openBanGUI");
 
         MSync.modules[info.ModuleIdentifier].banPanel(net.ReadTable())
@@ -1365,7 +1367,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the client entered '!mbsync'
         Returns: nothing
     ]]
-    net.Receive( "msync."..info.ModuleIdentifier..".openBanTable", function( len, ply )
+    net.Receive( "msync." .. info.ModuleIdentifier .. ".openBanTable", function( len, ply )
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.openBanTable");
 
         MSync.modules[info.ModuleIdentifier].clientPanel()
@@ -1383,7 +1385,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         MSync.modules[info.ModuleIdentifier].temporary = {}
         MSync.modules[info.ModuleIdentifier].banTable = {}
 
-        net.Start("msync."..info.ModuleIdentifier..".getBanTable")
+        net.Start("msync." .. info.ModuleIdentifier .. ".getBanTable")
             net.WriteBool(fulltable)
         net.SendToServer()
     end
@@ -1392,7 +1394,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the client entered '!mban'
         Returns: nothing
     ]]
-    net.Receive( "msync."..info.ModuleIdentifier..".recieveDataCount", function( len, ply )
+    net.Receive( "msync." .. info.ModuleIdentifier .. ".recieveDataCount", function( len, ply )
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.recieveDataCount");
 
         local num = net.ReadFloat()
@@ -1408,7 +1410,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the client entered '!mban'
         Returns: nothing
     ]]
-    net.Receive( "msync."..info.ModuleIdentifier..".recieveData", function( len, ply )
+    net.Receive( "msync." .. info.ModuleIdentifier .. ".recieveData", function( len, ply )
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] msync.MBSync.recieveData");
 
         MSync.modules[info.ModuleIdentifier].explodeTable(MSync.modules[info.ModuleIdentifier].banTable, net.ReadTable())
@@ -1419,21 +1421,21 @@ MSync.modules[info.ModuleIdentifier].net = function()
             MSync.modules[info.ModuleIdentifier].temporary = {}
             local tempTable = {}
             for k,v in pairs(MSync.modules[info.ModuleIdentifier].banTable) do
-                tempTable[v['banId']]                   = {}
-                tempTable[v['banId']]['banId']          = v['banId']
-                tempTable[v['banId']]['adminNickname']  = v['adminNickname']
-                tempTable[v['banId']]['nickname']       = v['banned']['nickname']
-                tempTable[v['banId']]['steamid']        = v['banned']['steamid']
-                tempTable[v['banId']]['steamid64']      = k
-                tempTable[v['banId']]['length']         = v['length']
-                tempTable[v['banId']]['reason']         = v['reason']
-                tempTable[v['banId']]['timestamp']      = v['timestamp']
-                tempTable[v['banId']]['servergroup']    = v['servergroup']
-                if v['banningAdmin'] then
-                    tempTable[v['banId']]['adminNickname']  = v['banningAdmin']['nickname']
+                tempTable[v["banId"]]                   = {}
+                tempTable[v["banId"]]["banId"]          = v["banId"]
+                tempTable[v["banId"]]["adminNickname"]  = v["adminNickname"]
+                tempTable[v["banId"]]["nickname"]       = v["banned"]["nickname"]
+                tempTable[v["banId"]]["steamid"]        = v["banned"]["steamid"]
+                tempTable[v["banId"]]["steamid64"]      = k
+                tempTable[v["banId"]]["length"]         = v["length"]
+                tempTable[v["banId"]]["reason"]         = v["reason"]
+                tempTable[v["banId"]]["timestamp"]      = v["timestamp"]
+                tempTable[v["banId"]]["servergroup"]    = v["servergroup"]
+                if v["banningAdmin"] then
+                    tempTable[v["banId"]]["adminNickname"]  = v["banningAdmin"]["nickname"]
                 end
-                if v['unBanningAdmin'] then
-                    tempTable[v['banId']]['unBanningAdmin']  = v['unBanningAdmin']['nickname']
+                if v["unBanningAdmin"] then
+                    tempTable[v["banId"]]["unBanningAdmin"]  = v["unBanningAdmin"]["nickname"]
                 end
             end
             MSync.modules[info.ModuleIdentifier].banTable = tempTable
@@ -1444,7 +1446,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
         Description: Net Receiver - Gets called when the server sent settings
         Returns: nothing
     ]]
-    net.Receive( "msync."..info.ModuleIdentifier..".sendSettingsPly", function( len, ply )
+    net.Receive( "msync." .. info.ModuleIdentifier .. ".sendSettingsPly", function( len, ply )
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Net: msync.MBSync.sendSettingsPly");
 
         MSync.modules[info.ModuleIdentifier].settings = net.ReadTable()
@@ -1457,7 +1459,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     MSync.modules[info.ModuleIdentifier].getSettings = function()
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.getSettings");
 
-        net.Start("msync."..info.ModuleIdentifier..".getSettings")
+        net.Start("msync." .. info.ModuleIdentifier .. ".getSettings")
         net.SendToServer()
     end
 
@@ -1468,7 +1470,7 @@ MSync.modules[info.ModuleIdentifier].net = function()
     MSync.modules[info.ModuleIdentifier].sendSettings = function()
         MSync.log(MSYNC_DBG_DEBUG, "[MBSync] Exec: MBSync.sendSettings");
 
-        net.Start("msync."..info.ModuleIdentifier..".sendSettings")
+        net.Start("msync." .. info.ModuleIdentifier .. ".sendSettings")
             net.WriteTable(MSync.modules[info.ModuleIdentifier].settings)
         net.SendToServer()
     end
