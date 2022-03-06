@@ -7,7 +7,7 @@ local userTransaction = userTransaction or {}
  * @package    MySQL Rank Sync
  * @author     Aperture Development
  * @license    root_dir/LICENCE
- * @version    2.2.3
+ * @version    2.3.0
 ]]
 
 --[[
@@ -17,7 +17,7 @@ MSync.modules.MRSync.info = {
     Name = "MySQL Rank Sync",
     ModuleIdentifier = "MRSync",
     Description = "Synchronise your ranks across your servers",
-    Version = "2.2.3"
+    Version = "2.3.0"
 }
 
 --[[
