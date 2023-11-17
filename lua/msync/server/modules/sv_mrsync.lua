@@ -178,7 +178,17 @@ function MSync.modules.MRSync.init( transaction )
             if data.rank == ply:GetUserGroup() then return end;
 
             MSync.log(MSYNC_DBG_INFO, "[MRSync] Data for user \"" .. ply:Nick() .. "\" valid and user does not have the right group, changing to " .. data.rank);
-            ply:SetUserGroup(data.rank)
+
+            --ply:SetUserGroup(data.rank)
+
+            -- Switch adding user groups to the ULX way using UCL
+            local userinfo = ULib.ucl.authed[ ply:UniqueID() ]
+            local userid = ULib.ucl.getUserRegisteredID( ply )
+            if not userid then userid = ply:SteamID() end
+
+            userTransaction[ply:SteamID64()] = true
+
+            ULib.ucl.addUser( userid, userinfo.allow, userinfo.deny, data.rank )
         end
 
         function loadUserQ.onSuccess( q, data )
@@ -340,6 +350,13 @@ function MSync.modules.MRSync.hooks()
     hook.Add("ULibUserGroupChange", "mrsync.H.saveRankOnUpdate", function(sid, _, _, new_group, _)
         MSync.log(MSYNC_DBG_INFO, "[MRSync] Rank changed for user \"" .. sid .. "\" updating it now");
         --MSync.modules.MRSync.saveRankByID(sid, new_group)
+
+        if userTransaction[util.SteamIDTo64(sid)] then
+            userTransaction[util.SteamIDTo64(sid)] = nil
+            MSync.log(MSYNC_DBG_DEBUG, "[MRSync] This hook call was caused by loading the users rank from the database. No further steps are required");
+            return
+        end
+
         MSync.modules.MRSync.validateData(sid, new_group)
     end)
 
