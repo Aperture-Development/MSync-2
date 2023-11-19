@@ -28,7 +28,7 @@ local debugLevels = {
 --[[
     MSync debug level convar
 ]]
-MSync.DebugCVar = CreateConVar( "msync_debug", 0, FCVAR_REPLICATED + FCVAR_ARCHIVE, "Set the MSync debug level. 0 = Error, 1 = Warning, 2 = Info, 3 = Debug", 0, 3 )
+MSync.DebugCVar = CreateConVar( "msync_debug", 2, FCVAR_REPLICATED + FCVAR_ARCHIVE, "Set the MSync debug level. 0 = Error, 1 = Warning, 2 = Info, 3 = Debug", 0, 3 )
 
 --[[
     Description: MSync logging function, allowing log levels and formated console logs

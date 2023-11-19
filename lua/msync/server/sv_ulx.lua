@@ -25,8 +25,8 @@ end
 function MSync.ulx.createCommands()
     MSync.log(MSYNC_DBG_DEBUG, "Creating ULX commands")
     function MSync.func.openAdminGUI(calling_ply)
-        if not calling_ply:query("msync.openAdminGUI") then return end;
         if not IsValid(calling_ply) then return end;
+        if not calling_ply:query("msync.openAdminGUI") then return end;
 
         MSync.net.openAdminGUI(calling_ply)
     end
