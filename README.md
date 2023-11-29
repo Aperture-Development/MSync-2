@@ -53,17 +53,12 @@ If you plan on extending the features of MSync 2, please copy and use the sample
 
 You need to install some things manually on the Server in order for MSync to work. 
 
-First you need libmysql on windows or libmysqlclient on linux. You can find them here:
-Windows: https://github.com/FredyH/MySQLOO/raw/master/MySQL/lib/windows/libmysql.dll
-Linux: https://github.com/FredyH/MySQLOO/raw/master/MySQL/lib/linux/libmysqlclient.so.18
-Put the file in the same folder where your scrds.exe or your scrds_linux file is.
+First you need gmsv_mysqloo_win32.dll on windows or gmsv_mysqloo_linux.dll on linux. You can find them here:
+Windows: [https://github.com/FredyH/MySQLOO/raw/master/MySQL/lib/windows/libmysql.dll](https://github.com/FredyH/MySQLOO/releases)
+Linux: [https://github.com/FredyH/MySQLOO/raw/master/MySQL/lib/linux/libmysqlclient.so.18](https://github.com/FredyH/MySQLOO/releases)
+Put the file in your /garrysmod/lua/bin folder - make the folder if it does not exist. 
 
-Then you need MySQLoo 9 or higher. You can download MySQLoo from here:
-https://github.com/FredyH/MySQLOO/releases
-Select win32 if your server runs on windows, otherwise use the linux dll.
-Put the dll file in your lua/bin folder. If you don't have one, create it.
-it should look like this:
-
+For example: 
 ```
 bin
 garrysmod
@@ -72,8 +67,14 @@ garrysmod
 --->gmsv_mysql_<version>.dll
 ```
 
+NOTE: 
+Select win32 if your server runs on windows, and isn't forced to use the 64-bit client, otherwise use the linux dll. Use the same logic if you are forcing your srcds to run in 64-bit mode. 
+
+
+
+
 After that just install the addon by putting it in your servers workshop collection or download the zip file from github and put the folder in your servers addon folder: 
-https://github.com/Aperture-Development/MSync-2/archive/master.zip
+https://github.com/Aperture-Development/MSync-2/archive/master.zip - make sure to restart the server to apply the changes. 
 
 When the server is started, everything should be ready for MSync 2. You can access the admin gui using "!msync"
 
